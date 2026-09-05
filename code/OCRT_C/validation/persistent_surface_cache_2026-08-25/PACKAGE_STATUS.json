@@ -1,0 +1,17 @@
+{
+  "implementation": "PASS",
+  "numeric_regression": "PASS_BYTE_IDENTICAL",
+  "scatter_rows": 624,
+  "cache_files": 86,
+  "cache_bytes": 51439776,
+  "row_independence": "PASS",
+  "required_miss": "FAIL_LOUD_PASS",
+  "corrupt_version": "FAIL_LOUD_PASS",
+  "batch_build_mode": "REJECTED_PASS",
+  "twa_spin2": "PASS",
+  "eap_runtime": "OFF_FAIL_LOUD",
+  "speed_work_after_persistent_cache": "FROZEN",
+  "platform_policy": "PLATFORM_NEUTRAL_NO_OS_SPECIFIC_GATE",
+  "native_windows_work": "ROLLED_BACK_NOT_CANONICAL",
+  "persistent_cache_core": "ISO_C_FILE_IO_ONLY"
+}

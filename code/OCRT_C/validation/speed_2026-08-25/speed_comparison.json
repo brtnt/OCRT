@@ -1,0 +1,18 @@
+{
+  "ocrt_optimized_fair_profile_repetitions_s": [
+    27.21,
+    26.77,
+    24.6
+  ],
+  "ocrt_optimized_fair_profile_median_s": 26.77,
+  "osoaa_fresh_s": [
+    33.47
+  ],
+  "osoaa_warm_s": [
+    20.99
+  ],
+  "ocrt_vs_osoaa_fresh_ratio_ocrt_over_osoaa": 0.7998207349865551,
+  "ocrt_vs_osoaa_warm_ratio_ocrt_over_osoaa": 1.2753692234397334,
+  "baseline_fair_profile_timeout_s": 420,
+  "baseline_speedup_lower_bound_x": 15.689204333208815
+}

@@ -1,0 +1,4 @@
+alias,canonical,relative_file,file_byte_identical,c_solver_stdout_byte_identical
+pico,eap_synechococcus,eap/EAP_15_Synechococcus_D1p2.mie,True,True
+nano,eap_hapto_prymnesiaceae,eap/EAP_12_Hapto_Prymnesiaceae_D4.mie,True,True
+micro,eap_diatoms_centric,eap/EAP_02_Diatoms_centric_D6.mie,True,True

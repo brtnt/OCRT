@@ -1,0 +1,5 @@
+PASS: cumulative patch applies to session-start RAA-audit source
+PASS: complete non-generated tree matches final release
+final binary sha256: 9dc34e8692d4a4c78203562d3a44d5976d4ec7d29e0f3e4190ca8505f78c15c5
+patched binary sha256: 9dc34e8692d4a4c78203562d3a44d5976d4ec7d29e0f3e4190ca8505f78c15c5
+byte-identical binary: PASS

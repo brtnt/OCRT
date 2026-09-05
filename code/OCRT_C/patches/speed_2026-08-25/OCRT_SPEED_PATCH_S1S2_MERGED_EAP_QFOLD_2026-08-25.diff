@@ -1,0 +1,312 @@
+--- a/src/shared/surface.c	2026-08-25 07:52:21.473454024 +0000
++++ b/src/shared/surface.c	2026-08-25 07:55:53.562116141 +0000
+@@ -793,6 +793,47 @@
+  * Uniform φ-quadrature on [0, 2π): φ_p = (p + 0.5) · 2π/N, w_p = 2π/N
+  * (midpoint rule — exactly integrates trig polynomials up to order N-1).
+  * ---------------------------------------------------------------------------- */
++#ifdef OCRT_FAST_KERNELS
++/* v1.11-speed S1 (2026-08-25): FKC type + prototype hoisted above the AIR-side
++ * kernel entry point so it can serve from the all-m cache too (definition and
++ * design notes below at "v1.09-opt S3").  g_fkc_build_mmax_hint caps the
++ * batched build at the caller's true m_max (default: full OCRT_FKC_MMAX,
++ * i.e. the pre-hint behavior). */
++#define OCRT_FKC_MMAX 64
++typedef void (*ocrt_fkc_trig_fn)(double, double, double, double,
++                                 double, int, double, int, double *);
++typedef struct {
++    int valid, n_o, n_i, n_phi, sigma_type, q_conv;
++    int built_mmax;               /* modes 0..built_mmax present in coef */
++    double ws, nw;
++    double *mu_o, *mu_i;
++    double *coef;                 /* (built_mmax+1) slabs of n_o*n_i*9, m-major */
++} ocrt_fkc_t;
++static int ocrt_fkc_serve(ocrt_fkc_t *C, ocrt_fkc_trig_fn trig,
++                          const double *mu_o, int n_o,
++                          const double *mu_i, int n_i,
++                          int m, int n_phi_quad,
++                          double ws, int sigma_type,
++                          double n_water, int q_convention,
++                          double *out_m);
++static _Thread_local int g_fkc_build_mmax_hint = OCRT_FKC_MMAX;
++#endif
++
++/* Public: declare the true mode-loop upper bound before a Fourier-kernel mode
++ * loop, so the batched all-m cache build stops there instead of projecting all
++ * OCRT_FKC_MMAX+1 modes.  Values outside [0, OCRT_FKC_MMAX] restore the
++ * uncapped default.  Thread-local; call before EACH kernel-building m loop
++ * (atm boundary, R_ww, T_wa) with that loop's m_max.  Bit-transparent for all
++ * modes actually built. */
++void surface_fkc_set_build_mmax(int m_max) {
++#ifdef OCRT_FAST_KERNELS
++    g_fkc_build_mmax_hint = (m_max >= 0 && m_max <= OCRT_FKC_MMAX)
++                                ? m_max : OCRT_FKC_MMAX;
++#else
++    (void)m_max;
++#endif
++}
++
+ static int surface_coxmunk_fourier_kernel_uncached_(const double *mu_o, int n_o,
+                                                       const double *mu_i, int n_i,
+                                                       int m, int n_phi_quad,
+@@ -958,6 +999,63 @@
+ 
+     const size_t kernel_count = (size_t)n_o * (size_t)n_i * 9u;
+     const size_t kernel_bytes = kernel_count * sizeof(double);
++
++#ifdef OCRT_FAST_KERNELS
++    /* v1.11-speed S1 (2026-08-25): serve the AIR-side rough-reflection kernel
++     * from the all-m FKC instead of re-integrating the m-independent Cox-Munk
++     * Mueller kernel once per Fourier mode (measured: 43% of a fair-profile
++     * coupled fullgrid run, 162M trig calls at n_mu=48/nphi=1024/m_max=32).
++     * Bit-transparent: the FKC per-m accumulation arithmetic is exactly the
++     * uncached_ loop's, and the identical m>0 IU/QU sign fold is applied
++     * below.  The atm mode loop alternates grid-grid and grid-solar keys, so
++     * a small LRU slot array (not a single slot) prevents rebuild thrash.
++     * Kill switch for regression comparison: OCRT_AIR_FKC_OFF=1. */
++    if (!getenv("OCRT_AIR_FKC_OFF")) {
++        enum { OCRT_FKC_AIR_SLOTS = 8 };
++        static _Thread_local ocrt_fkc_t g_fkc_air[OCRT_FKC_AIR_SLOTS];
++        static _Thread_local unsigned long long air_stamp[OCRT_FKC_AIR_SLOTS];
++        static _Thread_local unsigned long long air_tick;
++        ++air_tick;
++        int slot = -1;
++        for (int s = 0; s < OCRT_FKC_AIR_SLOTS; ++s) {
++            const ocrt_fkc_t *C = &g_fkc_air[s];
++            if (C->valid && C->n_o == n_o && C->n_i == n_i &&
++                C->n_phi == n_phi_quad && C->sigma_type == sigma_type &&
++                C->q_conv == q_convention && C->ws == ws && C->nw == n_water &&
++                memcmp(C->mu_o, mu_o, (size_t)n_o * sizeof(double)) == 0 &&
++                memcmp(C->mu_i, mu_i, (size_t)n_i * sizeof(double)) == 0) {
++                slot = s;
++                break;
++            }
++        }
++        if (slot < 0) {
++            unsigned long long oldest = ~0ULL;
++            slot = 0;
++            for (int s = 0; s < OCRT_FKC_AIR_SLOTS; ++s) {
++                if (!g_fkc_air[s].valid) { slot = s; break; }
++                if (air_stamp[s] < oldest) { oldest = air_stamp[s]; slot = s; }
++            }
++        }
++        if (ocrt_fkc_serve(&g_fkc_air[slot], surface_R_coxmunk_trig,
++                           mu_o, n_o, mu_i, n_i, m, n_phi_quad,
++                           ws, sigma_type, n_water, q_convention, R_m)) {
++            air_stamp[slot] = air_tick;
++            if (m > 0) {
++                /* identical to the uncached_ tail: OSOAA-basis IU/QU (indices
++                 * 2/5) sign conversion for m>0. */
++                const size_t np = (size_t)n_o * (size_t)n_i;
++                for (size_t q = 0; q < np; ++q) {
++                    R_m[q * 9 + 2] = -R_m[q * 9 + 2];
++                    R_m[q * 9 + 5] = -R_m[q * 9 + 5];
++                }
++            }
++            return 0;
++        }
++        /* serve declined (mode above build cap, or alloc failure):
++         * fall through to the legacy per-m cache + uncached_ path. */
++    }
++#endif
++
+     if (!ocrt_air_surface_cache_enabled_()) {
+         return surface_coxmunk_fourier_kernel_uncached_(
+             mu_o, n_o, mu_i, n_i, m, n_phi_quad, ws, sigma_type,
+@@ -1153,17 +1251,9 @@
+  * sin(m*phi) libm expressions and the p-accumulation order per (m,pair,kl)
+  * matches the original loop exactly, so served coefficients are the exact
+  * bits the direct evaluation produces.  m > MMAX or alloc failure falls
+- * through to the original body (always correct).  Thread-local. */
+-#define OCRT_FKC_MMAX 64
+-typedef void (*ocrt_fkc_trig_fn)(double, double, double, double,
+-                                 double, int, double, int, double *);
+-typedef struct {
+-    int valid, n_o, n_i, n_phi, sigma_type, q_conv;
+-    double ws, nw;
+-    double *mu_o, *mu_i;
+-    double *coef;                 /* (MMAX+1) slabs of n_o*n_i*9, m-major */
+-} ocrt_fkc_t;
+-
++ * through to the original body (always correct).  Thread-local.
++ * (v1.11-speed S1: type/prototype hoisted above the air kernel entry; build
++ * capped at surface_fkc_set_build_mmax; built_mmax records the built range.) */
+ static int ocrt_fkc_serve(ocrt_fkc_t *C, ocrt_fkc_trig_fn trig,
+                           const double *mu_o, int n_o,
+                           const double *mu_i, int n_i,
+@@ -1174,17 +1264,30 @@
+ {
+     if (m > OCRT_FKC_MMAX) return 0;
+     const size_t pair9 = (size_t)n_o * (size_t)n_i * 9;
+-    int hit = C->valid && C->n_o == n_o && C->n_i == n_i &&
++    int keymatch = C->valid && C->n_o == n_o && C->n_i == n_i &&
+               C->n_phi == n_phi_quad && C->sigma_type == sigma_type &&
+               C->q_conv == q_convention && C->ws == ws && C->nw == n_water &&
+               memcmp(C->mu_o, mu_o, (size_t)n_o * sizeof(double)) == 0 &&
+               memcmp(C->mu_i, mu_i, (size_t)n_i * sizeof(double)) == 0;
+-    if (!hit) {
++    if (keymatch && m <= C->built_mmax) {
++        memcpy(out_m, C->coef + (size_t)m * pair9, pair9 * sizeof(double));
++        return 1;
++    }
++    /* v1.11-speed S1: cap the batched build at the caller-declared true
++     * m_max (surface_fkc_set_build_mmax) instead of always projecting all
++     * OCRT_FKC_MMAX+1 modes.  Bit-transparent: built modes keep the exact
++     * per-m accumulation arithmetic; a request above the cap declines (return
++     * 0) so the caller's original per-m body handles it, and never destroys
++     * an existing valid slab. */
++    const int bmax = g_fkc_build_mmax_hint;
++    if (m > bmax) return 0;
++    {
+         free(C->mu_o); free(C->mu_i); free(C->coef);
++        C->valid = 0; C->built_mmax = -1;
+         C->mu_o = (double*)malloc((size_t)n_o * sizeof(double));
+         C->mu_i = (double*)malloc((size_t)n_i * sizeof(double));
+-        C->coef = (double*)malloc((size_t)(OCRT_FKC_MMAX + 1) * pair9 * sizeof(double));
+-        double *W = (double*)malloc((size_t)2 * (OCRT_FKC_MMAX + 1)
++        C->coef = (double*)malloc((size_t)(bmax + 1) * pair9 * sizeof(double));
++        double *W = (double*)malloc((size_t)2 * (size_t)(bmax + 1)
+                                     * (size_t)n_phi_quad * sizeof(double));
+         if (!C->mu_o || !C->mu_i || !C->coef || !W) {
+             free(C->mu_o); free(C->mu_i); free(C->coef); free(W);
+@@ -1194,7 +1297,7 @@
+         memcpy(C->mu_o, mu_o, (size_t)n_o * sizeof(double));
+         memcpy(C->mu_i, mu_i, (size_t)n_i * sizeof(double));
+         const double dphi = 2.0 * M_PI / (double)n_phi_quad;
+-        for (int mm = 0; mm <= OCRT_FKC_MMAX; mm++)
++        for (int mm = 0; mm <= bmax; mm++)
+             for (int p = 0; p < n_phi_quad; p++) {
+                 const double phi = (p + 0.5) * dphi;
+                 W[((size_t)2*mm    ) * (size_t)n_phi_quad + p] = cos(mm * phi);
+@@ -1215,14 +1318,14 @@
+                     double R_local[9];
+                     trig(mo, mi, cphi, sphi, ws, sigma_type,
+                          n_water, q_convention, R_local);
+-                    for (int mm = 0; mm <= OCRT_FKC_MMAX; mm++) {
++                    for (int mm = 0; mm <= bmax; mm++) {
+                         const double cm = W[((size_t)2*mm    ) * (size_t)n_phi_quad + p];
+                         const double sm = W[((size_t)2*mm + 1) * (size_t)n_phi_quad + p];
+                         for (int kl = 0; kl < 9; kl++)
+                             acc[mm][kl] += R_local[kl] * (cos_entry[kl] ? cm : sm);
+                     }
+                 }
+-                for (int mm = 0; mm <= OCRT_FKC_MMAX; mm++) {
++                for (int mm = 0; mm <= bmax; mm++) {
+                     const double norm_mm = (mm == 0) ? (1.0/(2.0*M_PI)) : (1.0/M_PI);
+                     double *dst = C->coef + (size_t)mm * pair9 + pair * 9;
+                     for (int kl = 0; kl < 9; kl++)
+@@ -1233,7 +1336,7 @@
+         free(W);
+         C->n_o = n_o; C->n_i = n_i; C->n_phi = n_phi_quad;
+         C->sigma_type = sigma_type; C->q_conv = q_convention;
+-        C->ws = ws; C->nw = n_water; C->valid = 1;
++        C->ws = ws; C->nw = n_water; C->built_mmax = bmax; C->valid = 1;
+     }
+     memcpy(out_m, C->coef + (size_t)m * pair9, pair9 * sizeof(double));
+     return 1;
+--- a/src/shared/surface.h	2026-08-25 08:07:54.748244351 +0000
++++ b/src/shared/surface.h	2026-08-25 07:56:10.097831408 +0000
+@@ -226,6 +226,13 @@
+                                     double n_water, int q_convention,
+                                     double *R_m);
+ 
++/* v1.11-speed S1 (2026-08-25): declare the true Fourier-mode upper bound of
++ * the NEXT kernel-building m loop so the all-m batched kernel cache builds
++ * only modes 0..m_max instead of the full compile ceiling.  Thread-local;
++ * values outside the valid range restore the uncapped default.  Purely a
++ * performance hint - built modes are bit-identical to the per-m evaluation. */
++void surface_fkc_set_build_mmax(int m_max);
++
+ /* WATER-SIDE internal-reflection analogues (B2, 2026-06-03). Same signatures
+  * and conventions as the air-side R_coxmunk_trig / coxmunk_fourier_kernel, with
+  * the facet Fresnel changed to water(n_water)->air(1.0) (internal, TIR).
+--- a/src/rt_air_water_coupling.c	2026-08-25 07:52:21.475401492 +0000
++++ b/src/rt_air_water_coupling.c	2026-08-25 07:57:14.390119390 +0000
+@@ -131,6 +131,21 @@
+  * For n <= 64 the arithmetic order is unchanged from the legacy path. */
+ enum { AW_INTERP_STACK_N = 320 };
+ 
++/* v1.11-speed S2 (2026-08-25): the coupling loops call this once per
++ * (component, mode, target) with the SAME direction grid, and the per-call
++ * insertion sort + dedup of that grid dominated the calls (measured 16.5% of
++ * a fair-profile coupled run, 24.6M calls).  Memoize the sorted/deduped index
++ * map per exact grid content (thread-local, byte-compared — no false hits);
++ * values are gathered through the memoized map, so every arithmetic input to
++ * linear_interp_ascending is bit-identical to the direct path. */
++typedef struct {
++    int    valid, n, w;
++    double mu_copy[AW_INTERP_STACK_N];
++    int    keep_src[AW_INTERP_STACK_N];   /* source index per kept entry */
++    double ms[AW_INTERP_STACK_N];         /* sorted, deduped mu */
++} aw_sortmemo_t;
++static _Thread_local aw_sortmemo_t g_aw_sortmemo;
++
+ static double aw_interp_on_unsorted(const double *mu, const double *vals,
+                                     int n, double mu_target) {
+     int ord_s[AW_INTERP_STACK_N];
+@@ -139,6 +154,30 @@
+     int *heap_i = NULL; double *heap_d = NULL;
+     int w = 0;
+     if (n < 2) return linear_interp_ascending(mu, vals, n, mu_target);
++    if (n <= AW_INTERP_STACK_N) {
++        aw_sortmemo_t *M = &g_aw_sortmemo;
++        if (!(M->valid && M->n == n &&
++              memcmp(M->mu_copy, mu, (size_t)n * sizeof(double)) == 0)) {
++            /* (re)build the sorted/deduped map for this grid content —
++             * identical insertion sort + tolerance dedup as the direct path */
++            for (int a = 0; a < n; ++a) ord[a] = a;
++            for (int a = 1; a < n; ++a) {
++                int k = ord[a]; int b = a - 1;
++                while (b >= 0 && mu[ord[b]] > mu[k]) { ord[b+1] = ord[b]; --b; }
++                ord[b+1] = k;
++            }
++            int wm = 0;
++            for (int a = 0; a < n; ++a) {
++                double m = mu[ord[a]];
++                if (wm > 0 && fabs(m - M->ms[wm-1]) < 1e-12) continue;
++                M->ms[wm] = m; M->keep_src[wm] = ord[a]; ++wm;
++            }
++            memcpy(M->mu_copy, mu, (size_t)n * sizeof(double));
++            M->n = n; M->w = wm; M->valid = 1;
++        }
++        for (int k = 0; k < M->w; ++k) tmp[k] = vals[M->keep_src[k]];
++        return linear_interp_ascending(M->ms, tmp, M->w, mu_target);
++    }
+     if (n > AW_INTERP_STACK_N) {
+         heap_i = (int *)malloc((size_t)n * sizeof(int));
+         heap_d = (double *)malloc((size_t)n * 2u * sizeof(double));
+@@ -623,6 +662,7 @@
+                 xi[NWIN + i] = xg[i];
+                 wi[NWIN + i] = (xg[i] > lo && xg[i] < hi) ? 0.0 : wg[i];
+             }
++            surface_fkc_set_build_mmax(m_max);   /* v1.11-speed S1: cap T_wa all-m build */
+             for (int m = 0; m <= m_max; ++m) {
+                 const double *Trow;
+                 #pragma omp critical(p2b_rowcache)
+--- a/src/rt_solver.c	2026-08-25 07:52:21.477183796 +0000
++++ b/src/rt_solver.c	2026-08-25 07:56:27.905689578 +0000
+@@ -54,6 +54,7 @@
+ #include "rt_sos_operator.h"
+ #include "rt_fourier.h"
+ #include "rt_surface_boundary.h"
++#include "shared/surface.h"   /* v1.11-speed S1: surface_fkc_set_build_mmax */
+ #include "rt_water_rt.h"
+ #include "rt_spectral_contract.h"
+ 
+@@ -829,6 +830,7 @@
+         }
+     }
+ 
++    surface_fkc_set_build_mmax(m_max);   /* v1.11-speed S1: cap air-kernel all-m build */
+     for (int m = 0; m <= m_max; ++m) {
+         /* Phase 3: pass atm->{gammal,betal}_aer when aerosol active; NULL
+          * preserves bit-level Phase 2 Rayleigh-only behavior. */
+--- a/src/rt_water_rt.c	2026-08-25 07:52:21.479306947 +0000
++++ b/src/rt_water_rt.c	2026-08-25 07:56:27.907915657 +0000
+@@ -5729,6 +5729,7 @@
+         rt_mkc_begin(&atm, &ws, m_loop_max + 1);
+ #endif
+     if (getenv("OCRT_S6_TRACE")) { struct timespec ts_; clock_gettime(CLOCK_MONOTONIC,&ts_); fprintf(stderr,"[S6W] wmloop begin abs=%.4f\n", ts_.tv_sec+1e-9*ts_.tv_nsec); }
++    surface_fkc_set_build_mmax(m_loop_max);   /* v1.11-speed S1: cap R_ww all-m build */
+     for (int m = 0; m <= m_loop_max; ++m) {
+         if (grid_hit) {
+             if (m >= g_grid_cache.m_count) break;   /* cold run early-exited here */

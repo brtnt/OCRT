@@ -1,0 +1,82 @@
+[01/72] cdom_0p01_b412_s0 rc=0 rows=24 identical=1 elapsed=0.00s
+[02/72] cdom_0p01_b412_s80 rc=0 rows=24 identical=1 elapsed=0.00s
+[03/72] cdom_0p01_b443_s40 rc=0 rows=24 identical=1 elapsed=0.00s
+[04/72] cdom_0p01_b412_s40 rc=0 rows=24 identical=1 elapsed=0.00s
+[05/72] cdom_0p01_b490_s0 rc=0 rows=24 identical=1 elapsed=0.00s
+[06/72] cdom_0p01_b490_s40 rc=0 rows=24 identical=1 elapsed=0.00s
+[07/72] cdom_0p01_b443_s0 rc=0 rows=24 identical=1 elapsed=0.00s
+[08/72] cdom_0p01_b555_s40 rc=0 rows=24 identical=1 elapsed=0.00s
+[09/72] cdom_0p01_b443_s80 rc=0 rows=24 identical=1 elapsed=0.00s
+[10/72] cdom_0p01_b555_s80 rc=0 rows=24 identical=1 elapsed=0.00s
+[11/72] cdom_0p01_b490_s80 rc=0 rows=24 identical=1 elapsed=0.00s
+[12/72] cdom_0p01_b555_s0 rc=0 rows=24 identical=1 elapsed=0.00s
+[13/72] cdom_0p01_b660_s40 rc=0 rows=24 identical=1 elapsed=0.00s
+[14/72] cdom_0p01_b660_s0 rc=0 rows=24 identical=1 elapsed=0.00s
+[15/72] cdom_0p01_b660_s80 rc=0 rows=24 identical=1 elapsed=0.00s
+[16/72] cdom_0p01_b865_s40 rc=0 rows=24 identical=1 elapsed=0.00s
+[17/72] cdom_0p01_b865_s80 rc=0 rows=24 identical=1 elapsed=0.00s
+[18/72] cdom_0p01_b865_s0 rc=0 rows=24 identical=1 elapsed=0.00s
+[19/72] cdom_0p1_b412_s40 rc=0 rows=24 identical=1 elapsed=0.00s
+[20/72] cdom_0p1_b412_s0 rc=0 rows=24 identical=1 elapsed=0.00s
+[21/72] cdom_0p1_b443_s0 rc=0 rows=24 identical=1 elapsed=0.00s
+[22/72] cdom_0p1_b412_s80 rc=0 rows=24 identical=1 elapsed=0.00s
+[23/72] cdom_0p1_b490_s0 rc=0 rows=24 identical=1 elapsed=0.00s
+[24/72] cdom_0p1_b443_s40 rc=0 rows=24 identical=1 elapsed=0.00s
+[25/72] cdom_0p1_b490_s40 rc=0 rows=24 identical=1 elapsed=0.00s
+[26/72] cdom_0p1_b443_s80 rc=0 rows=24 identical=1 elapsed=7.62s
+[27/72] cdom_0p1_b555_s80 rc=0 rows=24 identical=1 elapsed=7.98s
+[28/72] cdom_0p1_b555_s0 rc=0 rows=24 identical=1 elapsed=8.61s
+[29/72] cdom_0p1_b490_s80 rc=0 rows=24 identical=1 elapsed=8.98s
+[30/72] cdom_0p1_b555_s40 rc=0 rows=24 identical=1 elapsed=9.27s
+[31/72] cdom_0p1_b660_s80 rc=0 rows=24 identical=1 elapsed=9.81s
+[32/72] cdom_0p1_b660_s40 rc=0 rows=24 identical=1 elapsed=11.31s
+[33/72] cdom_0p1_b660_s0 rc=0 rows=24 identical=1 elapsed=12.41s
+[34/72] cdom_1p0_b412_s80 rc=0 rows=24 identical=1 elapsed=6.45s
+[35/72] cdom_0p1_b865_s40 rc=0 rows=24 identical=1 elapsed=9.71s
+[36/72] cdom_0p1_b865_s0 rc=0 rows=24 identical=1 elapsed=11.14s
+[37/72] cdom_1p0_b412_s0 rc=0 rows=24 identical=1 elapsed=10.53s
+[38/72] cdom_1p0_b412_s40 rc=0 rows=24 identical=1 elapsed=11.09s
+[39/72] cdom_0p1_b865_s80 rc=0 rows=24 identical=1 elapsed=11.80s
+[40/72] cdom_1p0_b443_s0 rc=0 rows=24 identical=1 elapsed=10.76s
+[41/72] cdom_1p0_b443_s40 rc=0 rows=24 identical=1 elapsed=10.84s
+[42/72] cdom_1p0_b443_s80 rc=0 rows=24 identical=1 elapsed=10.71s
+[43/72] cdom_1p0_b555_s40 rc=0 rows=24 identical=1 elapsed=7.96s
+[44/72] cdom_1p0_b490_s0 rc=0 rows=24 identical=1 elapsed=11.76s
+[45/72] cdom_1p0_b555_s0 rc=0 rows=24 identical=1 elapsed=9.63s
+[46/72] cdom_1p0_b490_s80 rc=0 rows=24 identical=1 elapsed=11.38s
+[47/72] cdom_1p0_b490_s40 rc=0 rows=24 identical=1 elapsed=13.03s
+[48/72] cdom_1p0_b660_s0 rc=0 rows=24 identical=1 elapsed=8.80s
+[49/72] cdom_1p0_b555_s80 rc=0 rows=24 identical=1 elapsed=10.98s
+[50/72] cdom_1p0_b865_s0 rc=0 rows=24 identical=1 elapsed=7.79s
+[51/72] cdom_1p0_b865_s40 rc=0 rows=24 identical=1 elapsed=7.71s
+[52/72] cdom_1p0_b660_s80 rc=0 rows=24 identical=1 elapsed=9.98s
+[53/72] cdom_1p0_b660_s40 rc=0 rows=24 identical=1 elapsed=11.62s
+[54/72] cdom_1p0_b865_s80 rc=0 rows=24 identical=1 elapsed=9.13s
+[55/72] pure_water_b412_s40 rc=0 rows=24 identical=1 elapsed=10.64s
+[56/72] pure_water_b412_s0 rc=0 rows=24 identical=1 elapsed=10.96s
+[57/72] pure_water_b412_s80 rc=0 rows=24 identical=1 elapsed=9.67s
+[58/72] pure_water_b443_s0 rc=0 rows=24 identical=1 elapsed=6.08s
+[59/72] pure_water_b555_s0 rc=0 rows=24 identical=1 elapsed=6.44s
+[60/72] pure_water_b490_s0 rc=0 rows=24 identical=1 elapsed=11.49s
+[61/72] pure_water_b443_s40 rc=0 rows=24 identical=1 elapsed=12.51s
+[62/72] pure_water_b490_s40 rc=0 rows=24 identical=1 elapsed=10.57s
+[63/72] pure_water_b443_s80 rc=0 rows=24 identical=1 elapsed=12.33s
+[64/72] pure_water_b555_s40 rc=0 rows=24 identical=1 elapsed=9.80s
+[65/72] pure_water_b555_s80 rc=0 rows=24 identical=1 elapsed=9.50s
+[66/72] pure_water_b490_s80 rc=0 rows=24 identical=1 elapsed=10.76s
+[67/72] pure_water_b660_s40 rc=0 rows=24 identical=1 elapsed=7.59s
+[68/72] pure_water_b660_s0 rc=0 rows=24 identical=1 elapsed=8.91s
+[69/72] pure_water_b865_s0 rc=0 rows=24 identical=1 elapsed=7.80s
+[70/72] pure_water_b660_s80 rc=0 rows=24 identical=1 elapsed=8.31s
+[71/72] pure_water_b865_s80 rc=0 rows=24 identical=1 elapsed=6.00s
+[72/72] pure_water_b865_s40 rc=0 rows=24 identical=1 elapsed=8.35s
+{
+  "runs": 72,
+  "success": 72,
+  "expected_row_count_pass": 72,
+  "water_converged_pass": 72,
+  "byte_identical_to_pole_baseline": 72,
+  "max_water_orders": 29,
+  "wall_s": 59.05629057800002,
+  "binary_sha256": "328f28b8f50b6d98207eabe57309dde3538e4658a1ceec8f53d970b9dda3587a"
+}

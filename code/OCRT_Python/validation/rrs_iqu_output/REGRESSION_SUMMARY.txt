@@ -1,0 +1,8 @@
+PASS rrs I/Q/U output: rows=8 sample=(7.128574300e-02,5.890505446e-05,1.794969309e-03)
+IOP_KD_FULLGRID_CSV PASS single_Kd=0.342726 grid_rows=4 cols=60
+PASS water internal-reflection msign: rough_DoLP=0.088632432
+PASS: OCRT public RAA convention helpers
+PASS: direct-glint branch RAA180; g0=8.571962822400e-09 g90=5.806454659200e-05 g180=3.888618042800e-01
+PASS Python compileall
+.......                                                                  [100%]
+7 passed in 0.80s

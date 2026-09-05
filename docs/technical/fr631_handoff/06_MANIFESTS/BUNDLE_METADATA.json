@@ -1,0 +1,21 @@
+{
+  "bundle_name": "OCRT_SPECTRAL_DATA_330_1100_FR631_HANDOFF_2026-08-20",
+  "date": "2026-08-20",
+  "canonical_mie_count": 198,
+  "mie_uncompressed_bytes": 4941848335,
+  "mie_contract": {
+    "wavelength_min_nm": 330,
+    "wavelength_max_nm": 1100,
+    "wavelength_step_nm": 1,
+    "bulk_rows": 771,
+    "phase_wavelength_columns": 771,
+    "angles": 631,
+    "angle_grid": "FR631"
+  },
+  "deprecated_not_regenerated": [
+    "Calcareous_sand_from_OSOAA_phase_443_550.mie",
+    "Phytoplankton.mie",
+    "TSM_mineral.mie"
+  ],
+  "validation_status": "PASS"
+}

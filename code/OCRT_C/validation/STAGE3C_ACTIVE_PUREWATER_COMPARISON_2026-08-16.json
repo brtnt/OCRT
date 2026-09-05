@@ -1,0 +1,19 @@
+{
+  "reference": "validation/stage2_coupling_clamp_fix_2026-08-02_dtpsign/reference/fullgrid_n64.csv",
+  "current_output": "/mnt/data/ocrt_stage3c_retry_work/osoaa_checks/current_purewater_n64.csv",
+  "reference_shape": [
+    24,
+    60
+  ],
+  "current_shape": [
+    24,
+    60
+  ],
+  "columns_equal": true,
+  "byte_identical": true,
+  "max_abs_numeric": 0.0,
+  "reference_sha256": "39e2bfd8a96c212f2d8ecf04a4958e579a300e62a1476dd8d3986611d3ad2402",
+  "current_sha256": "39e2bfd8a96c212f2d8ecf04a4958e579a300e62a1476dd8d3986611d3ad2402",
+  "status": "PASS",
+  "reference_policy": "active post-Z09 pure-water golden"
+}

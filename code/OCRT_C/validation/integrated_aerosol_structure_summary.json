@@ -1,0 +1,20 @@
+{
+  "snf": {
+    "count": 16,
+    "max_dense_norm_error_pct": 0.10299672617861688,
+    "max_g_table_dense_abs": 0.0036393292163333646,
+    "max_mueller_violation": 0.0
+  },
+  "accurt": {
+    "count": 80,
+    "max_dense_norm_error_pct": 0.024169506602633728,
+    "max_g_table_dense_abs": 0.0036578652639668308,
+    "max_mueller_violation": 0.0
+  },
+  "a2010ver": {
+    "count": 80,
+    "max_dense_norm_error_pct": 0.08455865518371963,
+    "max_g_table_dense_abs": 0.004313162307430729,
+    "max_mueller_violation": 0.0
+  }
+}

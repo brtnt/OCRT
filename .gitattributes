@@ -1,0 +1,4 @@
+# Store every file byte-exact (no end-of-line conversion on any platform).
+# SHA256SUMS.txt / MANIFEST_SHA256.csv are computed on the raw bytes, so a
+# checkout on Windows or Linux must reproduce the same bytes.
+* -text

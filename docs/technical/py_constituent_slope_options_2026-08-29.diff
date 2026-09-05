@@ -1,0 +1,211 @@
+--- /tmp/ocrt_solve.py.pre_slope	2026-08-29 07:39:01.197446257 +0000
++++ /root/ocrt/runtime/MIGRATION_PKG_2026-08-19/03_PYTHON_RUNTIME/pyOCRT_v1.2_SPECTRAL_DATA_330_1100_COMPONENT_GATED_2026-08-14/ocrt_solve.py	2026-08-29 07:39:31.754157185 +0000
+@@ -147,7 +147,9 @@
+         mie, wl_nm, aod865, aod_ref_nm=865.0, L_max=80)
+     out = dict(wavelength_nm=wl_nm, sza=sza, vza=vza, raa=raa, wind=wind,
+                chl=chl, tsm=tsm, acdom440=acdom440, aod865=aod865,
+-               aer_model=aer_name, aod_band=aod_band)
++               aer_model=aer_name, aod_band=aod_band,
++               adom_slope=cdom_slope, detritus_a440=det_a440,
++               detritus_slope=det_slope)
+ 
+     if 'R2' in which:
+         r2 = solve_aerosol_black_fresnel_ocean_value(
+@@ -218,6 +220,20 @@
+ }
+ 
+ 
++# v1.11 (2026-08-29): optional per-row constituent-slope columns.  Absent
++# columns fall back to the CLI value, which defaults to the C defaults
++# (S_cdom 0.014 nm^-1, S_detritus 0.0109 nm^-1, detritus a440 0), so existing
++# grids keep bit-identical results.  Names accept the C batch spellings
++# (ocrt_adom_slope / ocrt_detritus_*) as well as short forms.
++OPTIONAL_ALIASES = {
++    'adom_slope': ['ocrt_adom_slope', 'ccrr_adom_slope', 'adom_slope',
++                   'cdom_slope', 's_cdom', 'scdom'],
++    'det_a440': ['ocrt_detritus_a440', 'detritus_a440', 'det_a440'],
++    'det_slope': ['ocrt_detritus_slope', 'detritus_slope', 'det_slope',
++                  's_detritus', 'sdetritus', 's_det'],
++}
++
++
+ def _norm(s):
+     return re.sub(r'[^a-z0-9]', '', s.lower())
+ 
+@@ -237,14 +253,25 @@
+     miss = [k for k in ALIASES if k not in col and k != 'row_id']
+     if miss:
+         raise SystemExit('grid CSV 필수 열 없음: %s (헤더 %s)' % (miss, header))
++    ocol = {}
++    for key, names in OPTIONAL_ALIASES.items():
++        for n in names:
++            if _norm(n) in nmap:
++                ocol[key] = nmap[_norm(n)]
++                break
+     out = []
+     for i, r in enumerate(rows):
+         rid = r[col['row_id']].strip() if 'row_id' in col else str(i)
+-        out.append(dict(row_id=rid, tsm=float(r[col['tsm']]),
+-                        chl=float(r[col['chl']]), acdom=float(r[col['acdom']]),
+-                        aer=r[col['aer']].strip(), aod865=float(r[col['aod865']]),
+-                        wind=float(r[col['wind']]), sza=float(r[col['sza']]),
+-                        vza=float(r[col['vza']]), raa=float(r[col['raa']])))
++        rec = dict(row_id=rid, tsm=float(r[col['tsm']]),
++                   chl=float(r[col['chl']]), acdom=float(r[col['acdom']]),
++                   aer=r[col['aer']].strip(), aod865=float(r[col['aod865']]),
++                   wind=float(r[col['wind']]), sza=float(r[col['sza']]),
++                   vza=float(r[col['vza']]), raa=float(r[col['raa']]))
++        for key, ci in ocol.items():
++            cell = r[ci].strip() if ci < len(r) else ''
++            if cell:
++                rec[key] = float(cell)
++        out.append(rec)
+     return out
+ 
+ 
+@@ -256,7 +283,9 @@
+         a.aod865, a.aer, which=tuple(a.which),
+         phyto_group=a.phyto_group, tsm_species=a.tsm_species,
+         n_mu_water=a.n_mu_water, fourier_m_max=a.m_max, nt_atm=a.n_layers,
+-        max_it_water=a.max_it_water, pressure_hpa=a.pressure, gas_on=not a.no_gas)
++        max_it_water=a.max_it_water, pressure_hpa=a.pressure, gas_on=not a.no_gas,
++        cdom_slope=a.adom_slope, det_a440=a.detritus_a440,
++        det_slope=a.detritus_slope)
+     dt = time.time() - t
+     print('# %.1f s, conv=%s orders=%s' % (dt, r.get('conv'), r.get('orders')))
+     for k in ('rho_TOA_I', 'rho_R_I', 'rho_RA_black_I', 'rho_RC_I',
+@@ -271,7 +300,8 @@
+                  'rho_TOA_I', 'rho_R_I', 'rho_RA_black_I',
+                  'rho_RC_I', 'rho_AplusRA_I', 't_rho_w_I', 'Rrs', 'rrs0minus',
+                  'rho_TOA_Q', 'rho_TOA_U', 'rho_R_Q', 'rho_R_U',
+-                 'rho_RA_black_Q', 'rho_RA_black_U', 'orders', 'conv']
++                 'rho_RA_black_Q', 'rho_RA_black_U', 'orders', 'conv',
++                 'adom_slope', 'detritus_a440', 'detritus_slope']
+ 
+ 
+ def cmd_grid(a):
+@@ -309,7 +339,10 @@
+                         phyto_group=a.phyto_group, tsm_species=a.tsm_species,
+                         n_mu_water=a.n_mu_water, fourier_m_max=a.m_max,
+                         nt_atm=a.n_layers, max_it_water=a.max_it_water,
+-                        pressure_hpa=a.pressure, gas_on=not a.no_gas)
++                        pressure_hpa=a.pressure, gas_on=not a.no_gas,
++                        cdom_slope=row.get('adom_slope', a.adom_slope),
++                        det_a440=row.get('det_a440', a.detritus_a440),
++                        det_slope=row.get('det_slope', a.detritus_slope))
+                     r['row_id'] = row['row_id']
+                     w.writerow([r.get(c, '') for c in ASSEMBLE_COLS])
+                     fo.flush()
+@@ -342,6 +375,17 @@
+         p.add_argument('--pressure', type=float, default=1013.25)
+         p.add_argument('--no-gas', action='store_true',
+                        help='기체흡수 끄기(기본 켜짐)')
++        # v1.11 (2026-08-29): constituent spectral-slope controls, mirroring the
++        # C options --ocrt-adom-slope / --ocrt-detritus-a440 / --ocrt-detritus-slope.
++        p.add_argument('--adom-slope', '--cdom-slope', dest='adom_slope',
++                       type=float, default=0.014,
++                       help='aDOM/CDOM 지수 기울기 S [nm^-1] (기본 0.014, Bricaud 1981)')
++        p.add_argument('--detritus-a440', dest='detritus_a440',
++                       type=float, default=0.0,
++                       help='detritus a(440) [m^-1] (기본 0; Chl>0 에서만 의미)')
++        p.add_argument('--detritus-slope', dest='detritus_slope',
++                       type=float, default=0.0109,
++                       help='detritus 지수 기울기 S [nm^-1] (기본 0.0109, Bricaud-Stramski)')
+ 
+     ps = sub.add_parser('single')
+     common(ps)
+--- /tmp/batch_driver.py.pre_slope	2026-08-29 07:39:01.195860094 +0000
++++ /root/ocrt/runtime/MIGRATION_PKG_2026-08-19/03_PYTHON_RUNTIME/pyOCRT_v1.2_SPECTRAL_DATA_330_1100_COMPONENT_GATED_2026-08-14/ocrt_py/batch_driver.py	2026-08-29 07:39:01.207631550 +0000
+@@ -25,6 +25,18 @@
+ _AER_PHASE_CACHE = {}
+ 
+ 
++# v1.11 (2026-08-29): per-case CDOM / detritus spectral-slope controls.
++# A case dict may carry 'cdom_slope', 'det_a440' and 'det_slope'; absent keys
++# fall back to the C defaults (rt_types.h: S_cdom 0.014 nm^-1 Bricaud 1981,
++# detritus_slope 0.0109 nm^-1 Bricaud-Stramski, detritus a440 0), so existing
++# callers keep bit-identical results.
++def _case_slopes(c):
++    from .constituent import CDOM_SLOPE_DEFAULT, ORGANIC_DETRITUS_SLOPE_DEFAULT
++    return (float(c.get('cdom_slope', CDOM_SLOPE_DEFAULT)),
++            float(c.get('det_a440', 0.0)),
++            float(c.get('det_slope', ORGANIC_DETRITUS_SLOPE_DEFAULT)))
++
++
+ def _aer_greek(mie, wl_nm, aod, L_max, aer_name=None):
+     """Per-case wavelength interp + loglin truncation + Greek coefficients.
+     Returns (betal, gammal, alphal, zetal, tau_a_eff, ssa_a_eff, ts, P_norm_asc)
+@@ -237,11 +249,17 @@
+     _iop_np = None; _mom_cache = None
+     if len(cases) > 0:
+         _wl0 = cases[0]['wl']
+-        if all(c['wl'] == _wl0 for c in cases):
++        _cs0 = _case_slopes(cases[0])
++        # the batched IOP path shares one wavelength AND one slope set; mixed
++        # per-case slopes fall through to the per-case evaluate() below.
++        if (all(c['wl'] == _wl0 for c in cases) and
++                all(_case_slopes(c) == _cs0 for c in cases)):
+             _chl = np.array([c['chl'] for c in cases], dtype=float)
+             _tsm = np.array([c['tsm'] for c in cases], dtype=float)
+             _acd = np.array([c['ad'] for c in cases], dtype=float)
+-            _iopb = constituent_model.evaluate_batch(_wl0, _chl, _tsm, _acd)
++            _iopb = constituent_model.evaluate_batch(
++                _wl0, _chl, _tsm, _acd, cdom_slope=_cs0[0],
++                det_a440=_cs0[1], det_slope=_cs0[2])
+             _iop_np = {k: to_np(v) for k, v in _iopb.items()}
+             from .phase_batch import water_component_phase_moments_gauss_vec
+             # Stage-2 constituent Chl scattering is disabled.  Preserve a
+@@ -285,7 +303,10 @@
+                     be2 += wgt * bb_; ga2 += wgt * gg
+                     al2 += wgt * aa; ze2 += wgt * zz
+         else:
+-            r = constituent_model.evaluate(c['wl'], c['chl'], c['tsm'], c['ad'])
++            _cs = _case_slopes(c)
++            r = constituent_model.evaluate(c['wl'], c['chl'], c['tsm'], c['ad'],
++                                           cdom_slope=_cs[0], det_a440=_cs[1],
++                                           det_slope=_cs[2])
+             bp = r['b_phyto'] + r['b_det'] + r['b_min']
+             be2 = np.zeros(Lmix + 1); ga2 = np.zeros(Lmix + 1)
+             al2 = np.zeros(Lmix + 1); ze2 = np.zeros(Lmix + 1)
+--- /tmp/produce_grid.py.pre_slope	2026-08-29 07:39:01.198753904 +0000
++++ /root/ocrt/runtime/MIGRATION_PKG_2026-08-19/03_PYTHON_RUNTIME/pyOCRT_v1.2_SPECTRAL_DATA_330_1100_COMPONENT_GATED_2026-08-14/produce_grid.py	2026-08-29 07:39:45.332334012 +0000
+@@ -79,13 +79,27 @@
+             raise SystemExit(f'grid CSV missing columns: {miss}\n'
+                              f'have: {rd.fieldnames}')
+         for r in rd:
+-            rows.append(dict(
++            rec = dict(
+                 case_id=str(r[cmap['case_id']]),
+                 sza=float(r[cmap['sza']]), vza=float(r[cmap['vza']]),
+                 raa=float(r[cmap['raa']]), wind=float(r[cmap['wind']]),
+                 aerosol=str(r[cmap['aerosol']]).strip(),
+                 aod865=float(r[cmap['aod865']]), chl=float(r[cmap['chl']]),
+-                tsm=float(r[cmap['tsm']]), acdom440=float(r[cmap['acdom440']])))
++                tsm=float(r[cmap['tsm']]), acdom440=float(r[cmap['acdom440']]))
++            # v1.11 (2026-08-29): optional constituent spectral-slope columns.
++            # Absent columns keep the C defaults (S_cdom 0.014, S_det 0.0109,
++            # detritus a440 0), so existing grids stay bit-identical.
++            for key, names in (('cdom_slope', ('ocrt_adom_slope', 'adom_slope',
++                                               'cdom_slope')),
++                               ('det_a440', ('ocrt_detritus_a440',
++                                             'detritus_a440', 'det_a440')),
++                               ('det_slope', ('ocrt_detritus_slope',
++                                              'detritus_slope', 'det_slope'))):
++                for nm in names:
++                    if nm in cmap and str(r[cmap[nm]]).strip():
++                        rec[key] = float(r[cmap[nm]])
++                        break
++            rows.append(rec)
+     return rows
+ 
+ 
+@@ -127,6 +141,9 @@
+                  aer=r['aerosol'], wl=band_nm, aod=aod)
+         if kind == 'r1':
+             c.update(chl=r['chl'], tsm=r['tsm'], ad=r['acdom440'])
++            for key in ('cdom_slope', 'det_a440', 'det_slope'):
++                if key in r:
++                    c[key] = r[key]
+         cases.append(c)
+     return cases
+ 

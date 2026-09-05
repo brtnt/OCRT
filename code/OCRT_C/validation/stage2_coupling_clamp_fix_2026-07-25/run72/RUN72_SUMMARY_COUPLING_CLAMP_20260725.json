@@ -1,0 +1,10 @@
+{
+  "runs": 72,
+  "success": 72,
+  "expected_row_count_pass": 72,
+  "water_converged_pass": 72,
+  "byte_identical_to_pole_baseline": 72,
+  "max_water_orders": 29,
+  "wall_s": 59.05629057800002,
+  "binary_sha256": "328f28b8f50b6d98207eabe57309dde3538e4658a1ceec8f53d970b9dda3587a"
+}

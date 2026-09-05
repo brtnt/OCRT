@@ -1,0 +1,9 @@
+{
+  "count": 631,
+  "first": 180.0,
+  "last": 0.0,
+  "count_0_le_theta_lt_1": 80,
+  "count_0_le_theta_lt_10": 210,
+  "sha256_source_list": "1e4b97b40b75b41a5364e6c0c16ba6768bf0cd2a1a723eca6af70fdd51390497",
+  "note": "Explicit 631-line list and piecewise segment definitions are authoritative."
+}

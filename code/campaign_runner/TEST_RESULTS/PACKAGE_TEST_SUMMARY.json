@@ -1,0 +1,29 @@
+{
+  "status": "PASS",
+  "setup": {
+    "canonical_mie_installed": 198,
+    "mapped_files": 217,
+    "representative_hashes_checked": 6,
+    "c_build": true,
+    "binary_sha256": "720be78cf23ccb776b0ba2c48afb41f9fe6fc319dc766de7c41b9a1822c03d50",
+    "march": "cascadelake",
+    "pssa_fullgrid_smoke_rows": 1296
+  },
+  "runner": {
+    "selected_runs": 15,
+    "ok_or_reused": 15,
+    "failures": 0,
+    "workers": 16,
+    "pssa": true,
+    "broad_truncation": false,
+    "output_bytes": 573667,
+    "status": "PASS"
+  },
+  "resume_test": "PASS: all 15 outputs reused as skipped_valid on second execution",
+  "policy": {
+    "pssa": true,
+    "workers": 16,
+    "omp_threads_per_worker": 1,
+    "broad_truncation": false
+  }
+}

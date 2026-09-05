@@ -1,0 +1,15 @@
+{
+  "issue": "OCRT-OUTPUT-TRANS-RT-001",
+  "cases": 3,
+  "non_trans_numeric_diff_total": 0,
+  "upward_identity": "T_total_up_view * Lu0plus = TOA_water_signal_I",
+  "downward_identity": "T_total_dn_hemi = T_dir_dn + T_diff_dn_hemi",
+  "baseline_cases": [
+    "noatm",
+    "rayleigh",
+    "rayleigh+aerosol"
+  ],
+  "asan_ubsan_lowres_cases": 2,
+  "ac_lut_reciprocity_removed_rows": 324,
+  "status": "PASS"
+}

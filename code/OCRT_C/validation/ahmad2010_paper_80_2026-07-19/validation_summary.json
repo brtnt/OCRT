@@ -1,0 +1,40 @@
+{
+  "family": "Ahmad et al. (2010) paper-centric reconstruction",
+  "filename_prefix": "A2010ver_",
+  "model_count": 80,
+  "relative_humidities_percent": [
+    30,
+    50,
+    70,
+    75,
+    80,
+    85,
+    90,
+    95
+  ],
+  "fine_mode_volume_fractions": [
+    0.95,
+    0.8,
+    0.5,
+    0.3,
+    0.2,
+    0.1,
+    0.05,
+    0.02,
+    0.01,
+    0.0
+  ],
+  "wavelength_count": 20,
+  "angle_count": 361,
+  "angle_step_deg": 0.5,
+  "rlogpas": 0.011,
+  "paper_constrained_range_um": [
+    0.412,
+    0.865
+  ],
+  "outside_range_status": "documented engineering RI extension from the paper-centric OCRT reconstruction",
+  "quality_all_finite": true,
+  "quality_max_mueller_violation": 0.0,
+  "quality_max_native_norm_abs_error_pct": 2.769845431701645,
+  "quality_max_g_table_vs_phase_abs": 5.040432721770127e-05
+}

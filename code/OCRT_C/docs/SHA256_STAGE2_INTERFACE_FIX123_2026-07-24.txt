@@ -1,0 +1,5 @@
+Version: OCRT-v1.2-2026-07-24-KST-stage2-interface-fix123
+Approved binary: build/ocrt_interface_fix123
+SHA-256: 4a2269a13f81f4112dfb351ec3cac3dc5548915a8913670efa6efe2aa79180c8
+Production changes: water public-RAA fix + air-to-water interface FIX1+FIX2+FIX3
+Excluded change: naive diffuse-top molecular U-column sign flip

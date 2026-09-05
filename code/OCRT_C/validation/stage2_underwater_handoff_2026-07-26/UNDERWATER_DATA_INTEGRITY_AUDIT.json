@@ -1,0 +1,31 @@
+{
+  "validation_shape": [
+    11154,
+    37
+  ],
+  "summary_shape": [
+    50,
+    26
+  ],
+  "recomputed_summary_shape": [
+    50,
+    26
+  ],
+  "summary_max_abs_diff": 0.0,
+  "summary_mismatch_columns": [],
+  "validation_sha256": "6cdcda786bcc746bf431a8436efb4ed9ae0402423781d8d9ef925925c7d084a6",
+  "summary_sha256": "238b3afecac2353c51b4a47de15f04cb6e133cf42be5bd7022181f84fef5d40c",
+  "campaign_counts": {
+    "cdom": 5408,
+    "cdom_scan_sza": 1690,
+    "cdom_scan_wind": 1521,
+    "chl": 1521,
+    "tsm": 1014
+  },
+  "build_counts": {
+    "v5": 6929,
+    "v3": 2704,
+    "v11": 1521
+  },
+  "pass": true
+}

@@ -1,0 +1,38 @@
+{
+  "status": "PASS",
+  "package": "OCRT_POLARIZATION_PSSA_16CORE_RUN_PACKAGE_2026-08-22",
+  "migration_root": "/root/ocrt/runtime/MIGRATION_PKG_2026-08-19",
+  "c_root": "/root/ocrt/runtime/MIGRATION_PKG_2026-08-19/01_OCRT_C",
+  "python_root": "/root/ocrt/runtime/MIGRATION_PKG_2026-08-19/03_PYTHON_RUNTIME/pyOCRT_v1.2_SPECTRAL_DATA_330_1100_COMPONENT_GATED_2026-08-14",
+  "selected_consumer_patch": [
+    "src/rt_aerosol.c",
+    "src/rt_aerosol_runtime.c",
+    "src/rt_iop_ahn_mineral.c (771-column patch)"
+  ],
+  "data_install": {
+    "mapped_files": 217,
+    "canonical_mie_installed": 198,
+    "python_tree_installed": true,
+    "source_install_mode": "hardlink where supported; copy fallback",
+    "source_audit": {
+      "canonical_expected": 198,
+      "canonical_present": 198,
+      "hashes_checked": 6,
+      "full_hash_mode": false,
+      "failure_count": 0,
+      "failures": [],
+      "status": "PASS"
+    }
+  },
+  "binary": "/root/ocrt/runtime/MIGRATION_PKG_2026-08-19/01_OCRT_C/build/ocrt_polarization",
+  "binary_sha256": "1ddaa7d57f6c17bf0d188e151af621cc915315fbc549e71fd010ca13bbed8fa5",
+  "march": "cascadelake",
+  "pssa_policy": "ON in campaign runner",
+  "truncation_policy": "raw FR631; broad truncation OFF",
+  "parallel_policy": "16 independent processes; OMP_NUM_THREADS=1 each",
+  "smoke": {
+    "rows": 1296,
+    "elapsed_s": 0.31987452507019043,
+    "sha256_before_delete": "98e4b2433be300eb6f87744f2e62cc4dd2a356edb954445687838c78fcc5e723"
+  }
+}

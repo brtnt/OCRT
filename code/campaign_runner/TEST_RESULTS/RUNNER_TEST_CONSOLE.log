@@ -1,0 +1,26 @@
+starting 15 runs with workers=16, OMP_NUM_THREADS=1, PSSA=ON
+[1/15] R_555_50 ok 0.48s 
+[2/15] R_555_25 ok 1.26s 
+[3/15] R_865_75 ok 1.30s 
+[4/15] R_412_25 ok 1.27s 
+[5/15] R_748_50 ok 1.23s 
+[6/15] R_865_25 ok 1.22s 
+[7/15] R_667_50 ok 1.33s 
+[8/15] R_748_25 ok 1.32s 
+[9/15] R_748_75 ok 1.39s 
+[10/15] R_667_75 ok 1.38s 
+[11/15] R_865_50 ok 1.34s 
+[12/15] R_412_50 ok 1.37s 
+[13/15] R_555_75 ok 1.32s 
+[14/15] R_667_25 ok 1.43s 
+[15/15] R_412_75 ok 1.42s 
+{
+  "selected_runs": 15,
+  "ok_or_reused": 15,
+  "failures": 0,
+  "workers": 16,
+  "pssa": true,
+  "broad_truncation": false,
+  "output_bytes": 573667,
+  "status": "PASS"
+}

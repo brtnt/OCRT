@@ -1,0 +1,1 @@
+PASS: incremental patch reproduces final non-generated tree

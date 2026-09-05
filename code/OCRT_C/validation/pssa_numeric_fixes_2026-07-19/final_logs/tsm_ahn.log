@@ -1,0 +1,11 @@
+PASS four-species 443-nm optical coefficients
+PASS Mie-only a*/b* fallback
+PASS CLI automatic red-clay vector-phase routing
+PASS default species equals explicit red_clay
+PASS species without positive TSM is rejected
+PASS explicit phase override conflict is rejected
+TSM_AHN_SMOKE pass=6 fail=0
+
+real	0m2.134s
+user	0m1.770s
+sys	0m0.270s

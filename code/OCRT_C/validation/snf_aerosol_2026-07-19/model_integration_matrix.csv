@@ -1,0 +1,17 @@
+model,family,integration_action,source_inp,runtime_mie,n_wavelengths,n_angles,angular_spacing_deg,max_dense_phase_norm_error_pct,max_g_table_vs_dense_phase_abs,mueller_physicality_pass,runtime_smoke_412_550_860,external_rt_benchmark_status
+T50,T,retained existing high-resolution cache,inputs/aerosol_snf_inp/T50.inp,inputs/T50.mie,20,361,0.5,0.00022305285374280004,9.303895706647136e-05,True,PASS,existing qualified subset
+T80,T,added new canonical cache,inputs/aerosol_snf_inp/T80.inp,inputs/T80.mie,20,361,0.5,0.00017918804876559946,0.00010490668815543724,True,PASS,pending dedicated campaign
+T90,T,added new canonical cache,inputs/aerosol_snf_inp/T90.inp,inputs/T90.mie,20,361,0.5,0.0003979466163483991,0.00011538548663270198,True,PASS,pending dedicated campaign
+T95,T,added new canonical cache,inputs/aerosol_snf_inp/T95.inp,inputs/T95.mie,20,361,0.5,0.0002856998824629642,0.00010883080947010626,True,PASS,pending dedicated campaign
+C50,C,retained existing high-resolution cache,inputs/aerosol_snf_inp/C50.inp,inputs/C50.mie,20,361,0.5,0.0048823870409164805,0.0005297791150887798,True,PASS,existing qualified subset
+C70,C,added new canonical cache,inputs/aerosol_snf_inp/C70.inp,inputs/C70.mie,20,361,0.5,0.0077309228150856946,0.0006621535369160103,True,PASS,pending dedicated campaign
+C80,C,added new canonical cache,inputs/aerosol_snf_inp/C80.inp,inputs/C80.mie,20,361,0.5,0.0031741860597289673,0.00032744352847802194,True,PASS,pending dedicated campaign
+C90,C,added new canonical cache,inputs/aerosol_snf_inp/C90.inp,inputs/C90.mie,20,361,0.5,0.01587777634398657,0.00081844488485594,True,PASS,pending dedicated campaign
+C95,C,added new canonical cache,inputs/aerosol_snf_inp/C95.inp,inputs/C95.mie,20,361,0.5,0.01852413192438007,0.001004378543936757,True,PASS,pending dedicated campaign
+M50C,M,replaced deprecated legacy cache; promoted regenerated canonical cache,inputs/aerosol_snf_inp/M50C.inp,inputs/M50C.mie,20,361,0.5,0.005896901022539591,0.0005484721479779298,True,PASS,pending dedicated campaign
+M70C,M,added new canonical cache,inputs/aerosol_snf_inp/M70C.inp,inputs/M70C.mie,20,361,0.5,0.00793427312113515,0.0006156891334275771,True,PASS,pending dedicated campaign
+M80C,M,retained existing high-resolution cache,inputs/aerosol_snf_inp/M80C.inp,inputs/M80C.mie,20,361,0.5,0.009327479464871224,0.0006885569679797587,True,PASS,existing qualified subset
+M90C,M,added new canonical cache,inputs/aerosol_snf_inp/M90C.inp,inputs/M90C.mie,20,361,0.5,0.013607266961068731,0.0009288728551023473,True,PASS,pending dedicated campaign
+M95C,M,replaced 83-angle legacy cache,inputs/aerosol_snf_inp/M95C.inp,inputs/M95C.mie,20,361,0.5,0.02177210054835621,0.0013038266481835148,True,PASS,pending dedicated campaign
+M98C,M,replaced 83-angle legacy cache,inputs/aerosol_snf_inp/M98C.inp,inputs/M98C.mie,20,361,0.5,0.04130192054687676,0.0020635495940026782,True,PASS,pending dedicated campaign
+O99,O,retained existing high-resolution cache,inputs/aerosol_snf_inp/O99.inp,inputs/O99.mie,20,361,0.5,0.10299672617861688,0.0036393292163333646,True,PASS,pending dedicated campaign

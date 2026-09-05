@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "files": {
+    "OCRT_MIGRATION_PKG_2026-08-19 (1).tar.gz": {
+      "size_bytes": 148555675,
+      "sha256": "4423f15647d690e3b71936c38463137dda6c6600f9617fc8b25e8643b82bae52",
+      "role": "core"
+    },
+    "OCRT_MIE_GRID_TRUNCATION_VALIDATION_ARTIFACT_UPDATE_2026-08-21.zip": {
+      "size_bytes": 59973016,
+      "sha256": "9a9e7e0de0d949a53d133f38f4c3ff2b02ac28ee4d6c151f235d4059853b4cef",
+      "role": "core"
+    },
+    "PART00_CORE_DOCUMENTS_NONMIE_PATCH_VALIDATION(1).zip": {
+      "size_bytes": 1481901,
+      "sha256": "4749a6a37a84f85eb784cefe0b059b074e072f40a0d27a1c1daa0090386e13e5",
+      "role": "data_part"
+    },
+    "PART01_WATER_MIE_22(1).zip": {
+      "size_bytes": 166427065,
+      "sha256": "35e869cf49e910c0c5994159d94605e0b214372b15c312b6c04f76d5b7615bf8",
+      "role": "data_part"
+    },
+    "PART02_AEROSOL_SNF_OPAC_16(1).zip": {
+      "size_bytes": 119213743,
+      "sha256": "2553bac456911974a09e87a3ffcd6da4bb2240762118d1acca49467032af2ba5",
+      "role": "data_part"
+    },
+    "PART03_AEROSOL_AHMAD2010_PAPER_RH30_RH50(1).zip": {
+      "size_bytes": 153597557,
+      "sha256": "c6f59b739119b3184d0b8b71d980b53ae6b35a112b1eaccdccd3eeb624a1d2aa",
+      "role": "data_part"
+    },
+    "PART04_AEROSOL_AHMAD2010_PAPER_RH70_RH75(1).zip": {
+      "size_bytes": 153496170,
+      "sha256": "8f61c27542baa4e88ff61b1bf8dd81e01468203bd3499c0a127bdf70691b08e9",
+      "role": "data_part"
+    },
+    "PART05_AEROSOL_AHMAD2010_PAPER_RH80_RH85(1).zip": {
+      "size_bytes": 153282507,
+      "sha256": "f931d958d02a7f66d1ba095ba4d901ffe419e13cf98c845602b80f9914b11661",
+      "role": "data_part"
+    },
+    "PART06_AEROSOL_AHMAD2010_PAPER_RH90_RH95(1).zip": {
+      "size_bytes": 153155833,
+      "sha256": "c0ef0c5868c57559848d161726bd9f7af68e93ac66202780949332d781df9eb5",
+      "role": "data_part"
+    },
+    "PART07_AEROSOL_AHMAD2010_ACCURT_RH30_RH50(1).zip": {
+      "size_bytes": 153309899,
+      "sha256": "1afb244e30fe64db68b3e06acbdee2b12d480702dc60f32aadfb0c80d037cc21",
+      "role": "data_part"
+    },
+    "PART08_AEROSOL_AHMAD2010_ACCURT_RH70_RH75(1).zip": {
+      "size_bytes": 153552555,
+      "sha256": "1a340588b07ff621fede0283282d96ad0a957c495e3a1236a53e55370d12cc45",
+      "role": "data_part"
+    },
+    "PART09_AEROSOL_AHMAD2010_ACCURT_RH80_RH85(1).zip": {
+      "size_bytes": 153281972,
+      "sha256": "dcbf63bcaa086865f204f033990356f958d626e4de875ab6ebfe1d633cf688bf",
+      "role": "data_part"
+    },
+    "PART10_AEROSOL_AHMAD2010_ACCURT_RH90_RH95(1).zip": {
+      "size_bytes": 153152650,
+      "sha256": "0f0f1c25dd91c882f920c05ff4dcb843e10cd4fc9cb884360b00cdaf4fa204d3",
+      "role": "data_part"
+    }
+  },
+  "transport_summary": {
+    "core_base_bytes": 208528691,
+    "external_data_parts_bytes": 1513951852,
+    "total_bytes": 1722480543
+  }
+}

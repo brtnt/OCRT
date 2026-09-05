@@ -1,0 +1,10 @@
+OCRT C v1.11.1 (2026-09-05) — Windows 실행파일 재빌드 필요
+==========================================================
+변경 파일: src/rt_ipss.c, src/rt_ipss.h, src/rt_solver.c, tests/test_ipss_gates.c
+내용:  혼합 대기(Rayleigh + 에어로졸)에서 IPSS κ 의 위상함수 가중 누락 수정.
+       Rayleigh 단독 산출은 비트 동일, 비-PSSA 경로 불변.
+       진단 환경변수 OCRT_IPSS_PROFILE_DUMP=<file> 추가.
+빌드:  code\OCRT_C\build_win.bat  (REBUILD_WIN_v1.11_KO.txt 의 절차 그대로, -march=x86-64-v3)
+검증:  scripts\run_ipss_gates.sh 상당 — Windows 에서는 build\test_ipss 를 직접 실행해
+       "IPSS GATES: ALL PASS" (G-I0 ~ G-I4) 를 확인.
+기록:  validation\ipss_2026-09-05\OCRT_IPSS_REPLACEMENT_RECORD_2026-09-05.md §11.6

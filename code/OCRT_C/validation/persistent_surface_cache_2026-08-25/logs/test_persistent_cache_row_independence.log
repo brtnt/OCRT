@@ -1,0 +1,3 @@
+OpenMP rows overlap without p2b cache lock
+independent processes overlap and are byte-identical
+PASS: immutable persistent cache has no row build dependency; serial, 4-thread and 4-process outputs are byte-identical

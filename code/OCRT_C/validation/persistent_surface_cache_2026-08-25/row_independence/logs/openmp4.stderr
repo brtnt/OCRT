@@ -1,0 +1,44 @@
+# TSM Ahn: C=0.5 g m^-3 species=red_clay data=inputs/tsm_ahn phase=inputs/tsm_ahn/Red_clay_AHN.mie
+rt_absorption (SOS-integrated): λ=443.0nm τ_abs_col=0.0000e+00
+  h2o: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  o3: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  o2: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  co2: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  no2: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  ch4: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+# batch-full-grid: 4 rows, OMP threads=4
+# BATCH_DIAG: nrow=4, OMP threads=4
+rt_water_iop_lut: loaded 2250 rows from 'inputs/water_iop/water_coef_z09_1nm.txt' (λ 200.00..2449.00 nm)
+rt_water_iop_lut: loaded 2250 rows from 'inputs/water_iop/water_coef_z09_1nm.txt' (λ 200.00..2449.00 nm)
+rt_water_iop_psi_T: loaded 771 rows from 'inputs/water_iop/psi_T_rottgers2014_OCRT.txt' (λ 330.0..1100.0 nm)
+rt_water_iop_psi_T: loaded 771 rows from 'inputs/water_iop/psi_T_rottgers2014_OCRT.txt' (λ 330.0..1100.0 nm)
+rt_water_iop_lut: loaded 2250 rows from 'inputs/water_iop/water_coef_z09_1nm.txt' (λ 200.00..2449.00 nm)
+rt_water_iop_psi_T: loaded 771 rows from 'inputs/water_iop/psi_T_rottgers2014_OCRT.txt' (λ 330.0..1100.0 nm)
+rt_water_iop_lut: loaded 2250 rows from 'inputs/water_iop/water_coef_z09_1nm.txt' (λ 200.00..2449.00 nm)
+rt_water_iop_psi_T: loaded 771 rows from 'inputs/water_iop/psi_T_rottgers2014_OCRT.txt' (λ 330.0..1100.0 nm)
+[D3tr] at-consume Ed=7.042317037e-01 Ed_diff=2.100272640e-02 Iview=6.173684481e-04 Up00=-1.000000000e+00 Up01=-1.000000000e+00
+[native-coupled-lut] calls=3 water_cold=1 water_views=7 exact_near_nadir=1 cells=84 replay=0
+ocean_rrs_full_grid: n_mu=7 n_raa=12 rows=84 fail=0 replay=0 output=/mnt/data/ocrt_persistent_cache_validation/independence3/out/row3_660.csv
+# batch-full-grid row 3/4 rc=0 out=/mnt/data/ocrt_persistent_cache_validation/independence3/out/row3_660.csv
+[native-coupled-lut] calls=3 water_cold=1 water_views=7 exact_near_nadir=1 cells=84 replay=0
+ocean_rrs_full_grid: n_mu=7 n_raa=12 rows=84 fail=0 replay=0 output=/mnt/data/ocrt_persistent_cache_validation/independence3/out/row2_555.csv
+# batch-full-grid row 2/4 rc=0 out=/mnt/data/ocrt_persistent_cache_validation/independence3/out/row2_555.csv
+[native-coupled-lut] calls=3 water_cold=1 water_views=7 exact_near_nadir=1 cells=84 replay=0
+ocean_rrs_full_grid: n_mu=7 n_raa=12 rows=84 fail=0 replay=0 output=/mnt/data/ocrt_persistent_cache_validation/independence3/out/row1_443.csv
+# batch-full-grid row 1/4 rc=0 out=/mnt/data/ocrt_persistent_cache_validation/independence3/out/row1_443.csv
+[native-coupled-lut] calls=3 water_cold=1 water_views=7 exact_near_nadir=1 cells=84 replay=0
+ocean_rrs_full_grid: n_mu=7 n_raa=12 rows=84 fail=0 replay=0 output=/mnt/data/ocrt_persistent_cache_validation/independence3/out/row4_443.csv
+# batch-full-grid row 4/4 rc=0 out=/mnt/data/ocrt_persistent_cache_validation/independence3/out/row4_443.csv
+# BATCH_DIAG thread 0: rows=1 busy=1.103s
+# BATCH_DIAG thread 1: rows=1 busy=7.119s
+# BATCH_DIAG thread 2: rows=1 busy=6.882s
+# BATCH_DIAG thread 3: rows=1 busy=5.038s
+# BATCH_DIAG wall=7.130s sum_busy=20.142s parallel_efficiency=0.71
+# BATCH_DIAG mean_concurrency=2.83 threads_spawned=4 peak_concurrency=4
+# BATCH_DIAG VERDICT: PARALLEL_OK threads overlap as expected
+# BATCH_DIAG timeline (row: tid start..end s):
+#   row  1: tid 2  0.010..6.892  (6.882s)
+#   row  2: tid 3  0.010..5.049  (5.038s)
+#   row  3: tid 0  0.010..1.113  (1.103s)
+#   row  4: tid 1  0.010..7.130  (7.119s)
+# batch-full-grid done: 4 rows, 0 failed

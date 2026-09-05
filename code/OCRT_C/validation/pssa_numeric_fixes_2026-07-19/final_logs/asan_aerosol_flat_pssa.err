@@ -1,0 +1,7 @@
+rt_absorption (SOS-integrated): λ=443.0nm τ_abs_col=0.0000e+00
+  h2o: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  o3: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  o2: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  co2: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  no2: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  ch4: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00

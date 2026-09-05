@@ -1,0 +1,16 @@
+PASS canonical_legacy_byte_identity
+PASS table_reproducible
+PASS table_values
+PASS canonical_only_load
+PASS legacy_fallback_load
+PASS canonical_legacy_runtime_identity
+PASS run_440_1.0
+PASS run_443_0.3
+PASS run_555_0.3
+PASS run_670_0.3
+PASS runtime_absorption_values
+CCRR_CHL_V119_SMOKE pass=11 fail=0
+
+real	0m5.332s
+user	0m4.360s
+sys	0m0.740s

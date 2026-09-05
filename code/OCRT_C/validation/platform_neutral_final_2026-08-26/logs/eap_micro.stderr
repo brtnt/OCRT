@@ -1,0 +1,8 @@
+error: --ocrt-phyto-group is not supported yet (requested 'micro').
+  The 17-species EAP generator is integrated, but EAP scattering is
+  disabled in the constituent RT path because the current L=200 moment
+  representation can reconstruct a negative mid-angle P11 for strongly
+  forward-peaked species.  Drop the option and rerun: phytoplankton then
+  contributes absorption only, while detritus supplies particle scattering.
+  Species scattering will be restored only with a validated component-level
+  truncation or a higher-order RT representation.

@@ -1,0 +1,79 @@
+[
+  {
+    "part": "PART01_WATER_MIE_22.zip",
+    "kind": "mie",
+    "file_count": 22,
+    "zip_bytes": 166427065,
+    "sha256": "35e869cf49e910c0c5994159d94605e0b214372b15c312b6c04f76d5b7615bf8"
+  },
+  {
+    "part": "PART02_AEROSOL_SNF_OPAC_16.zip",
+    "kind": "mie",
+    "file_count": 16,
+    "zip_bytes": 119213743,
+    "sha256": "2553bac456911974a09e87a3ffcd6da4bb2240762118d1acca49467032af2ba5"
+  },
+  {
+    "part": "PART03_AEROSOL_AHMAD2010_PAPER_RH30_RH50.zip",
+    "kind": "mie",
+    "file_count": 20,
+    "zip_bytes": 153597557,
+    "sha256": "c6f59b739119b3184d0b8b71d980b53ae6b35a112b1eaccdccd3eeb624a1d2aa"
+  },
+  {
+    "part": "PART04_AEROSOL_AHMAD2010_PAPER_RH70_RH75.zip",
+    "kind": "mie",
+    "file_count": 20,
+    "zip_bytes": 153496170,
+    "sha256": "8f61c27542baa4e88ff61b1bf8dd81e01468203bd3499c0a127bdf70691b08e9"
+  },
+  {
+    "part": "PART05_AEROSOL_AHMAD2010_PAPER_RH80_RH85.zip",
+    "kind": "mie",
+    "file_count": 20,
+    "zip_bytes": 153282507,
+    "sha256": "f931d958d02a7f66d1ba095ba4d901ffe419e13cf98c845602b80f9914b11661"
+  },
+  {
+    "part": "PART06_AEROSOL_AHMAD2010_PAPER_RH90_RH95.zip",
+    "kind": "mie",
+    "file_count": 20,
+    "zip_bytes": 153155833,
+    "sha256": "c0ef0c5868c57559848d161726bd9f7af68e93ac66202780949332d781df9eb5"
+  },
+  {
+    "part": "PART07_AEROSOL_AHMAD2010_ACCURT_RH30_RH50.zip",
+    "kind": "mie",
+    "file_count": 20,
+    "zip_bytes": 153309899,
+    "sha256": "1afb244e30fe64db68b3e06acbdee2b12d480702dc60f32aadfb0c80d037cc21"
+  },
+  {
+    "part": "PART08_AEROSOL_AHMAD2010_ACCURT_RH70_RH75.zip",
+    "kind": "mie",
+    "file_count": 20,
+    "zip_bytes": 153552555,
+    "sha256": "1a340588b07ff621fede0283282d96ad0a957c495e3a1236a53e55370d12cc45"
+  },
+  {
+    "part": "PART09_AEROSOL_AHMAD2010_ACCURT_RH80_RH85.zip",
+    "kind": "mie",
+    "file_count": 20,
+    "zip_bytes": 153281972,
+    "sha256": "dcbf63bcaa086865f204f033990356f958d626e4de875ab6ebfe1d633cf688bf"
+  },
+  {
+    "part": "PART10_AEROSOL_AHMAD2010_ACCURT_RH90_RH95.zip",
+    "kind": "mie",
+    "file_count": 20,
+    "zip_bytes": 153152650,
+    "sha256": "0f0f1c25dd91c882f920c05ff4dcb843e10cd4fc9cb884360b00cdaf4fa204d3"
+  },
+  {
+    "part": "PART11_REPRODUCTION_SOURCES.zip",
+    "kind": "repro",
+    "file_count": 324,
+    "zip_bytes": 78520006,
+    "sha256": "70ed8a8c4c324439aba6b118b145f6c4315506f863403d2c03cb4fdef5efa249"
+  }
+]

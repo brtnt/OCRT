@@ -1,0 +1,11 @@
+{
+  "legacy_int_ord_64_absent": true,
+  "legacy_double_ms_64_absent": true,
+  "legacy_n_gt_64_clamp_absent": true,
+  "stack_workspace_320_present": true,
+  "heap_fallback_present": true,
+  "fail_loud_abort_present": true,
+  "test_wrapper_compile_guard_present": true,
+  "atmosphere_source_files_changed": false,
+  "python_physics_counterpart_found": false
+}

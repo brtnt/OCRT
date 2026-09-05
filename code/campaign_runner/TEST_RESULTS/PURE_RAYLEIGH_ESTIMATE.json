@@ -1,0 +1,10 @@
+{
+  "status": "ESTIMATE",
+  "sample_runs": 15,
+  "matrix_runs": 15,
+  "mean_compressed_bytes_per_run": 38244.46666666667,
+  "estimated_compressed_output_bytes": 573667.0,
+  "mean_single_run_wall_s": 0.0,
+  "estimated_16_worker_wall_s_ideal": null,
+  "warning": "Wall-time estimate is idealized; I/O, case complexity, and convergence vary by state."
+}

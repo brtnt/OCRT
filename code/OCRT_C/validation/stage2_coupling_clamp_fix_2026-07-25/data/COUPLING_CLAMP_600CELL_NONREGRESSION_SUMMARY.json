@@ -1,0 +1,9 @@
+{
+  "rows": 600,
+  "columns": 61,
+  "numeric_columns_compared": 57,
+  "max_abs_numeric_difference": 0.0,
+  "all_numeric_columns_exact": true,
+  "source_version_only_change": true,
+  "reference_scope": "legacy pre-corrected-depth OSOAA table; code non-regression only"
+}

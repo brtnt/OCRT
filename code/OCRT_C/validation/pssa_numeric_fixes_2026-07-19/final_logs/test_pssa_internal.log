@@ -1,0 +1,3 @@
+PASS: single-direction basis is bit-identical to table builder
+PSSA_GEOMETRY max_eq8_ratio=2.2204396324461602e-16 max_eq8_angle=0 max_ch_abs=0 xi_surface=3.255654802027963
+PASS: He et al. Eq. (8), surface and attenuation invariants

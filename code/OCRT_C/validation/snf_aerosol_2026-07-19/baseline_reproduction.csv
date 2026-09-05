@@ -1,0 +1,5 @@
+model,spectral_max_abs,P11_max_abs,P12_interior_max_abs,P12_endpoint_max_abs,P33_max_abs,exact_numeric_fraction,different_numeric_values,total_numeric_values,operational_values_exact
+T50,0.0,0.0,0.0,3.3544e-17,0.0,0.9981634527089073,40,21780,True
+C50,0.0,0.0,0.0,1.4271999999999998e-16,0.0,0.9981634527089073,40,21780,True
+M80C,0.0,0.0,0.0,6.9868e-16,0.0,0.9981634527089073,40,21780,True
+O99,0.0,0.0,0.0,2.2935999999999992e-15,0.0,0.9981634527089073,40,21780,True

@@ -1,0 +1,30 @@
+{
+  "issue_id": "OCRT-OUTPUT-TRANS-RT-001",
+  "date": "2026-07-21",
+  "priority": "P0",
+  "commit": "32f7825",
+  "target_release": "OCRT-v1.2-2026-07-20-KST-water-mmax-mode-bound-fix + Mie phase wavelength PCHIP",
+  "scope": "public transmittance diagnostics and LUT output; no solver/TOA/Rrs feedback",
+  "removed": [
+    "T_diff_up_hemi = T_diff_dn_hemi",
+    "T_total_up_view = exp(-tau/mu_view) + T_diff_dn_hemi",
+    "ocrt_ac_lut.py Tup(vza)=Tdn(vza)"
+  ],
+  "added": [
+    "T_total_dn_hemi",
+    "TOA_water_signal_I",
+    "T_diff_up_view",
+    "RT-derived T_total_up_view",
+    "T_up_rt_valid"
+  ],
+  "validation": {
+    "non_trans_numeric_differences": 0,
+    "representative_cases": 3,
+    "full_grid_rows": 4,
+    "asan_ubsan_cases": 2,
+    "water_branch": "14/14 PASS",
+    "pchip": "PASS",
+    "radiometry_flux_split": "PASS"
+  },
+  "separate_issue": "ocean full-grid driver does not pass aerosol object to rt_solve_case_ocean"
+}

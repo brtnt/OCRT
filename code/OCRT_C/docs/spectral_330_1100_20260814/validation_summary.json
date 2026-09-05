@@ -1,0 +1,147 @@
+{
+  "versions": {
+    "c": "OCRT-v1.2-2026-08-14-KST-spectral-data-330-1100-component-gated",
+    "python": "pyOCRT-v1.2-2026-08-14-spectral-data-330-1100-component-gated",
+    "osoaa": "unchanged OSOAA_OCRT_REFERENCE_2026-07-28_PURE_WATER_Z09_FULL"
+  },
+  "handoff_archive": {
+    "sha256": "a38679873150bbc94f5340f1154ee763d2f563efaf1cd2b526466ecca3376562",
+    "recovered_files": 866,
+    "recovered_runtime_pairs": 197,
+    "central_directory": "missing/truncated"
+  },
+  "installation": {
+    "handoff_mapping_rows": 197,
+    "accepted_runtime_files": 196,
+    "rejected_conditional_files": 1,
+    "all_handoff_pairs_equal": true,
+    "all_accepted_c_python_equal": true,
+    "all_accepted_match_handoff": true,
+    "detritus_candidate_archived_matches_handoff": true,
+    "component_counts_accepted": {
+      "aerosol_snf_opac": 16,
+      "aerosol_ahmad2010_accurt": 80,
+      "aerosol_ahmad2010_paper": 80,
+      "ahn_mineral_mie": 4,
+      "ahn_mineral_scalar": 8,
+      "phytoplankton_absorption": 1,
+      "pure_water_temperature_correction": 1,
+      "gas_xsec": 6
+    }
+  },
+  "pure_water_sha256": "f173e1a4514b653973def109a5415678afbe4f39564a7b19f94a71ef55ea0e46",
+  "full_range_mie": {
+    "count": 180,
+    "all_range_ok": true,
+    "all_finite": true,
+    "min_p11": 0.00405305235,
+    "max_abs_p12_over_p11": 0.9552198543296466,
+    "max_abs_p33_over_p11": 1.0,
+    "max_trapezoid_norm_error": 0.030760237290766268
+  },
+  "c_python_iop_parity": {
+    "max_abs": 2.220446049250313e-16,
+    "max_rel": 5.492865203755722e-15
+  },
+  "c_native_lut_endpoint_parity": {
+    "330": {
+      "rows": 12,
+      "max_abs_all": 1.000310945187266e-13,
+      "max_abs_physical": 0.0
+    },
+    "1100": {
+      "rows": 12,
+      "max_abs_all": 1.8999992551504974e-14,
+      "max_abs_physical": 0.0
+    }
+  },
+  "python_native_lut_endpoint_parity": [
+    {
+      "changed_numeric_fields": 0,
+      "diagnostics": {
+        "aerosol_prepare_count": 1,
+        "air_surface_cache_enabled": true,
+        "air_surface_cache_entries": 10,
+        "atmos_pass1_solves": 1,
+        "atmos_pass2_solves": 1,
+        "cell_solver_calls": 0,
+        "mie_read_count": 1,
+        "native_lut": true,
+        "raa_count": 2,
+        "runtime_object_id": 139670681273072,
+        "vza_count": 2,
+        "water_solves": 1
+      },
+      "max_abs_native_legacy": 0.0,
+      "max_rel_native_legacy": 0.0,
+      "rows": 4,
+      "wavelength_nm": 330.0
+    },
+    {
+      "changed_numeric_fields": 0,
+      "diagnostics": {
+        "aerosol_prepare_count": 1,
+        "air_surface_cache_enabled": true,
+        "air_surface_cache_entries": 10,
+        "atmos_pass1_solves": 1,
+        "atmos_pass2_solves": 1,
+        "cell_solver_calls": 0,
+        "mie_read_count": 1,
+        "native_lut": true,
+        "raa_count": 2,
+        "runtime_object_id": 139670445198224,
+        "vza_count": 2,
+        "water_solves": 1
+      },
+      "max_abs_native_legacy": 0.0,
+      "max_rel_native_legacy": 0.0,
+      "rows": 4,
+      "wavelength_nm": 1100.0
+    }
+  ],
+  "performance": {
+    "old": {
+      "runs_s": [
+        0.75,
+        0.72,
+        0.72,
+        0.72,
+        0.73
+      ],
+      "median_s": 0.72,
+      "mean_s": 0.728
+    },
+    "new": {
+      "runs_s": [
+        0.72,
+        0.72,
+        0.72,
+        0.73,
+        0.72
+      ],
+      "median_s": 0.72,
+      "mean_s": 0.722
+    },
+    "median_change_pct": 0.0
+  },
+  "detritus_candidate": {
+    "active_sha256": "0202c29d7a3f050d88715766a37ef7080cbf709ef5a6e69c1ab645171e61f516",
+    "candidate_sha256": "3c88824db36a098cf8b58e3d36f160ed7a44b61570ec46e99c9277470ac21a60",
+    "active_range_nm": [
+      350,
+      850
+    ],
+    "candidate_range_nm": [
+      330,
+      1100
+    ],
+    "candidate_l200_min_reconstruction": -0.0807,
+    "reduced_solver_rc": 1,
+    "decision": "rejected; archived; active legacy retained; fail-loud outside 350-850"
+  },
+  "tests": {
+    "c_selected": "PASS (pure-water, spectral IOP, PCHIP, Stage-2 EAP disabled, DTPSIGN, RAA, water-RAA, immutable LUT cache, detritus gate)",
+    "python_selected": "25 passed + final quick 9 passed",
+    "long_full_suite": "not rerun in full; prior long m-sign/direct-value-kernel tests not repeated"
+  }
+}

@@ -1,0 +1,10 @@
+RUN full-grid n_mu_water=48
+PASS full-grid n_mu_water=48
+RUN full-grid n_mu_water=64
+PASS full-grid n_mu_water=64
+RUN full-grid n_mu_water=96
+PASS full-grid n_mu_water=96
+PASS: coupling interpolation retains all water directions
+PASS: n_mu_water=48/64/96 full-grid references
+PASS: forbidden nadir m=0 polarization is zero
+NOTE: single/full parity is checked by test_stage2_coupling_clamp_single_parity.sh

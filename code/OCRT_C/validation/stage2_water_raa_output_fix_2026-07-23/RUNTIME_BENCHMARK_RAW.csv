@@ -1,0 +1,11 @@
+sequence,pair,variant,elapsed_s,returncode
+1,1,baseline,4.827586131,0
+2,1,updated,4.878792853,0
+3,2,updated,4.828571501,0
+4,2,baseline,4.827477134,0
+5,3,baseline,4.877231079,0
+6,3,updated,4.827445983,0
+7,4,updated,4.877901361,0
+8,4,baseline,4.882283455,0
+9,5,baseline,4.827955225,0
+10,5,updated,4.827707025,0

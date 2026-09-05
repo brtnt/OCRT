@@ -1,0 +1,109 @@
+--- a/src/rt_air_water_coupling.c
++++ b/src/rt_air_water_coupling.c
+@@ -501,6 +501,50 @@
+                         n_mu_atm, w_atm_pos ? "Y" : "N", _mb_dbg_sum);
+ }
+ 
++/* [P3 / WORKORDER-6, 2026-08-18] per-(mu_a, m) kernel-row cache for the P2b
++ * composite grid.  A row depends only on (mu_a, m, wind, sigma_type, n_water,
++ * q_convention) plus the compile-time grid constants (keyed too, so future
++ * constant changes invalidate).  View cells share vza across raa; caching
++ * removes the measured 24x azimuth duplication.  Memory-for-speed per project
++ * policy; rows are ~NTOT*9 doubles each. */
++typedef struct {
++    double mu_a, wind, n_water;
++    int m, sigma_type, q_convention, ntot, nphi;
++    double *Tm;
++} p2b_row_t;
++static p2b_row_t *g_p2b_rows = NULL;
++static int g_p2b_nrows = 0, g_p2b_cap = 0;
++static const double *p2b_row_lookup(double mu_a, int m, double wind,
++                                    int sigma_type, double n_water,
++                                    int q_convention, int ntot, int nphi) {
++    for (int i = 0; i < g_p2b_nrows; ++i) {
++        const p2b_row_t *r = &g_p2b_rows[i];
++        if (r->m == m && r->ntot == ntot && r->nphi == nphi &&
++            r->sigma_type == sigma_type && r->q_convention == q_convention &&
++            r->mu_a == mu_a && r->wind == wind && r->n_water == n_water)
++            return r->Tm;
++    }
++    return NULL;
++}
++static void p2b_row_insert(double mu_a, int m, double wind, int sigma_type,
++                           double n_water, int q_convention, int ntot,
++                           int nphi, const double *Tm) {
++    if (g_p2b_nrows == g_p2b_cap) {
++        int nc = g_p2b_cap ? 2 * g_p2b_cap : 64;
++        p2b_row_t *nr = (p2b_row_t*)realloc(g_p2b_rows,
++                                            (size_t)nc * sizeof(p2b_row_t));
++        if (!nr) return;               /* cache full: silently skip */
++        g_p2b_rows = nr; g_p2b_cap = nc;
++    }
++    double *cp = (double*)malloc((size_t)ntot * 9 * sizeof(double));
++    if (!cp) return;
++    memcpy(cp, Tm, (size_t)ntot * 9 * sizeof(double));
++    p2b_row_t *r = &g_p2b_rows[g_p2b_nrows++];
++    r->mu_a = mu_a; r->wind = wind; r->n_water = n_water;
++    r->m = m; r->sigma_type = sigma_type; r->q_convention = q_convention;
++    r->ntot = ntot; r->nphi = nphi; r->Tm = cp;
++}
++
+ int rt_air_water_couple_water_to_atm(const double *I_water_per_m,
+                                      const double *Q_water_per_m,
+                                      const double *U_water_per_m,
+@@ -540,11 +584,14 @@
+          * spacing (~3e-4) resolves the lobe core; the global part carries the
+          * broad wings incl. the TIR-cone leakage.  Deterministic construction,
+          * no per-angle branching. */
++        /* [P3c] Original single dense window restored (three-tier variant
++         * introduced a composite-trapezoid defect, reverted).  Speed comes
++         * from the row cache (24x cell dedup) and n_phi 128 (vs 2048). */
+         const int    NWIN  = 1024;
+         const int    NGLO  = 96;
+         const double WHALF = 0.30;
+         const int    NTOT  = NWIN + NGLO;
+-        const int    n_phi_q = 2048;
++        const int    n_phi_q = 128; /* [P3] 64 broke G3 (phi-lobe under-resolved at vza>=40); 128 = converged floor (2048 identical) */
+         double *xg = (double*)malloc((size_t)NGLO * sizeof(double));
+         double *wg = (double*)malloc((size_t)NGLO * sizeof(double));
+         double *xi = (double*)malloc((size_t)NTOT * sizeof(double));
+@@ -577,11 +624,25 @@
+                 wi[NWIN + i] = (xg[i] > lo && xg[i] < hi) ? 0.0 : wg[i];
+             }
+             for (int m = 0; m <= m_max; ++m) {
+-                if (surface_T_wa_coxmunk_fourier_kernel(&mu_a, 1, xi, NTOT,
+-                                                        m, n_phi_q,
+-                                                        wind_speed, sigma_type,
+-                                                        n_water, q_convention,
+-                                                        Tm) != 0) { ok = 0; break; }
++                const double *Trow;
++                #pragma omp critical(p2b_rowcache)
++                Trow = p2b_row_lookup(mu_a, m, wind_speed, sigma_type,
++                                      n_water, q_convention, NTOT, n_phi_q);
++                if (!Trow) {
++                    if (surface_T_wa_coxmunk_fourier_kernel(&mu_a, 1, xi, NTOT,
++                                                            m, n_phi_q,
++                                                            wind_speed,
++                                                            sigma_type,
++                                                            n_water,
++                                                            q_convention,
++                                                            Tm) != 0) {
++                        ok = 0; break;
++                    }
++                    #pragma omp critical(p2b_rowcache)
++                    p2b_row_insert(mu_a, m, wind_speed, sigma_type, n_water,
++                                   q_convention, NTOT, n_phi_q, Tm);
++                    Trow = Tm;
++                }
+                 const double az = (m == 0) ? (2.0 * M_PI) : M_PI;
+                 const double *I_w_m = &I_water_per_m[(size_t)m * (size_t)n_mu_water];
+                 const double *Q_w_m = &Q_water_per_m[(size_t)m * (size_t)n_mu_water];
+@@ -590,7 +651,7 @@
+                 for (int i = 0; i < NTOT; ++i) {
+                     if (wi[i] == 0.0) continue;
+                     const double wj = az * xi[i] * wi[i];
+-                    const double *T = Tm + (size_t)i * 9;
++                    const double *T = Trow + (size_t)i * 9;
+                     const double Iw = aw_interp_on_unsorted(mu_water_pos, I_w_m,
+                                                             n_mu_water, xi[i]);
+                     const double Qw = aw_interp_on_unsorted(mu_water_pos, Q_w_m,

@@ -1,0 +1,10 @@
+Internal ctest changing into directory: /mnt/data/ocrt_persistent_cache_work/OCRT_C_SPEEDPATCHED_EAP_DISABLED_2026-08-25/build_pcache
+Test project /mnt/data/ocrt_persistent_cache_work/OCRT_C_SPEEDPATCHED_EAP_DISABLED_2026-08-25/build_pcache
+    Start 1: fr631_mie_reader
+1/2 Test #1: fr631_mie_reader .................   Passed    0.13 sec
+    Start 2: ocrt_nadir_smoke
+2/2 Test #2: ocrt_nadir_smoke .................   Passed    0.04 sec
+
+100% tests passed, 0 tests failed out of 2
+
+Total Test time (real) =   0.17 sec

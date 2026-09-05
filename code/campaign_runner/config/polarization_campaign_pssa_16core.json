@@ -1,0 +1,38 @@
+{
+  "campaign_id": "OCRT_POLARIZATION_PSSA_16CORE_2026-08-22",
+  "workers": 16,
+  "omp_threads_per_worker": 1,
+  "enforce_pssa": true,
+  "canonical_water_particle_phase": "raw_FR631",
+  "broad_water_particle_truncation": "OFF",
+  "n_mu_water_policy": "MUST_BE_EXPLICIT_IN_EACH_WATER_RUN_MATRIX_ROW",
+  "child_environment": {
+    "OMP_NUM_THREADS": "1",
+    "OMP_DYNAMIC": "FALSE",
+    "OPENBLAS_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1",
+    "OCRT_ADVANCED": "1",
+    "OCRT_WATER_PARTICLE_KERNEL": "direct"
+  },
+  "forbidden_cli_options": [
+    "--ocrt-mie-truncation",
+    "--iop-mie-truncation"
+  ],
+  "forbidden_environment_variables": [
+    "OCRT_DEBUG",
+    "OCRT_ALLOW_LEGACY_CELL_REPLAY",
+    "OCRT_WATER_MIE_TRUNC_FULLB"
+  ],
+  "output": {
+    "compression": "gzip",
+    "delete_validated_uncompressed_csv": true,
+    "resume": true,
+    "authoritative_format": "csv.gz",
+    "atomic_replace": true
+  },
+  "validation": {
+    "default_expected_rows": 1296,
+    "fail_on_nonfinite": true,
+    "fail_on_nonpositive_I_when_rho_I_present": true
+  }
+}

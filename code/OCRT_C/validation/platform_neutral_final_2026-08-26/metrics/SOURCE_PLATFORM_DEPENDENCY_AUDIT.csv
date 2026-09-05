@@ -1,0 +1,15 @@
+scope,check,token,count,verdict
+src/shared/surface_persistent_cache.c,preprocessor_windows,_WIN32,0,PASS
+src/shared/surface_persistent_cache.c,windows_direct_header,<direct.h>,0,PASS
+src/shared/surface_persistent_cache.c,windows_process_header,<process.h>,0,PASS
+src/shared/surface_persistent_cache.c,posix_unistd_header,<unistd.h>,0,PASS
+src/shared/surface_persistent_cache.c,posix_stat_header,<sys/stat.h>,0,PASS
+src/shared/surface_persistent_cache.c,process_id_api,getpid,0,PASS
+src/shared/surface_persistent_cache.c,windows_process_id_api,_getpid,0,PASS
+src/shared/surface_persistent_cache.c,lock_file,lock file,0,PASS
+src/shared/surface_persistent_cache.c,sleep_call,Sleep(,0,PASS
+src/shared/surface_persistent_cache.c,pthread,pthread,0,PASS
+src/shared/surface_persistent_cache.c,file_lock,flock,0,PASS
+final tree,PowerShell scripts,*.ps1,0,PASS
+final tree,Windows executables,*.exe,0,PASS
+final tree,pre-existing portability shim unchanged,src/rt_windows_compat.h,1,PASS

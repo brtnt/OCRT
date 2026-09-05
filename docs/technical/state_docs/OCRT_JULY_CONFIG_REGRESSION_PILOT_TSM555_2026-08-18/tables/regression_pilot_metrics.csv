@@ -1,0 +1,41 @@
+comparison,level,metric,n,mean_abs,max_abs,median_ratio
+기준선: 7월OCRT vs 7월OSOAA,rrs0minus,I_relative_pct,169,0.0547,0.2378,1.000153
+기준선: 7월OCRT vs 7월OSOAA,rrs0minus,Q_diff_over_maxI_pct,169,0.0285,0.0828,
+기준선: 7월OCRT vs 7월OSOAA,rrs0minus,U_diff_over_maxI_pct,169,0.0265,0.0958,
+기준선: 7월OCRT vs 7월OSOAA,rrs0minus,DoLP_pp,169,0.0398,0.1160,
+현재(moment) vs 7월OSOAA,rrs0minus,I_relative_pct,169,0.3359,0.5442,0.996112
+현재(moment) vs 7월OSOAA,rrs0minus,Q_diff_over_maxI_pct,169,0.0231,0.0577,
+현재(moment) vs 7월OSOAA,rrs0minus,U_diff_over_maxI_pct,169,0.0208,0.0595,
+현재(moment) vs 7월OSOAA,rrs0minus,DoLP_pp,169,0.0429,0.1264,
+현재(direct) vs 7월OSOAA,rrs0minus,I_relative_pct,169,0.2326,0.4292,0.997356
+현재(direct) vs 7월OSOAA,rrs0minus,Q_diff_over_maxI_pct,169,1.5512,23.3098,
+현재(direct) vs 7월OSOAA,rrs0minus,U_diff_over_maxI_pct,169,0.1941,3.8207,
+현재(direct) vs 7월OSOAA,rrs0minus,DoLP_pp,169,1.8710,23.7636,
+현재(moment) vs 7월OCRT,rrs0minus,I_relative_pct,169,0.3835,0.4858,0.995957
+현재(moment) vs 7월OCRT,rrs0minus,Q_diff_over_maxI_pct,169,0.0143,0.0646,
+현재(moment) vs 7월OCRT,rrs0minus,U_diff_over_maxI_pct,169,0.0144,0.0550,
+현재(moment) vs 7월OCRT,rrs0minus,DoLP_pp,169,0.0070,0.0226,
+현재(direct) vs 7월OCRT,rrs0minus,I_relative_pct,169,0.2680,0.3735,0.997240
+현재(direct) vs 7월OCRT,rrs0minus,Q_diff_over_maxI_pct,169,1.5233,23.2364,
+현재(direct) vs 7월OCRT,rrs0minus,U_diff_over_maxI_pct,169,0.1699,3.7902,
+현재(direct) vs 7월OCRT,rrs0minus,DoLP_pp,169,1.8438,23.7978,
+기준선: 7월OCRT vs 7월OSOAA,Rrs0plus,I_relative_pct,169,0.1306,0.9643,0.999462
+기준선: 7월OCRT vs 7월OSOAA,Rrs0plus,Q_diff_over_maxI_pct,169,0.1599,0.9690,
+기준선: 7월OCRT vs 7월OSOAA,Rrs0plus,U_diff_over_maxI_pct,169,0.0192,0.1228,
+기준선: 7월OCRT vs 7월OSOAA,Rrs0plus,DoLP_pp,169,0.1397,1.0381,
+현재(moment) vs 7월OSOAA,Rrs0plus,I_relative_pct,169,0.5301,1.1725,0.995229
+현재(moment) vs 7월OSOAA,Rrs0plus,Q_diff_over_maxI_pct,169,0.1662,1.0003,
+현재(moment) vs 7월OSOAA,Rrs0plus,U_diff_over_maxI_pct,169,0.0271,0.1673,
+현재(moment) vs 7월OSOAA,Rrs0plus,DoLP_pp,169,0.1421,1.0599,
+현재(direct) vs 7월OSOAA,Rrs0plus,I_relative_pct,169,0.4078,1.0535,0.996511
+현재(direct) vs 7월OSOAA,Rrs0plus,Q_diff_over_maxI_pct,169,1.7448,24.3944,
+현재(direct) vs 7월OSOAA,Rrs0plus,U_diff_over_maxI_pct,169,0.1934,3.9993,
+현재(direct) vs 7월OSOAA,Rrs0plus,DoLP_pp,169,1.9503,23.7656,
+현재(moment) vs 7월OCRT,Rrs0plus,I_relative_pct,169,0.4000,0.5010,0.995792
+현재(moment) vs 7월OCRT,Rrs0plus,Q_diff_over_maxI_pct,169,0.0166,0.0550,
+현재(moment) vs 7월OCRT,Rrs0plus,U_diff_over_maxI_pct,169,0.0160,0.0588,
+현재(moment) vs 7월OCRT,Rrs0plus,DoLP_pp,169,0.0070,0.0219,
+현재(direct) vs 7월OCRT,Rrs0plus,I_relative_pct,169,0.2776,0.3825,0.997148
+현재(direct) vs 7월OCRT,Rrs0plus,Q_diff_over_maxI_pct,169,1.6155,24.6080,
+현재(direct) vs 7월OCRT,Rrs0plus,U_diff_over_maxI_pct,169,0.1802,4.0143,
+현재(direct) vs 7월OCRT,Rrs0plus,DoLP_pp,169,1.8435,23.7978,

@@ -1,0 +1,133 @@
+# TSM Ahn: C=0.5 g m^-3 species=red_clay data=inputs/tsm_ahn phase=inputs/tsm_ahn/Red_clay_AHN.mie
+# LUT grid output: /home/claude/work/runs/regpilot_moment/fullgrid.csv (vza step 5 deg, raa step 15 deg, vza max 60 deg)
+rt_absorption (SOS-integrated): λ=555.0nm τ_abs_col=0.0000e+00
+  h2o: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  o3: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  o2: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  co2: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  no2: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  ch4: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+rt_water_iop_lut: loaded 2250 rows from 'inputs/water_iop/water_coef_z09_1nm.txt' (λ 200.00..2449.00 nm)
+rt_water_iop_psi_T: loaded 771 rows from 'inputs/water_iop/psi_T_rottgers2014_OCRT.txt' (λ 330.0..1100.0 nm)
+[TAUR] wl=555 tau_R=0.0935485118 depol=0.02790000
+IOP a=0.0735397 b_raw=0.384053 b=0.384053 bb=0.00912407 delta_f=0 b_rt=0.384053 omega_in=0.83929 omega_eff=0.83929
+OCRT_IOP water[a=5.96346600e-02 b=1.67263100e-03 bb=8.36315500e-04] cdom[a=0.00000000e+00] phyto[a=0.00000000e+00 b=0.00000000e+00 bb=0.00000000e+00] detritus[a=0.00000000e+00 b=0.00000000e+00 bb=0.00000000e+00] tsm[a=1.39050000e-02 b=3.82380000e-01 bb=8.28775101e-03]
+MIEPHASE 'inputs/tsm_ahn/Red_clay_AHN.mie' Na=631 n_phase_wl=16 lambda_nm=555.000 lambda_um=0.55500 ssa=0.9649 Lm=200 moment_mode=1 nmg=400
+  ang[0]=180.00 ang[Na-1]=0.00  eval@90: P11=9.7783e-02 P12=-8.0402e-02 P33=4.2524e-02
+  betal0=1.0000 betal2=2.4511 gammal2=-0.35184 alphal2=3.99178 zetal2=3.87420 bb_b(mie)=0.02144 omega_p=0.8356
+OCRT_PHASE_COMPONENT name=tsm weight_b=1 b=0.38238 bb_b_iop=0.0216741226397 bb_b_phase=0.0214401332387 P90=[9.77826853e-02 -8.04018109e-02 4.25241369e-02] cache=build path=inputs/tsm_ahn/Red_clay_AHN.mie
+OCRT_PHASE_MIX components=1 L=200 beta0=1 beta2=2.45113722741 gamma2=-0.351841393444 alpha2=3.99177808616 zeta2=3.87420163311 recon_back_min=0.025244136028 cache=build
+WATER_DEPTH_AUTO tau_base=16.635863 tau_max=16.635863 z_max=36.3552082 ext=0.457592291 transport_ext=0.164873845 g_eff=0.762183155 max_tau=16.635863 max_z=200 tol=1e-08
+WATER_LAYER_AUTO n_layers=333 tau_max=16.635863 dtau=0.0499575465
+EDCOMP Ed_direct=6.602619e-01 Ed_diffuse=4.584029e-02 Ed_intrefl=0.000000e+00 Eu_diffuse=8.455781e-02 | intrefl/Ed_total=0.0000 Eu/Ed=0.1198
+[TAUR] wl=555 tau_R=0.0935485118 depol=0.02790000
+[D3tr] at-consume Ed=7.061022082e-01 Ed_diff=4.142394643e-02 Iview=1.981293815e-02 Up00=-1.000000000e+00 Up01=-1.000000000e+00
+[TAUR] wl=555 tau_R=0.0935485118 depol=0.02790000
+IOP a=0.0735397 b_raw=0.384053 b=0.384053 bb=0.00912407 delta_f=0 b_rt=0.384053 omega_in=0.83929 omega_eff=0.83929
+OCRT_IOP water[a=5.96346600e-02 b=1.67263100e-03 bb=8.36315500e-04] cdom[a=0.00000000e+00] phyto[a=0.00000000e+00 b=0.00000000e+00 bb=0.00000000e+00] detritus[a=0.00000000e+00 b=0.00000000e+00 bb=0.00000000e+00] tsm[a=1.39050000e-02 b=3.82380000e-01 bb=8.28775101e-03]
+OCRT_PHASE_COMPONENT name=tsm weight_b=1 b=0.38238 bb_b_iop=0.0216741226397 bb_b_phase=0.0214401332387 P90=[9.77826853e-02 -8.04018109e-02 4.25241369e-02] cache=hit path=inputs/tsm_ahn/Red_clay_AHN.mie
+OCRT_PHASE_MIX components=1 L=200 beta0=1 beta2=2.45113722741 gamma2=-0.351841393444 alpha2=3.99177808616 zeta2=3.87420163311 recon_back_min=0.025244136028 cache=hit
+WATER_DEPTH_AUTO tau_base=16.635863 tau_max=16.635863 z_max=36.3552082 ext=0.457592291 transport_ext=0.164873845 g_eff=0.762183155 max_tau=16.635863 max_z=200 tol=1e-08
+WATER_LAYER_AUTO n_layers=333 tau_max=16.635863 dtau=0.0499575465
+EDCOMP Ed_direct=6.602619e-01 Ed_diffuse=4.584029e-02 Ed_intrefl=0.000000e+00 Eu_diffuse=8.455781e-02 | intrefl/Ed_total=0.0000 Eu/Ed=0.1198
+[TAUR] wl=555 tau_R=0.0935485118 depol=0.02790000
+IOP a=0.0735397 b_raw=0.384053 b=0.384053 bb=0.00912407 delta_f=0 b_rt=0.384053 omega_in=0.83929 omega_eff=0.83929
+OCRT_IOP water[a=5.96346600e-02 b=1.67263100e-03 bb=8.36315500e-04] cdom[a=0.00000000e+00] phyto[a=0.00000000e+00 b=0.00000000e+00 bb=0.00000000e+00] detritus[a=0.00000000e+00 b=0.00000000e+00 bb=0.00000000e+00] tsm[a=1.39050000e-02 b=3.82380000e-01 bb=8.28775101e-03]
+OCRT_PHASE_COMPONENT name=tsm weight_b=1 b=0.38238 bb_b_iop=0.0216741226397 bb_b_phase=0.0214401332387 P90=[9.77826853e-02 -8.04018109e-02 4.25241369e-02] cache=hit path=inputs/tsm_ahn/Red_clay_AHN.mie
+OCRT_PHASE_MIX components=1 L=200 beta0=1 beta2=2.45113722741 gamma2=-0.351841393444 alpha2=3.99177808616 zeta2=3.87420163311 recon_back_min=0.025244136028 cache=hit
+WATER_DEPTH_AUTO tau_base=16.635863 tau_max=16.635863 z_max=36.3552082 ext=0.457592291 transport_ext=0.164873845 g_eff=0.762183155 max_tau=16.635863 max_z=200 tol=1e-08
+WATER_LAYER_AUTO n_layers=333 tau_max=16.635863 dtau=0.0499575465
+EDCOMP Ed_direct=6.602619e-01 Ed_diffuse=4.584029e-02 Ed_intrefl=0.000000e+00 Eu_diffuse=8.455781e-02 | intrefl/Ed_total=0.0000 Eu/Ed=0.1198
+IOP a=0.0735397 b_raw=0.384053 b=0.384053 bb=0.00912407 delta_f=0 b_rt=0.384053 omega_in=0.83929 omega_eff=0.83929
+OCRT_IOP water[a=5.96346600e-02 b=1.67263100e-03 bb=8.36315500e-04] cdom[a=0.00000000e+00] phyto[a=0.00000000e+00 b=0.00000000e+00 bb=0.00000000e+00] detritus[a=0.00000000e+00 b=0.00000000e+00 bb=0.00000000e+00] tsm[a=1.39050000e-02 b=3.82380000e-01 bb=8.28775101e-03]
+OCRT_PHASE_COMPONENT name=tsm weight_b=1 b=0.38238 bb_b_iop=0.0216741226397 bb_b_phase=0.0214401332387 P90=[9.77826853e-02 -8.04018109e-02 4.25241369e-02] cache=hit path=inputs/tsm_ahn/Red_clay_AHN.mie
+OCRT_PHASE_MIX components=1 L=200 beta0=1 beta2=2.45113722741 gamma2=-0.351841393444 alpha2=3.99177808616 zeta2=3.87420163311 recon_back_min=0.025244136028 cache=hit
+WATER_DEPTH_AUTO tau_base=16.635863 tau_max=16.635863 z_max=36.3552082 ext=0.457592291 transport_ext=0.164873845 g_eff=0.762183155 max_tau=16.635863 max_z=200 tol=1e-08
+WATER_LAYER_AUTO n_layers=333 tau_max=16.635863 dtau=0.0499575465
+EDCOMP Ed_direct=6.602619e-01 Ed_diffuse=4.584029e-02 Ed_intrefl=0.000000e+00 Eu_diffuse=8.455781e-02 | intrefl/Ed_total=0.0000 Eu/Ed=0.1198
+IOP a=0.0735397 b_raw=0.384053 b=0.384053 bb=0.00912407 delta_f=0 b_rt=0.384053 omega_in=0.83929 omega_eff=0.83929
+OCRT_IOP water[a=5.96346600e-02 b=1.67263100e-03 bb=8.36315500e-04] cdom[a=0.00000000e+00] phyto[a=0.00000000e+00 b=0.00000000e+00 bb=0.00000000e+00] detritus[a=0.00000000e+00 b=0.00000000e+00 bb=0.00000000e+00] tsm[a=1.39050000e-02 b=3.82380000e-01 bb=8.28775101e-03]
+OCRT_PHASE_COMPONENT name=tsm weight_b=1 b=0.38238 bb_b_iop=0.0216741226397 bb_b_phase=0.0214401332387 P90=[9.77826853e-02 -8.04018109e-02 4.25241369e-02] cache=hit path=inputs/tsm_ahn/Red_clay_AHN.mie
+OCRT_PHASE_MIX components=1 L=200 beta0=1 beta2=2.45113722741 gamma2=-0.351841393444 alpha2=3.99177808616 zeta2=3.87420163311 recon_back_min=0.025244136028 cache=hit
+WATER_DEPTH_AUTO tau_base=16.635863 tau_max=16.635863 z_max=36.3552082 ext=0.457592291 transport_ext=0.164873845 g_eff=0.762183155 max_tau=16.635863 max_z=200 tol=1e-08
+WATER_LAYER_AUTO n_layers=333 tau_max=16.635863 dtau=0.0499575465
+EDCOMP Ed_direct=6.602619e-01 Ed_diffuse=4.584029e-02 Ed_intrefl=0.000000e+00 Eu_diffuse=8.455781e-02 | intrefl/Ed_total=0.0000 Eu/Ed=0.1198
+IOP a=0.0735397 b_raw=0.384053 b=0.384053 bb=0.00912407 delta_f=0 b_rt=0.384053 omega_in=0.83929 omega_eff=0.83929
+OCRT_IOP water[a=5.96346600e-02 b=1.67263100e-03 bb=8.36315500e-04] cdom[a=0.00000000e+00] phyto[a=0.00000000e+00 b=0.00000000e+00 bb=0.00000000e+00] detritus[a=0.00000000e+00 b=0.00000000e+00 bb=0.00000000e+00] tsm[a=1.39050000e-02 b=3.82380000e-01 bb=8.28775101e-03]
+OCRT_PHASE_COMPONENT name=tsm weight_b=1 b=0.38238 bb_b_iop=0.0216741226397 bb_b_phase=0.0214401332387 P90=[9.77826853e-02 -8.04018109e-02 4.25241369e-02] cache=hit path=inputs/tsm_ahn/Red_clay_AHN.mie
+OCRT_PHASE_MIX components=1 L=200 beta0=1 beta2=2.45113722741 gamma2=-0.351841393444 alpha2=3.99177808616 zeta2=3.87420163311 recon_back_min=0.025244136028 cache=hit
+WATER_DEPTH_AUTO tau_base=16.635863 tau_max=16.635863 z_max=36.3552082 ext=0.457592291 transport_ext=0.164873845 g_eff=0.762183155 max_tau=16.635863 max_z=200 tol=1e-08
+WATER_LAYER_AUTO n_layers=333 tau_max=16.635863 dtau=0.0499575465
+EDCOMP Ed_direct=6.602619e-01 Ed_diffuse=4.584029e-02 Ed_intrefl=0.000000e+00 Eu_diffuse=8.455781e-02 | intrefl/Ed_total=0.0000 Eu/Ed=0.1198
+IOP a=0.0735397 b_raw=0.384053 b=0.384053 bb=0.00912407 delta_f=0 b_rt=0.384053 omega_in=0.83929 omega_eff=0.83929
+OCRT_IOP water[a=5.96346600e-02 b=1.67263100e-03 bb=8.36315500e-04] cdom[a=0.00000000e+00] phyto[a=0.00000000e+00 b=0.00000000e+00 bb=0.00000000e+00] detritus[a=0.00000000e+00 b=0.00000000e+00 bb=0.00000000e+00] tsm[a=1.39050000e-02 b=3.82380000e-01 bb=8.28775101e-03]
+OCRT_PHASE_COMPONENT name=tsm weight_b=1 b=0.38238 bb_b_iop=0.0216741226397 bb_b_phase=0.0214401332387 P90=[9.77826853e-02 -8.04018109e-02 4.25241369e-02] cache=hit path=inputs/tsm_ahn/Red_clay_AHN.mie
+OCRT_PHASE_MIX components=1 L=200 beta0=1 beta2=2.45113722741 gamma2=-0.351841393444 alpha2=3.99177808616 zeta2=3.87420163311 recon_back_min=0.025244136028 cache=hit
+WATER_DEPTH_AUTO tau_base=16.635863 tau_max=16.635863 z_max=36.3552082 ext=0.457592291 transport_ext=0.164873845 g_eff=0.762183155 max_tau=16.635863 max_z=200 tol=1e-08
+WATER_LAYER_AUTO n_layers=333 tau_max=16.635863 dtau=0.0499575465
+EDCOMP Ed_direct=6.602619e-01 Ed_diffuse=4.584029e-02 Ed_intrefl=0.000000e+00 Eu_diffuse=8.455781e-02 | intrefl/Ed_total=0.0000 Eu/Ed=0.1198
+IOP a=0.0735397 b_raw=0.384053 b=0.384053 bb=0.00912407 delta_f=0 b_rt=0.384053 omega_in=0.83929 omega_eff=0.83929
+OCRT_IOP water[a=5.96346600e-02 b=1.67263100e-03 bb=8.36315500e-04] cdom[a=0.00000000e+00] phyto[a=0.00000000e+00 b=0.00000000e+00 bb=0.00000000e+00] detritus[a=0.00000000e+00 b=0.00000000e+00 bb=0.00000000e+00] tsm[a=1.39050000e-02 b=3.82380000e-01 bb=8.28775101e-03]
+OCRT_PHASE_COMPONENT name=tsm weight_b=1 b=0.38238 bb_b_iop=0.0216741226397 bb_b_phase=0.0214401332387 P90=[9.77826853e-02 -8.04018109e-02 4.25241369e-02] cache=hit path=inputs/tsm_ahn/Red_clay_AHN.mie
+OCRT_PHASE_MIX components=1 L=200 beta0=1 beta2=2.45113722741 gamma2=-0.351841393444 alpha2=3.99177808616 zeta2=3.87420163311 recon_back_min=0.025244136028 cache=hit
+WATER_DEPTH_AUTO tau_base=16.635863 tau_max=16.635863 z_max=36.3552082 ext=0.457592291 transport_ext=0.164873845 g_eff=0.762183155 max_tau=16.635863 max_z=200 tol=1e-08
+WATER_LAYER_AUTO n_layers=333 tau_max=16.635863 dtau=0.0499575465
+EDCOMP Ed_direct=6.602619e-01 Ed_diffuse=4.584029e-02 Ed_intrefl=0.000000e+00 Eu_diffuse=8.455781e-02 | intrefl/Ed_total=0.0000 Eu/Ed=0.1198
+IOP a=0.0735397 b_raw=0.384053 b=0.384053 bb=0.00912407 delta_f=0 b_rt=0.384053 omega_in=0.83929 omega_eff=0.83929
+OCRT_IOP water[a=5.96346600e-02 b=1.67263100e-03 bb=8.36315500e-04] cdom[a=0.00000000e+00] phyto[a=0.00000000e+00 b=0.00000000e+00 bb=0.00000000e+00] detritus[a=0.00000000e+00 b=0.00000000e+00 bb=0.00000000e+00] tsm[a=1.39050000e-02 b=3.82380000e-01 bb=8.28775101e-03]
+OCRT_PHASE_COMPONENT name=tsm weight_b=1 b=0.38238 bb_b_iop=0.0216741226397 bb_b_phase=0.0214401332387 P90=[9.77826853e-02 -8.04018109e-02 4.25241369e-02] cache=hit path=inputs/tsm_ahn/Red_clay_AHN.mie
+OCRT_PHASE_MIX components=1 L=200 beta0=1 beta2=2.45113722741 gamma2=-0.351841393444 alpha2=3.99177808616 zeta2=3.87420163311 recon_back_min=0.025244136028 cache=hit
+WATER_DEPTH_AUTO tau_base=16.635863 tau_max=16.635863 z_max=36.3552082 ext=0.457592291 transport_ext=0.164873845 g_eff=0.762183155 max_tau=16.635863 max_z=200 tol=1e-08
+WATER_LAYER_AUTO n_layers=333 tau_max=16.635863 dtau=0.0499575465
+EDCOMP Ed_direct=6.602619e-01 Ed_diffuse=4.584029e-02 Ed_intrefl=0.000000e+00 Eu_diffuse=8.455781e-02 | intrefl/Ed_total=0.0000 Eu/Ed=0.1198
+IOP a=0.0735397 b_raw=0.384053 b=0.384053 bb=0.00912407 delta_f=0 b_rt=0.384053 omega_in=0.83929 omega_eff=0.83929
+OCRT_IOP water[a=5.96346600e-02 b=1.67263100e-03 bb=8.36315500e-04] cdom[a=0.00000000e+00] phyto[a=0.00000000e+00 b=0.00000000e+00 bb=0.00000000e+00] detritus[a=0.00000000e+00 b=0.00000000e+00 bb=0.00000000e+00] tsm[a=1.39050000e-02 b=3.82380000e-01 bb=8.28775101e-03]
+OCRT_PHASE_COMPONENT name=tsm weight_b=1 b=0.38238 bb_b_iop=0.0216741226397 bb_b_phase=0.0214401332387 P90=[9.77826853e-02 -8.04018109e-02 4.25241369e-02] cache=hit path=inputs/tsm_ahn/Red_clay_AHN.mie
+OCRT_PHASE_MIX components=1 L=200 beta0=1 beta2=2.45113722741 gamma2=-0.351841393444 alpha2=3.99177808616 zeta2=3.87420163311 recon_back_min=0.025244136028 cache=hit
+WATER_DEPTH_AUTO tau_base=16.635863 tau_max=16.635863 z_max=36.3552082 ext=0.457592291 transport_ext=0.164873845 g_eff=0.762183155 max_tau=16.635863 max_z=200 tol=1e-08
+WATER_LAYER_AUTO n_layers=333 tau_max=16.635863 dtau=0.0499575465
+EDCOMP Ed_direct=6.602619e-01 Ed_diffuse=4.584029e-02 Ed_intrefl=0.000000e+00 Eu_diffuse=8.455781e-02 | intrefl/Ed_total=0.0000 Eu/Ed=0.1198
+IOP a=0.0735397 b_raw=0.384053 b=0.384053 bb=0.00912407 delta_f=0 b_rt=0.384053 omega_in=0.83929 omega_eff=0.83929
+OCRT_IOP water[a=5.96346600e-02 b=1.67263100e-03 bb=8.36315500e-04] cdom[a=0.00000000e+00] phyto[a=0.00000000e+00 b=0.00000000e+00 bb=0.00000000e+00] detritus[a=0.00000000e+00 b=0.00000000e+00 bb=0.00000000e+00] tsm[a=1.39050000e-02 b=3.82380000e-01 bb=8.28775101e-03]
+OCRT_PHASE_COMPONENT name=tsm weight_b=1 b=0.38238 bb_b_iop=0.0216741226397 bb_b_phase=0.0214401332387 P90=[9.77826853e-02 -8.04018109e-02 4.25241369e-02] cache=hit path=inputs/tsm_ahn/Red_clay_AHN.mie
+OCRT_PHASE_MIX components=1 L=200 beta0=1 beta2=2.45113722741 gamma2=-0.351841393444 alpha2=3.99177808616 zeta2=3.87420163311 recon_back_min=0.025244136028 cache=hit
+WATER_DEPTH_AUTO tau_base=16.635863 tau_max=16.635863 z_max=36.3552082 ext=0.457592291 transport_ext=0.164873845 g_eff=0.762183155 max_tau=16.635863 max_z=200 tol=1e-08
+WATER_LAYER_AUTO n_layers=333 tau_max=16.635863 dtau=0.0499575465
+EDCOMP Ed_direct=6.602619e-01 Ed_diffuse=4.584029e-02 Ed_intrefl=0.000000e+00 Eu_diffuse=8.455781e-02 | intrefl/Ed_total=0.0000 Eu/Ed=0.1198
+IOP a=0.0735397 b_raw=0.384053 b=0.384053 bb=0.00912407 delta_f=0 b_rt=0.384053 omega_in=0.83929 omega_eff=0.83929
+OCRT_IOP water[a=5.96346600e-02 b=1.67263100e-03 bb=8.36315500e-04] cdom[a=0.00000000e+00] phyto[a=0.00000000e+00 b=0.00000000e+00 bb=0.00000000e+00] detritus[a=0.00000000e+00 b=0.00000000e+00 bb=0.00000000e+00] tsm[a=1.39050000e-02 b=3.82380000e-01 bb=8.28775101e-03]
+OCRT_PHASE_COMPONENT name=tsm weight_b=1 b=0.38238 bb_b_iop=0.0216741226397 bb_b_phase=0.0214401332387 P90=[9.77826853e-02 -8.04018109e-02 4.25241369e-02] cache=hit path=inputs/tsm_ahn/Red_clay_AHN.mie
+OCRT_PHASE_MIX components=1 L=200 beta0=1 beta2=2.45113722741 gamma2=-0.351841393444 alpha2=3.99177808616 zeta2=3.87420163311 recon_back_min=0.025244136028 cache=hit
+WATER_DEPTH_AUTO tau_base=16.635863 tau_max=16.635863 z_max=36.3552082 ext=0.457592291 transport_ext=0.164873845 g_eff=0.762183155 max_tau=16.635863 max_z=200 tol=1e-08
+WATER_LAYER_AUTO n_layers=333 tau_max=16.635863 dtau=0.0499575465
+EDCOMP Ed_direct=6.602619e-01 Ed_diffuse=4.584029e-02 Ed_intrefl=0.000000e+00 Eu_diffuse=8.455781e-02 | intrefl/Ed_total=0.0000 Eu/Ed=0.1198
+IOP a=0.0735397 b_raw=0.384053 b=0.384053 bb=0.00912407 delta_f=0 b_rt=0.384053 omega_in=0.83929 omega_eff=0.83929
+OCRT_IOP water[a=5.96346600e-02 b=1.67263100e-03 bb=8.36315500e-04] cdom[a=0.00000000e+00] phyto[a=0.00000000e+00 b=0.00000000e+00 bb=0.00000000e+00] detritus[a=0.00000000e+00 b=0.00000000e+00 bb=0.00000000e+00] tsm[a=1.39050000e-02 b=3.82380000e-01 bb=8.28775101e-03]
+OCRT_PHASE_COMPONENT name=tsm weight_b=1 b=0.38238 bb_b_iop=0.0216741226397 bb_b_phase=0.0214401332387 P90=[9.77826853e-02 -8.04018109e-02 4.25241369e-02] cache=hit path=inputs/tsm_ahn/Red_clay_AHN.mie
+OCRT_PHASE_MIX components=1 L=200 beta0=1 beta2=2.45113722741 gamma2=-0.351841393444 alpha2=3.99177808616 zeta2=3.87420163311 recon_back_min=0.025244136028 cache=hit
+WATER_DEPTH_AUTO tau_base=16.635863 tau_max=16.635863 z_max=36.3552082 ext=0.457592291 transport_ext=0.164873845 g_eff=0.762183155 max_tau=16.635863 max_z=200 tol=1e-08
+WATER_LAYER_AUTO n_layers=333 tau_max=16.635863 dtau=0.0499575465
+EDCOMP Ed_direct=6.602619e-01 Ed_diffuse=4.584029e-02 Ed_intrefl=0.000000e+00 Eu_diffuse=8.455781e-02 | intrefl/Ed_total=0.0000 Eu/Ed=0.1198
+IOP a=0.0735397 b_raw=0.384053 b=0.384053 bb=0.00912407 delta_f=0 b_rt=0.384053 omega_in=0.83929 omega_eff=0.83929
+OCRT_IOP water[a=5.96346600e-02 b=1.67263100e-03 bb=8.36315500e-04] cdom[a=0.00000000e+00] phyto[a=0.00000000e+00 b=0.00000000e+00 bb=0.00000000e+00] detritus[a=0.00000000e+00 b=0.00000000e+00 bb=0.00000000e+00] tsm[a=1.39050000e-02 b=3.82380000e-01 bb=8.28775101e-03]
+OCRT_PHASE_COMPONENT name=tsm weight_b=1 b=0.38238 bb_b_iop=0.0216741226397 bb_b_phase=0.0214401332387 P90=[9.77826853e-02 -8.04018109e-02 4.25241369e-02] cache=hit path=inputs/tsm_ahn/Red_clay_AHN.mie
+OCRT_PHASE_MIX components=1 L=200 beta0=1 beta2=2.45113722741 gamma2=-0.351841393444 alpha2=3.99177808616 zeta2=3.87420163311 recon_back_min=0.025244136028 cache=hit
+WATER_DEPTH_AUTO tau_base=16.635863 tau_max=16.635863 z_max=36.3552082 ext=0.457592291 transport_ext=0.164873845 g_eff=0.762183155 max_tau=16.635863 max_z=200 tol=1e-08
+WATER_LAYER_AUTO n_layers=333 tau_max=16.635863 dtau=0.0499575465
+EDCOMP Ed_direct=6.602619e-01 Ed_diffuse=4.584029e-02 Ed_intrefl=0.000000e+00 Eu_diffuse=8.455781e-02 | intrefl/Ed_total=0.0000 Eu/Ed=0.1198
+IOP a=0.0735397 b_raw=0.384053 b=0.384053 bb=0.00912407 delta_f=0 b_rt=0.384053 omega_in=0.83929 omega_eff=0.83929
+OCRT_IOP water[a=5.96346600e-02 b=1.67263100e-03 bb=8.36315500e-04] cdom[a=0.00000000e+00] phyto[a=0.00000000e+00 b=0.00000000e+00 bb=0.00000000e+00] detritus[a=0.00000000e+00 b=0.00000000e+00 bb=0.00000000e+00] tsm[a=1.39050000e-02 b=3.82380000e-01 bb=8.28775101e-03]
+OCRT_PHASE_COMPONENT name=tsm weight_b=1 b=0.38238 bb_b_iop=0.0216741226397 bb_b_phase=0.0214401332387 P90=[9.77826853e-02 -8.04018109e-02 4.25241369e-02] cache=hit path=inputs/tsm_ahn/Red_clay_AHN.mie
+OCRT_PHASE_MIX components=1 L=200 beta0=1 beta2=2.45113722741 gamma2=-0.351841393444 alpha2=3.99177808616 zeta2=3.87420163311 recon_back_min=0.025244136028 cache=hit
+WATER_DEPTH_AUTO tau_base=16.635863 tau_max=16.635863 z_max=36.3552082 ext=0.457592291 transport_ext=0.164873845 g_eff=0.762183155 max_tau=16.635863 max_z=200 tol=1e-08
+WATER_LAYER_AUTO n_layers=333 tau_max=16.635863 dtau=0.0499575465
+EDCOMP Ed_direct=6.602619e-01 Ed_diffuse=4.584029e-02 Ed_intrefl=0.000000e+00 Eu_diffuse=8.455781e-02 | intrefl/Ed_total=0.0000 Eu/Ed=0.1198
+IOP a=0.0735397 b_raw=0.384053 b=0.384053 bb=0.00912407 delta_f=0 b_rt=0.384053 omega_in=0.83929 omega_eff=0.83929
+OCRT_IOP water[a=5.96346600e-02 b=1.67263100e-03 bb=8.36315500e-04] cdom[a=0.00000000e+00] phyto[a=0.00000000e+00 b=0.00000000e+00 bb=0.00000000e+00] detritus[a=0.00000000e+00 b=0.00000000e+00 bb=0.00000000e+00] tsm[a=1.39050000e-02 b=3.82380000e-01 bb=8.28775101e-03]
+OCRT_PHASE_COMPONENT name=tsm weight_b=1 b=0.38238 bb_b_iop=0.0216741226397 bb_b_phase=0.0214401332387 P90=[9.77826853e-02 -8.04018109e-02 4.25241369e-02] cache=hit path=inputs/tsm_ahn/Red_clay_AHN.mie
+OCRT_PHASE_MIX components=1 L=200 beta0=1 beta2=2.45113722741 gamma2=-0.351841393444 alpha2=3.99177808616 zeta2=3.87420163311 recon_back_min=0.025244136028 cache=hit
+WATER_DEPTH_AUTO tau_base=16.635863 tau_max=16.635863 z_max=36.3552082 ext=0.457592291 transport_ext=0.164873845 g_eff=0.762183155 max_tau=16.635863 max_z=200 tol=1e-08
+WATER_LAYER_AUTO n_layers=333 tau_max=16.635863 dtau=0.0499575465
+EDCOMP Ed_direct=6.602619e-01 Ed_diffuse=4.584029e-02 Ed_intrefl=0.000000e+00 Eu_diffuse=8.455781e-02 | intrefl/Ed_total=0.0000 Eu/Ed=0.1198
+[native-coupled-lut] calls=3 water_cold=1 water_views=13 exact_near_nadir=1 cells=312 replay=0
+ocean_rrs_full_grid: n_mu=13 n_raa=24 rows=312 fail=0 replay=0 output=/home/claude/work/runs/regpilot_moment/fullgrid.csv

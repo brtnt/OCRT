@@ -1,0 +1,21 @@
+{
+  "release": "OCRT_SPEED_OPTIMIZED_PLATFORM_NEUTRAL_NO_MIE_2026-08-26",
+  "status": "CANONICAL_CODE_ONLY_HANDOFF",
+  "source_release": "OCRT_C_FINAL_PLATFORM_NEUTRAL_PERF_2026-08-26",
+  "source_archive_sha256": "0debb9b92f652ee6a9621b28ff1ce40cbeb0d566b8f0080b3c9c1c8580cab629",
+  "package_scope": "C_SOURCE_DOCS_TESTS_VALIDATION_NO_MIE_PAYLOAD",
+  "mie_files_in_package": 0,
+  "source_release_mie_files_removed": 187,
+  "external_canonical_mie_total": 198,
+  "external_runtime_non_eap_required": 181,
+  "eap_archival_only": 17,
+  "eap_runtime": "OFF_FAIL_LOUD",
+  "platform_policy": "PLATFORM_NEUTRAL_NO_OS_SPECIFIC_GATE",
+  "simulation_row_dependency": "NONE",
+  "additional_speed_optimization": "FROZEN",
+  "source_code_equivalence": "PASS",
+  "build_without_mie": "PASS_CMAKE_RELEASE",
+  "data_dependent_tests": "REQUIRE_EXTERNAL_MIE_INSTALLATION",
+  "source_only_smoke_without_mie": "PASS_OCRT_NADIR_SMOKE_1_OF_1",
+  "full_data_dependent_ctest": "NOT_RUN_REQUIRES_EXTERNAL_MIE_INSTALLATION"
+}

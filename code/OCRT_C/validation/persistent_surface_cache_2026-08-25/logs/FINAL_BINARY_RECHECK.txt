@@ -1,0 +1,3 @@
+final_binary_sha256=ccd9beed2429521894e5690ece8a76cff05371a0fea6c3b516c3580527a3211f
+pure_water_required_vs_off=BYTE_IDENTICAL
+red_clay_tsm0p5_required_vs_off=BYTE_IDENTICAL

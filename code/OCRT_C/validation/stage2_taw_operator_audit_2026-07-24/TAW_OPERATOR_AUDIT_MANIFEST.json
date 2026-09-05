@@ -1,0 +1,31 @@
+{
+  "ocrt_root": "/mnt/data/stage2_interface_review/current_src/OCRT_v1.2_STAGE2_WATER_RAA_OUTPUT_FIX_20260723",
+  "ocrt_surface_c_sha256": "978a3c4d0baac90e0bd00a65acd9ea38851c3cdc29bb7879bb719cf42acde525",
+  "osoaa_taw": "/mnt/data/stage2_interface_review/osoaa_precomp/extracted/OCRT_OSOAA_PRECOMPUTED_REFERENCE_20260723/04_SURFACE_MATRICES_USED/TAW-1.340-03.0-RadMU48-NB200-SZA40.000-TSZA28.665",
+  "osoaa_taw_sha256": "fab2dd66ec963da4a49233b58cfec4a80cfba0d5aeb08e0d0255546114120de2",
+  "angles": "/mnt/data/stage2_interface_review/osoaa_precomp/extracted/OCRT_OSOAA_PRECOMPUTED_REFERENCE_20260723/02_RAW_OSOAA_72_RUNS/pure_water_b443_s40/Advanced_outputs/RAD_UsedAngles.txt",
+  "angles_sha256": "5e8f9b5aa4ec4d3585de73114171c5f5dda60f488b0429c6b9692f423c1a9df9",
+  "n_total_angles": 51,
+  "n_active_gauss_angles": 48,
+  "m_max": 4,
+  "n_phi": 1024,
+  "wind": 3.0,
+  "n_water": 1.34,
+  "sigma_type": 1,
+  "q_convention": 1,
+  "public_raa_shift_applied": true,
+  "normalization": "K_OSOAA=2*TAW/(C_m*mu_water*mu_air), C0=2pi, Cm=pi; optional (-1)^m public-RAA shift",
+  "files": [
+    "TAW_OPERATOR_AUDIT_SUMMARY.csv",
+    "TAW_OPERATOR_AUDIT_LONG.csv",
+    "TAW_M11_scatter.png",
+    "TAW_M12_scatter.png",
+    "TAW_M13_scatter.png",
+    "TAW_M21_scatter.png",
+    "TAW_M22_scatter.png",
+    "TAW_M23_scatter.png",
+    "TAW_M31_scatter.png",
+    "TAW_M32_scatter.png",
+    "TAW_M33_scatter.png"
+  ]
+}

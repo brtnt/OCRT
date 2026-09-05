@@ -1,0 +1,49 @@
+{
+  "contract": "AHN-LEGACY-PHASE-FR631-330HOLD-2026-08-16",
+  "files": [
+    {
+      "file": "Red_clay_AHN.mie",
+      "n_angles": 631,
+      "n_phase_wavelengths": 16,
+      "phase_min_um": 0.33,
+      "phase_max_um": 1.1,
+      "max_common_node_abs_difference": 0.0,
+      "min_p11": 0.022872,
+      "max_p12_bound_excess": -0.003369999999999984,
+      "max_p33_bound_excess": 0.0
+    },
+    {
+      "file": "Brown_earth_AHN.mie",
+      "n_angles": 631,
+      "n_phase_wavelengths": 16,
+      "phase_min_um": 0.33,
+      "phase_max_um": 1.1,
+      "max_common_node_abs_difference": 0.0,
+      "min_p11": 0.020963,
+      "max_p12_bound_excess": -0.0017499999999999738,
+      "max_p33_bound_excess": 0.0
+    },
+    {
+      "file": "Yellow_clay_AHN.mie",
+      "n_angles": 631,
+      "n_phase_wavelengths": 16,
+      "phase_min_um": 0.33,
+      "phase_max_um": 1.1,
+      "max_common_node_abs_difference": 0.0,
+      "min_p11": 0.021956,
+      "max_p12_bound_excess": -0.0016100000000000003,
+      "max_p33_bound_excess": 0.0
+    },
+    {
+      "file": "Calcareous_sand_AHN.mie",
+      "n_angles": 631,
+      "n_phase_wavelengths": 16,
+      "phase_min_um": 0.33,
+      "phase_max_um": 1.1,
+      "max_common_node_abs_difference": 0.0,
+      "min_p11": 0.024541,
+      "max_p12_bound_excess": -0.0034199999999999786,
+      "max_p33_bound_excess": 0.0
+    }
+  ]
+}

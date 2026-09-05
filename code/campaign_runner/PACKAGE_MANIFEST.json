@@ -1,0 +1,201 @@
+{
+  "package": "OCRT_POLARIZATION_PSSA_16CORE_RUN_PACKAGE_2026-08-22",
+  "status": "TESTED_PASS",
+  "policies": {
+    "pssa": true,
+    "workers": 16,
+    "omp_threads_per_worker": 1,
+    "raw_fr631": true,
+    "broad_truncation": false
+  },
+  "files": [
+    {
+      "path": "PACKAGE_INDEX.html",
+      "size_bytes": 968,
+      "sha256": "add9fea8c2db831769a865a8c305b48d36f708b7f66ae6e96a8a71361ab5d3a6"
+    },
+    {
+      "path": "PACKAGE_LAYOUT_KO.md",
+      "size_bytes": 630,
+      "sha256": "532a7075692c13f834c9e945c04fe3fd52639e3dbd02ef3bd690db63382461d8"
+    },
+    {
+      "path": "README_FIRST_KO.md",
+      "size_bytes": 4800,
+      "sha256": "57f7c7a697fe4041432f9cda4bd34dc6ae8d44815708ccbdecce6bc0473bbb40"
+    },
+    {
+      "path": "TEST_RESULTS/PACKAGE_TEST_SUMMARY.json",
+      "size_bytes": 725,
+      "sha256": "abf4183f3fcc788c893e254ddc0a89220c89387cae7b43f93dd55e41985c09c1"
+    },
+    {
+      "path": "TEST_RESULTS/PURE_RAYLEIGH_ESTIMATE.json",
+      "size_bytes": 351,
+      "sha256": "54131ed216c2bcf2e4e28ba210d335790696b4beeefd13025f4cb8a44c8cb6b6"
+    },
+    {
+      "path": "TEST_RESULTS/PURE_RAYLEIGH_RUN_MANIFEST.csv",
+      "size_bytes": 4701,
+      "sha256": "a439d647aff7f96688e6d01c8ced6cc1ae1e2596192e58e3ac5dce65aa3002a4"
+    },
+    {
+      "path": "TEST_RESULTS/PURE_RAYLEIGH_RUN_SUMMARY.json",
+      "size_bytes": 173,
+      "sha256": "641254d821237d6547f874d1c153ef0e7f0f51512750c1cc62c64a3372b1bbf1"
+    },
+    {
+      "path": "TEST_RESULTS/RUNNER_TEST_CONSOLE.log",
+      "size_bytes": 630,
+      "sha256": "c10abf8eee2c231c3d193d79daac2ca0487d0387d80b2ff4bbba280c287733bb"
+    },
+    {
+      "path": "TEST_RESULTS/SETUP_STATUS.json",
+      "size_bytes": 1533,
+      "sha256": "fbf0059eb4b5b1a148820469d60af4ab405db91dac8b376a957de8d11f9c7986"
+    },
+    {
+      "path": "TEST_RESULTS/SETUP_TEST_CONSOLE.log",
+      "size_bytes": 2019,
+      "sha256": "b90c3bf7101a5043f88ee8257dc9bbabf83c9caeab4117c545a3fcdea0eb36ee"
+    },
+    {
+      "path": "base/OCRT_MIE_GRID_TRUNCATION_VALIDATION_ARTIFACT_UPDATE_2026-08-21.zip",
+      "size_bytes": 59973016,
+      "sha256": "9a9e7e0de0d949a53d133f38f4c3ff2b02ac28ee4d6c151f235d4059853b4cef"
+    },
+    {
+      "path": "base/OCRT_MIGRATION_PKG_2026-08-19 (1).tar.gz",
+      "size_bytes": 148555675,
+      "sha256": "4423f15647d690e3b71936c38463137dda6c6600f9617fc8b25e8643b82bae52"
+    },
+    {
+      "path": "config/polarization_campaign_pssa_16core.json",
+      "size_bytes": 1059,
+      "sha256": "974811060498e7f45c56a3702a8ccb85b6b3143b800971d11146e347bc5215c7"
+    },
+    {
+      "path": "docs/EXACT_HISTORICAL_MATRIX_BLOCKER_KO.md",
+      "size_bytes": 1236,
+      "sha256": "d187eb6bf258b4455312e7a05217ede11c70ad9036521cb032ae35096f490019"
+    },
+    {
+      "path": "docs/OUTPUT_STORAGE_POLICY_KO.md",
+      "size_bytes": 855,
+      "sha256": "00e54153a36c8837dc649392c4a4f149c6d68e04e9e2f069a52030dbd52f93d1"
+    },
+    {
+      "path": "docs/SOURCE_BASIS_KO.md",
+      "size_bytes": 625,
+      "sha256": "a714911893f3d78cec6d7305af4d9786698fa9c963258ae575b25cf74c36b4c6"
+    },
+    {
+      "path": "manifests/REQUIRED_EXTERNAL_DATA_PARTS.csv",
+      "size_bytes": 1479,
+      "sha256": "6669cc52d98da03aa9891c1bf109c84a009e262f0e5394ef163b9e1d1b53869a"
+    },
+    {
+      "path": "manifests/REQUIRED_FILES.json",
+      "size_bytes": 2820,
+      "sha256": "460d7dbbdb3c6f6386ce193c8e9a3d14f0a390f9d7954c1d7aa7399ad46e47bf"
+    },
+    {
+      "path": "matrices/HISTORICAL_RUN_MATRIX_REQUIRED.csv",
+      "size_bytes": 135,
+      "sha256": "1a68260c078aab108ffe88cb65120773e23a51b96360e389a2a4cd4777a0b25e"
+    },
+    {
+      "path": "matrices/KNOWN_CAMPAIGN_FACTORS.json",
+      "size_bytes": 694,
+      "sha256": "c270df633ad38934e72056111407eda5e61bd8c853a4c66e2831bb31611fd15e"
+    },
+    {
+      "path": "matrices/PURE_RAYLEIGH_15RUN_MATRIX.csv",
+      "size_bytes": 12180,
+      "sha256": "1ff957a464064a4ca3b806da35b6a7a9969391e03c862fad88ad0a15d01f51d7"
+    },
+    {
+      "path": "runner/RUN_MATRIX_16CORES_WSL.ps1",
+      "size_bytes": 948,
+      "sha256": "0ca09a503e003a768ae754769cce9016c2a42df22c20e74ed64149b0ef25378a"
+    },
+    {
+      "path": "runner/RUN_PURE_RAYLEIGH_16CORES_WSL.ps1",
+      "size_bytes": 520,
+      "sha256": "80663a702b165eeb9144e66f40fb98d2c01e6eaa249c343e165cbd0a4d7026cd"
+    },
+    {
+      "path": "runner/SETUP_AND_BUILD_WSL.ps1",
+      "size_bytes": 483,
+      "sha256": "8894185b2335ae3b038bb40427a4d54da04723533f389968cdd7f3c9a41c66f7"
+    },
+    {
+      "path": "runner/__pycache__/build_matrix_from_run_commands.cpython-313.pyc",
+      "size_bytes": 5322,
+      "sha256": "da2c9cb835780765eb9c4990b78abe1b11b34c41fc3aed7f8d088ac435b5a8dc"
+    },
+    {
+      "path": "runner/__pycache__/inspect_historical_package.cpython-313.pyc",
+      "size_bytes": 4563,
+      "sha256": "66e295c3327fc749c20a23f4881cfe5efc9b854483f9d52ae16dbc17c6014e03"
+    },
+    {
+      "path": "runner/__pycache__/monitor_progress.cpython-313.pyc",
+      "size_bytes": 2199,
+      "sha256": "5455d4c1860db998e2f55a472d9e0093f81405f75dd81b78761c2fc2d29ce9da"
+    },
+    {
+      "path": "runner/__pycache__/run_campaign.cpython-313.pyc",
+      "size_bytes": 28929,
+      "sha256": "788b8f88bf52cab79832040c64b04bb675ab62715e41ed2103fee87d54f70a12"
+    },
+    {
+      "path": "runner/__pycache__/setup_runtime.cpython-313.pyc",
+      "size_bytes": 41859,
+      "sha256": "b52e5938a7454373a579057c8f7365688a101a605eda7f4c7400b1dfa55bbf3e"
+    },
+    {
+      "path": "runner/build_matrix_from_run_commands.py",
+      "size_bytes": 3413,
+      "sha256": "683b076b7923a7996a6c381f07f517906409a805f9a2fc4cc34f53bd64273472"
+    },
+    {
+      "path": "runner/inspect_historical_package.py",
+      "size_bytes": 2322,
+      "sha256": "9c7445196ea9c42a5768c6d03e7d7dc89807782f758fb8007b8d666047e6dfcc"
+    },
+    {
+      "path": "runner/monitor_progress.py",
+      "size_bytes": 845,
+      "sha256": "fea75e0e46d951859ab5156579e3ed4f6691ab6dce33c812563f49cfbcca0d77"
+    },
+    {
+      "path": "runner/run_campaign.py",
+      "size_bytes": 20228,
+      "sha256": "05a082dcb89248a33e2f798bc4ab4f370be6a45b2aa3fb7c14a85a35d91eeb80"
+    },
+    {
+      "path": "runner/run_matrix_16cores_linux.sh",
+      "size_bytes": 405,
+      "sha256": "1f70d89f3393af51feeeea6ea52aa765bb2d8dd298ee179e2f3c9a3be6a2a980"
+    },
+    {
+      "path": "runner/run_pure_rayleigh_16cores_linux.sh",
+      "size_bytes": 396,
+      "sha256": "a94ea71136aeb74379ee8d74ced159ae3f2d47b9ab1a7179064b10cbf43d17e9"
+    },
+    {
+      "path": "runner/setup_and_build_linux.sh",
+      "size_bytes": 276,
+      "sha256": "fd93ed5f159de8b319262704dfa51e64732d55ab782edd013b74d68389ec2445"
+    },
+    {
+      "path": "runner/setup_runtime.py",
+      "size_bytes": 30998,
+      "sha256": "60b6889436db1f856abf1b1a69008a8a63b7659952388ed6fb5c9fdcb1cbeec2"
+    }
+  ],
+  "external_data_contract": "manifests/REQUIRED_EXTERNAL_DATA_PARTS.csv",
+  "exact_historical_matrix_included": false,
+  "reason": "Exact archived command/state tables are not present; no values were inferred."
+}

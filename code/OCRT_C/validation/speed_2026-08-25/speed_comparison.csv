@@ -1,0 +1,8 @@
+comparison,baseline_s,optimized_s,speedup_x,status
+pure_312_geometry,11.100000,5.660000,1.961131,complete
+redclay_312_geometry,17.440000,11.060000,1.576854,complete
+pssa_bfo_1296_geometry,0.530000,0.270000,1.962963,complete
+fair_profile_OCRT_optimized,,26.770000,,3 completed repetitions
+fair_profile_baseline_timeout,420.000000,26.770000,15.689204,lower_bound; baseline timed out at 420 s
+OCRT_vs_OSOAA_fresh_surface_matrix,33.470000,26.770000,1.250280,OCRT faster when speedup_x>1; single OSOAA fresh run
+OCRT_vs_OSOAA_warm_surface_matrix,20.990000,26.770000,0.784087,OCRT faster when speedup_x>1; single OSOAA warm run

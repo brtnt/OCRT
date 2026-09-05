@@ -1,0 +1,4 @@
+file,reason
+Calcareous_sand_from_OSOAA_phase_443_550.mie,legacy narrow-band comparison alias; not canonical
+Phytoplankton.mie,legacy generic alias; EAP remains disabled and canonical EAP files are species-specific
+TSM_mineral.mie,legacy generic alias; replaced by four AHN mineral files

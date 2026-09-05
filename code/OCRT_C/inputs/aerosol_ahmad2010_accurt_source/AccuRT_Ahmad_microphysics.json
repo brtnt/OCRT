@@ -1,0 +1,20 @@
+{
+  "source": "User-supplied AccuRT aerosol configuration; comments attribute optical constants to Ahmad et al. (2010), private communication (2013).",
+  "profile_type": "volume_fraction",
+  "reference_wavelength_nm": 865,
+  "dry_volume_mode_radius_um": {
+    "fine": 0.1499,
+    "coarse": 2.1786
+  },
+  "natural_log_width_sigma": {
+    "fine": 0.437,
+    "coarse": 0.672
+  },
+  "fine_mode_fraction_definition": "V_f/(V_f+V_c)",
+  "relative_humidity_input_example": 0.3,
+  "quadrature_points_in_AccuRT_example": 100,
+  "ocrt_generation_angle_grid": "0.0 to 180.0 degrees at 0.5 degree spacing (stored 180 to 0)",
+  "ocrt_radius_integration": "geometric radius grid, rlogpas=0.011, mode support +/-4 sigma",
+  "interpolation": "linear in wavelength for both n and positive k",
+  "337.1_nm_decision": "retained after source-lineage and RT sensitivity review"
+}

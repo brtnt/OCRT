@@ -1,0 +1,14 @@
+pole-continuity R_air_out_pole   rel=9.429336e-06 M11=1.136228563e-04
+pole-continuity R_air_in_pole    rel=9.429336e-06 M11=1.136228563e-04
+pole-continuity T_wa_out_pole    rel=4.916165e-05 M11=2.071344199e-01
+pole-continuity T_wa_in_pole     rel=4.665033e-05 M11=4.237918870e+00
+pole-continuity R_ww_out_pole    rel=5.311752e-06 M11=7.676004156e-03
+pole-continuity R_ww_in_pole     rel=5.311752e-06 M11=7.676004156e-03
+pole-continuity T_aw_in_pole     rel=4.916431e-05 M11=3.719305644e-01
+pole-continuity T_aw_out_pole    rel=4.665293e-05 M11=7.609607123e+00
+spin2 R_air amp=2.163445103e-05 leakage/amp=8.306e-17 pair/amp=3.132e-16
+spin2 T_wa  amp=7.897086791e-04 leakage/amp=7.878e-17 pair/amp=8.237e-16
+spin2 R_ww  amp=1.026800320e-03 leakage/amp=6.376e-17 pair/amp=0.000e+00
+spin2 T_aw  amp=2.901194689e-02 leakage/amp=5.912e-17 pair/amp=1.555e-15
+PASS: exact-pole meridian rotation limits and vertical spin-2 covariance
+PASS: stage-2 surface pole-limit source audit

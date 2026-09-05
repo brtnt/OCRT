@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "target_range_nm": [
+    350.0,
+    1100.0
+  ],
+  "pure_water_aw_bw": {
+    "file": "water_coef_z09_1nm.txt",
+    "source_range_nm": [
+      200.0,
+      2449.0
+    ],
+    "policy": "linear interpolation within source range",
+    "status": "complete"
+  },
+  "pure_water_temperature_correction": {
+    "file": "psi_T_rottgers2014_OCRT.txt",
+    "source_range_nm": [
+      400.0,
+      900.0
+    ],
+    "policy": "endpoint hold outside source range in current code",
+    "status": "incomplete for T != 20 C"
+  },
+  "phytoplankton_absorption": {
+    "file": "phyto_absorption_default.csv",
+    "source_range_nm": [
+      350.0,
+      850.0
+    ],
+    "distributed_range_nm": [
+      350.0,
+      1100.0
+    ],
+    "policy": "a_star=0 for wavelength >850 and <=1100 nm",
+    "status": "complete by explicit model policy"
+  },
+  "phytoplankton_scattering": {
+    "policy": "disabled in Stage-2 constituent production; EAP catalog retained for advanced/generator validation",
+    "source_range_nm": [
+      350.0,
+      850.0
+    ],
+    "status": "not active"
+  },
+  "chl_linked_detritus_scattering": {
+    "file": "Detritus_Stramski2001.mie",
+    "source_phase_range_nm": [
+      350.0,
+      850.0
+    ],
+    "policy_above_850": "provisional 850-nm endpoint hold for P11/P12/P33 and bb/b",
+    "status": "scientific extrapolation pending"
+  },
+  "ahn_mineral_tsm": {
+    "source_range_nm": [
+      350.0,
+      3750.0
+    ],
+    "status": "complete"
+  },
+  "legacy_narrow_mie_removed": [
+    "Phytoplankton.mie",
+    "TSM_mineral.mie",
+    "Calcareous_sand_from_OSOAA_phase_443_550.mie"
+  ]
+}

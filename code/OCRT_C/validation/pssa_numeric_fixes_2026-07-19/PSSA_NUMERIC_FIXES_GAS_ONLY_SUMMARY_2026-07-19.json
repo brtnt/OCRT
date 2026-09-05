@@ -1,0 +1,134 @@
+{
+  "stage2_vs_stage1": {
+    "TOA_rho_I": {
+      "max_abs": 0.00022765808999999915,
+      "max_abs_pct": 262.52952354739296,
+      "mean_signed_pct": 16.770785763113814,
+      "median_signed_pct": 0.7875106572690667
+    },
+    "TOA_rho_Q": {
+      "max_abs": 2.7375001500000266e-05,
+      "max_abs_pct": 262.5295235547049,
+      "mean_signed_pct": 16.770785763550926,
+      "median_signed_pct": 0.7875106613225757
+    },
+    "TOA_rho_U": {
+      "max_abs": 1.3409883199999815e-20,
+      "max_abs_pct": 0.0,
+      "mean_signed_pct": 0.0,
+      "median_signed_pct": 0.0
+    },
+    "T_dir_dn": {
+      "max_abs": 0.07323682787000008,
+      "max_abs_pct": 262.52952355055953,
+      "mean_signed_pct": 17.683270470102194,
+      "median_signed_pct": 0.9046419298147822
+    },
+    "Ed0plus_direct": {
+      "max_abs": 0.020052900000000012,
+      "max_abs_pct": 262.52960994590495,
+      "mean_signed_pct": 17.6832739852786,
+      "median_signed_pct": 0.9046488962838621
+    },
+    "Ed0minus_direct": {
+      "max_abs": 0.008315320000000001,
+      "max_abs_pct": 262.52951069491274,
+      "mean_signed_pct": 17.683270849087837,
+      "median_signed_pct": 0.9046233942757397
+    },
+    "Rrs0plus_I": {
+      "max_abs": 0.0,
+      "max_abs_pct": 0.0,
+      "mean_signed_pct": 0.0,
+      "median_signed_pct": 0.0
+    }
+  },
+  "final_vs_baseline": {
+    "TOA_rho_I": {
+      "max_abs": 0.00022765808999999915,
+      "max_abs_pct": 262.52952354739296,
+      "mean_signed_pct": 16.770785763113814,
+      "median_signed_pct": 0.7875106572690667
+    },
+    "TOA_rho_Q": {
+      "max_abs": 2.7375001500000266e-05,
+      "max_abs_pct": 262.5295235547049,
+      "mean_signed_pct": 16.770785763550926,
+      "median_signed_pct": 0.7875106613225757
+    },
+    "TOA_rho_U": {
+      "max_abs": 1.3409883199999815e-20,
+      "max_abs_pct": 0.0,
+      "mean_signed_pct": 0.0,
+      "median_signed_pct": 0.0
+    },
+    "T_dir_dn": {
+      "max_abs": 0.07323682787000008,
+      "max_abs_pct": 262.52952355055953,
+      "mean_signed_pct": 17.683270470102194,
+      "median_signed_pct": 0.9046419298147822
+    },
+    "Ed0plus_direct": {
+      "max_abs": 0.020052900000000012,
+      "max_abs_pct": 262.52960994590495,
+      "mean_signed_pct": 17.6832739852786,
+      "median_signed_pct": 0.9046488962838621
+    },
+    "Ed0minus_direct": {
+      "max_abs": 0.008315320000000001,
+      "max_abs_pct": 262.52951069491274,
+      "mean_signed_pct": 17.683270849087837,
+      "median_signed_pct": 0.9046233942757397
+    },
+    "Rrs0plus_I": {
+      "max_abs": 0.0,
+      "max_abs_pct": 0.0,
+      "mean_signed_pct": 0.0,
+      "median_signed_pct": 0.0
+    }
+  },
+  "gas_helper_ablation_no_gas_vs_final": {
+    "TOA_rho_I": {
+      "max_abs": 0.00022765808999999915,
+      "max_abs_pct": 72.41603965892529,
+      "mean_signed_pct": -6.843874112307938,
+      "median_signed_pct": -0.7812233780057946
+    },
+    "TOA_rho_Q": {
+      "max_abs": 2.7375001500000266e-05,
+      "max_abs_pct": 72.41603965948163,
+      "mean_signed_pct": -6.843874112468964,
+      "median_signed_pct": -0.7812233819981651
+    },
+    "TOA_rho_U": {
+      "max_abs": 1.3409883199999815e-20,
+      "max_abs_pct": 0.0,
+      "mean_signed_pct": 0.0,
+      "median_signed_pct": 0.0
+    },
+    "T_dir_dn": {
+      "max_abs": 0.07323682787000008,
+      "max_abs_pct": 72.41603965916622,
+      "mean_signed_pct": -7.776752829866149,
+      "median_signed_pct": -0.8965315296832576
+    },
+    "Ed0plus_direct": {
+      "max_abs": 0.020052900000000012,
+      "max_abs_pct": 72.41604623276936,
+      "mean_signed_pct": -7.776752848770289,
+      "median_signed_pct": -0.8965383717986246
+    },
+    "Ed0minus_direct": {
+      "max_abs": 0.008315320000000001,
+      "max_abs_pct": 72.41603868101232,
+      "mean_signed_pct": -7.776753161776734,
+      "median_signed_pct": -0.8965133250049456
+    },
+    "Rrs0plus_I": {
+      "max_abs": 0.0,
+      "max_abs_pct": 0.0,
+      "mean_signed_pct": 0.0,
+      "median_signed_pct": 0.0
+    }
+  }
+}

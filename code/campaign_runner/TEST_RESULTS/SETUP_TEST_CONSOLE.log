@@ -1,0 +1,58 @@
+input archives: PASS
+extracted PART00/10
+extracted PART02/10
+extracted PART04/10
+extracted PART03/10
+extracted PART06/10
+extracted PART01/10
+extracted PART05/10
+extracted PART07/10
+extracted PART08/10
+extracted PART09/10
+extracted PART10/10
+installed 25/217 mapped files
+installed 50/217 mapped files
+installed 75/217 mapped files
+installed 100/217 mapped files
+installed 125/217 mapped files
+installed 150/217 mapped files
+installed 175/217 mapped files
+installed 200/217 mapped files
+{
+  "status": "PASS",
+  "package": "OCRT_POLARIZATION_PSSA_16CORE_RUN_PACKAGE_2026-08-22",
+  "migration_root": "/mnt/data/_OCRT_PSSA_TEST_RUNTIME/MIGRATION_PKG_2026-08-19",
+  "c_root": "/mnt/data/_OCRT_PSSA_TEST_RUNTIME/MIGRATION_PKG_2026-08-19/01_OCRT_C",
+  "python_root": "/mnt/data/_OCRT_PSSA_TEST_RUNTIME/MIGRATION_PKG_2026-08-19/03_PYTHON_RUNTIME/pyOCRT_v1.2_SPECTRAL_DATA_330_1100_COMPONENT_GATED_2026-08-14",
+  "selected_consumer_patch": [
+    "src/rt_aerosol.c",
+    "src/rt_aerosol_runtime.c",
+    "src/rt_iop_ahn_mineral.c (771-column patch)"
+  ],
+  "data_install": {
+    "mapped_files": 217,
+    "canonical_mie_installed": 198,
+    "python_tree_installed": true,
+    "source_install_mode": "hardlink where supported; copy fallback",
+    "source_audit": {
+      "canonical_expected": 198,
+      "canonical_present": 198,
+      "hashes_checked": 6,
+      "full_hash_mode": false,
+      "failure_count": 0,
+      "failures": [],
+      "status": "PASS"
+    }
+  },
+  "binary": "/mnt/data/_OCRT_PSSA_TEST_RUNTIME/MIGRATION_PKG_2026-08-19/01_OCRT_C/build/ocrt_polarization",
+  "binary_sha256": "720be78cf23ccb776b0ba2c48afb41f9fe6fc319dc766de7c41b9a1822c03d50",
+  "march": "cascadelake",
+  "pssa_policy": "ON in campaign runner",
+  "truncation_policy": "raw FR631; broad truncation OFF",
+  "parallel_policy": "16 independent processes; OMP_NUM_THREADS=1 each",
+  "smoke": {
+    "rows": 1296,
+    "elapsed_s": 0.280562162399292,
+    "sha256_before_delete": "98e4b2433be300eb6f87744f2e62cc4dd2a356edb954445687838c78fcc5e723"
+  }
+}

@@ -1,0 +1,4 @@
+component,n,max_abs_diff,mean_diff,rmse,slope,intercept,r2,byte_identical
+I,624,0.0,0.0,0.0,1.0,0.0,1.0,True
+Q,624,0.0,0.0,0.0,1.0,0.0,1.0,True
+U,624,0.0,0.0,0.0,1.0,0.0,1.0,True

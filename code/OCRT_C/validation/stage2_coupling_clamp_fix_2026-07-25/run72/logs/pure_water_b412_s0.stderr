@@ -1,0 +1,14 @@
+# water branch: ocrt selected with Chl=TSM=aDOM440=0; using native pure-water path
+# water grid: SHARED with atmosphere (OSOAA-parity single mu set), n_mu_water=48 (= n_mu)
+# LUT grid output: /mnt/data/ocrt_stage2_clamp_fix_work/OCRT_v1.2_STAGE2_COUPLING_CLAMP_FIX_20260725/validation/stage2_coupling_clamp_fix_2026-07-25/run72/outputs/pure_water_b412_s0.csv (vza step 30 deg, raa step 45 deg, vza max 60 deg)
+rt_absorption (SOS-integrated): λ=412.0nm τ_abs_col=0.0000e+00
+  h2o: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  o3: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  o2: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  co2: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  no2: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  ch4: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+rt_water_iop_lut: loaded 501 rows from 'inputs/water_iop/water_coef_z09_1nm.txt' (λ 400.00..900.00 nm)
+rt_water_iop_psi_T: loaded 501 rows from 'inputs/water_iop/psi_T_rottgers2014_OCRT.txt' (λ 400.0..900.0 nm)
+[D3tr] at-consume Ed=2.456324223e+00 Ed_diff=4.102155337e-01 Iview=1.609514927e-01 Up00=-1.000000000e+00 Up01=-1.000000000e+00
+ocean_rrs_full_grid: n_mu=3 n_raa=8 rows=24 fail=0 output=/mnt/data/ocrt_stage2_clamp_fix_work/OCRT_v1.2_STAGE2_COUPLING_CLAMP_FIX_20260725/validation/stage2_coupling_clamp_fix_2026-07-25/run72/outputs/pure_water_b412_s0.csv

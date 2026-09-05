@@ -1,0 +1,353 @@
+wavelength_nm,a_star_m2_per_mg,segment,source,decision,scientific_status
+350,0.025989999999999999,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+355,0.026939999999999999,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+360,0.02793,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+365,0.02896,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+370,0.030020000000000002,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+375,0.031109999999999999,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+380,0.032239999999999998,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+385,0.033300000000000003,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+390,0.033390000000000003,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+395,0.033820000000000003,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+400,0.035000000000000003,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+405,0.035279999999999999,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+410,0.035610000000000003,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+415,0.035900000000000001,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+420,0.035830000000000001,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+425,0.035549999999999998,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+430,0.036130000000000002,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+435,0.035999999999999997,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+440,0.035200000000000002,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+445,0.03422,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+450,0.033169999999999998,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+455,0.032059999999999998,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+460,0.0309,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+465,0.029690000000000001,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+470,0.02852,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+475,0.027459999999999998,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+480,0.026610000000000002,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+485,0.026030000000000001,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+490,0.025559999999999999,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+495,0.025000000000000001,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+500,0.024119999999999999,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+505,0.022769999999999999,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+510,0.021180000000000001,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+515,0.019740000000000001,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+520,0.018769999999999998,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+525,0.01804,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+530,0.017180000000000001,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+535,0.015890000000000001,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+540,0.01439,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+545,0.01303,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+550,0.01214,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+555,0.011520000000000001,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+560,0.010869999999999999,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+565,0.0098899999999999995,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+570,0.0087600000000000004,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+575,0.0078600000000000007,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+580,0.0074000000000000003,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+585,0.0072399999999999999,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+590,0.0070899999999999999,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+595,0.0067999999999999996,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+600,0.0065599999999999999,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+605,0.0066,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+610,0.0070600000000000003,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+615,0.0078200000000000006,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+620,0.0083599999999999994,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+625,0.0082900000000000005,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+630,0.0081600000000000006,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+635,0.0083999999999999995,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+640,0.0081099999999999992,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+645,0.0067400000000000003,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+650,0.0064599999999999996,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+655,0.0092200000000000008,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+660,0.013350000000000001,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+665,0.016969999999999999,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+670,0.01915,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+675,0.019730000000000001,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+680,0.01847,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+685,0.01506,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+690,0.01014,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+695,0.0051500000000000001,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+700,0.0021099999999999999,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+705,0.0010499999999999999,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+710,0.00096000000000000002,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+715,0.00080999999999999996,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+720,0.00048999999999999998,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+725,0.00023000000000000001,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+730,0.00017000000000000001,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+735,0.00022000000000000001,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+740,0.00032000000000000003,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+745,0.00035,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+750,0.00032000000000000003,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+755,0.00027,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+760,0.00023000000000000001,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+765,0.00021000000000000001,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+770,0.00022000000000000001,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+775,0.00024000000000000001,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+780,0.00025000000000000001,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+785,0.00025999999999999998,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+790,0.00025000000000000001,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+795,0.00024000000000000001,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+800,0.00023000000000000001,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+805,0.00022000000000000001,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+810,0.00022000000000000001,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+815,0.00022000000000000001,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+820,0.00021000000000000001,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+825,0.00021000000000000001,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+830,0.00021000000000000001,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+835,0.00021000000000000001,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+840,0.00021000000000000001,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+845,0.00021000000000000001,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+850,0.00021000000000000001,source_backed,source/phyto_absorption_default_stage2_baseline_350_850.csv,preserve_2026-08-09_stage2_baseline,source-backed OCRT baseline
+850.00000000000011,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+851,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+852,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+853,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+854,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+855,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+856,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+857,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+858,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+859,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+860,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+861,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+862,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+863,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+864,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+865,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+866,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+867,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+868,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+869,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+870,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+871,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+872,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+873,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+874,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+875,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+876,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+877,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+878,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+879,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+880,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+881,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+882,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+883,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+884,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+885,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+886,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+887,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+888,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+889,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+890,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+891,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+892,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+893,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+894,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+895,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+896,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+897,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+898,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+899,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+900,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+901,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+902,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+903,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+904,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+905,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+906,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+907,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+908,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+909,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+910,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+911,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+912,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+913,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+914,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+915,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+916,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+917,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+918,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+919,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+920,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+921,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+922,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+923,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+924,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+925,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+926,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+927,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+928,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+929,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+930,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+931,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+932,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+933,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+934,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+935,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+936,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+937,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+938,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+939,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+940,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+941,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+942,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+943,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+944,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+945,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+946,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+947,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+948,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+949,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+950,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+951,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+952,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+953,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+954,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+955,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+956,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+957,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+958,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+959,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+960,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+961,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+962,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+963,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+964,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+965,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+966,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+967,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+968,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+969,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+970,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+971,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+972,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+973,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+974,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+975,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+976,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+977,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+978,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+979,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+980,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+981,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+982,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+983,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+984,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+985,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+986,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+987,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+988,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+989,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+990,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+991,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+992,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+993,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+994,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+995,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+996,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+997,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+998,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+999,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1000,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1001,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1002,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1003,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1004,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1005,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1006,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1007,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1008,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1009,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1010,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1011,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1012,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1013,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1014,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1015,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1016,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1017,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1018,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1019,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1020,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1021,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1022,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1023,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1024,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1025,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1026,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1027,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1028,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1029,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1030,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1031,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1032,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1033,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1034,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1035,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1036,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1037,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1038,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1039,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1040,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1041,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1042,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1043,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1044,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1045,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1046,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1047,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1048,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1049,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1050,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1051,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1052,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1053,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1054,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1055,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1056,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1057,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1058,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1059,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1060,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1061,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1062,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1063,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1064,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1065,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1066,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1067,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1068,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1069,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1070,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1071,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1072,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1073,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1074,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1075,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1076,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1077,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1078,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1079,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1080,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1081,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1082,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1083,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1084,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1085,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1086,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1087,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1088,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1089,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1090,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1091,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1092,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1093,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1094,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1095,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1096,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1097,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1098,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1099,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement
+1100,0,approved_zero_extension,,OCRT project decision: a_star=0 for wavelength>850 nm,project-approved closure; not source measurement

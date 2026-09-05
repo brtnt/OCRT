@@ -1,0 +1,363 @@
+diff -ruN a/scripts/test_stage2_interface_fix123.sh b/scripts/test_stage2_interface_fix123.sh
+--- a/scripts/test_stage2_interface_fix123.sh	1970-01-01 00:00:00.000000000 +0000
++++ b/scripts/test_stage2_interface_fix123.sh	2026-07-24 01:28:13.632349424 +0000
+@@ -0,0 +1,29 @@
++#!/usr/bin/env bash
++set -euo pipefail
++ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
++cd "$ROOT"
++CC_BIN=${CC:-gcc}
++OUT=build/test_surface_aw_interface_conventions
++mkdir -p build
++"$CC_BIN" -std=c11 -O2 -Isrc \
++  tests/test_surface_aw_interface_conventions.c \
++  src/shared/surface.c \
++  src/shared/surface_multibounce.c \
++  -o "$OUT" -lm
++"$OUT"
++
++# FIX1/FIX2 source contract.
++grep -Fq 'const double cphi_r = -cphi;' src/shared/surface.c
++grep -Fq 'const double sphi_r = -sphi;' src/shared/surface.c
++grep -Fq 'const double mu_i_s = -mu_i;' src/shared/surface.c
++grep -Fq 'const double mu_o_s = -mu_o;' src/shared/surface.c
++# FIX3 source contract: incoming-U column only, m>0.
++grep -Fq 'T_pair[0*3 + 2] = -T_pair[0*3 + 2];' src/shared/surface.c
++grep -Fq 'T_pair[1*3 + 2] = -T_pair[1*3 + 2];' src/shared/surface.c
++# Rejected diffuse-top hypothesis must not be present.
++if grep -Fq 'const double ruI = ray_on ? -gamma2' src/rt_water_rt.c; then
++  echo 'FAIL: rejected diffuse-top U sign flip is present' >&2
++  exit 1
++fi
++
++echo 'PASS: stage-2 interface FIX1+FIX2+FIX3 source audit'
+diff -ruN a/scripts/test_stage2_taw_rotation_fix.sh b/scripts/test_stage2_taw_rotation_fix.sh
+--- a/scripts/test_stage2_taw_rotation_fix.sh	2026-07-24 01:28:13.632349424 +0000
++++ b/scripts/test_stage2_taw_rotation_fix.sh	1970-01-01 00:00:00.000000000 +0000
+@@ -1,32 +0,0 @@
+-#!/usr/bin/env bash
+-set -euo pipefail
+-
+-ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+-cd "$ROOT"
+-CC_BIN=${CC:-gcc}
+-OUT=build/test_stage2_taw_rotation_fix
+-mkdir -p build
+-
+-"$CC_BIN" -std=c11 -O2 -Isrc/shared \
+-  tests/test_surface_aw_rotation.c \
+-  src/shared/surface.c src/shared/surface_multibounce.c \
+-  -o "$OUT" -lm
+-"$OUT"
+-
+-if grep -Fq 'double cosPsi = mu_i * mu_o + si * so * cphi;' src/shared/surface.c; then
+-  echo 'FAIL: legacy air-to-water transmission cosPsi azimuth remains' >&2
+-  exit 1
+-fi
+-if grep -Fq 'double si1 = so * sphi / dnm;' src/shared/surface.c; then
+-  echo 'FAIL: legacy air-to-water transmission si1 azimuth remains' >&2
+-  exit 1
+-fi
+-if grep -Fq 'double si2 = si * sphi / dnm;' src/shared/surface.c; then
+-  echo 'FAIL: legacy air-to-water transmission si2 azimuth remains' >&2
+-  exit 1
+-fi
+-
+-grep -Fq 'const double cphi_r = -cphi;' src/shared/surface.c
+-grep -Fq 'const double sphi_r = -sphi;' src/shared/surface.c
+-
+-echo 'PASS: stage-2 TAW rotation source audit'
+diff -ruN a/src/shared/surface.c b/src/shared/surface.c
+--- a/src/shared/surface.c	2026-07-24 01:28:13.628349425 +0000
++++ b/src/shared/surface.c	2026-07-24 01:28:13.628349425 +0000
+@@ -1146,26 +1146,28 @@
+     MT[2*3+2] = ft_sp;
+ 
+     /* Mishchenko meridian rotations, roles: incoming = air, outgoing = water.
+-     * The microfacet geometry above stores both rays as vectors pointing away
+-     * from the interface.  Stokes rotation, however, must use the physical
+-     * incident propagation direction, whose azimuth is shifted by pi.  In the
+-     * public surface azimuth convention the refracted/specular branch is
+-     * therefore cphi=-1, and the propagation-direction separation uses
+-     * (cphi_r,sphi_r)=(-cphi,-sphi). */
++     * surface_aw_microfacet_geometry_ uses directions pointing away from the
++     * interface.  Stokes rotations, however, must use photon propagation
++     * directions: the incident air ray is the negative of that geometry
++     * vector, while the transmitted water ray is already downward.  Hence
++     * both signed direction cosines are negative and the relative azimuth is
++     * shifted by pi. */
+     const double cphi_r = -cphi;
+     const double sphi_r = -sphi;
+-    double cosPsi = mu_i * mu_o + si * so * cphi_r;
++    const double mu_i_s = -mu_i;
++    const double mu_o_s = -mu_o;
++    double cosPsi = mu_i_s * mu_o_s + si * so * cphi_r;
+     if      (cosPsi > +1.0) cosPsi = +1.0;
+     else if (cosPsi < -1.0) cosPsi = -1.0;
+     double sT = sqrt(fmax(0.0, 1.0 - cosPsi * cosPsi));
+     double dnm = fmax(1e-12, sT);
+     double s1_safe = fmax(1e-12, si);
+     double s2_safe = fmax(1e-12, so);
+-    double ci1 = (mu_o - mu_i * cosPsi) / (dnm * s1_safe);
++    double ci1 = (mu_o_s - mu_i_s * cosPsi) / (dnm * s1_safe);
+     double si1 = so * sphi_r / dnm;
+     double r1 = sqrt(ci1*ci1 + si1*si1);
+     if (r1 < 1e-12) { ci1 = 1.0; si1 = 0.0; } else { ci1 /= r1; si1 /= r1; }
+-    double ci2 = (mu_i - mu_o * cosPsi) / (dnm * s2_safe);
++    double ci2 = (mu_i_s - mu_o_s * cosPsi) / (dnm * s2_safe);
+     double si2 = si * sphi_r / dnm;
+     double r2 = sqrt(ci2*ci2 + si2*si2);
+     if (r2 < 1e-12) { ci2 = 1.0; si2 = 0.0; } else { ci2 /= r2; si2 /= r2; }
+@@ -1253,6 +1255,15 @@
+                 }
+             }
+             for (int kl = 0; kl < 9; kl++) T_pair[kl] *= norm * dphi;
++            /* The OCRT Fourier field stores U as a sine coefficient.  In the
++             * relative-azimuth convolution, the incoming-U column acquires one
++             * minus sign for m>0.  Fold it into the stored operator once so the
++             * downstream 3x3 contraction remains an ordinary matrix-vector
++             * product, matching OSOAA Step-7 TAW storage/contraction. */
++            if (m > 0) {
++                T_pair[0*3 + 2] = -T_pair[0*3 + 2];
++                T_pair[1*3 + 2] = -T_pair[1*3 + 2];
++            }
+         }
+     }
+ #ifdef OCRT_FAST_KERNELS
+diff -ruN a/tests/test_surface_aw_interface_conventions.c b/tests/test_surface_aw_interface_conventions.c
+--- a/tests/test_surface_aw_interface_conventions.c	1970-01-01 00:00:00.000000000 +0000
++++ b/tests/test_surface_aw_interface_conventions.c	2026-07-24 01:28:13.632349424 +0000
+@@ -0,0 +1,139 @@
++#include <math.h>
++#include <stdio.h>
++#include <stdlib.h>
++
++#ifndef M_PI
++#define M_PI 3.14159265358979323846
++#endif
++
++void surface_T_aw_coxmunk_trig_test(double mu_i_air, double mu_o_water,
++                                    double cphi, double sphi,
++                                    double ws, int sigma_type,
++                                    double n_water, int q_convention,
++                                    double *T);
++int surface_T_aw_coxmunk_fourier_kernel(const double *mu_o, int n_o,
++                                        const double *mu_i, int n_i,
++                                        int m, int n_phi_quad,
++                                        double ws, int sigma_type,
++                                        double n_water, int q_convention,
++                                        double *T_m);
++
++static int close_value(const char *name, double got, double expected, double tol)
++{
++    const double err = fabs(got - expected);
++    if (err > tol) {
++        fprintf(stderr,
++                "FAIL %s got=%.17g expected=%.17g |d|=%.3e tol=%.3e\n",
++                name, got, expected, err, tol);
++        return 1;
++    }
++    return 0;
++}
++
++static int test_polar_limit(void)
++{
++    const double n = 1.34;
++    const double mu_i = cos(40.0 * M_PI / 180.0);
++    const double theta_o = 1.0e-4 * M_PI / 180.0;
++    const double mu_o = cos(theta_o);
++    const double phi = M_PI + 30.0 * M_PI / 180.0;
++    const double cphi = cos(phi), sphi = sin(phi);
++    const double si = sqrt(fmax(0.0, 1.0 - mu_i * mu_i));
++    const double so = sqrt(fmax(0.0, 1.0 - mu_o * mu_o));
++
++    /* Independent microfacet incidence cosine.  These vectors are the
++     * away-from-interface geometry used by the facet construction only. */
++    const double ix = si, iy = 0.0, iz = mu_i;
++    const double ox = so * cphi, oy = so * sphi, oz = -mu_o;
++    double hx = -(ix + n * ox);
++    double hy = -(iy + n * oy);
++    double hz = -(iz + n * oz);
++    const double hn = sqrt(hx*hx + hy*hy + hz*hz);
++    hx /= hn; hy /= hn; hz /= hn;
++    if (hz < 0.0) { hx=-hx; hy=-hy; hz=-hz; }
++    const double cti = ix*hx + iy*hy + iz*hz;
++    const double sti = sqrt(fmax(0.0, 1.0 - cti*cti));
++    const double stt = sti / n;
++    const double ctt = sqrt(fmax(0.0, 1.0 - stt*stt));
++    const double rs = (cti - n*ctt) / (cti + n*ctt);
++    const double rp = (n*cti - ctt) / (n*cti + ctt);
++    const double Ts = 1.0 - rs*rs;
++    const double Tp = 1.0 - rp*rp;
++    const double A = 0.5 * (Ts + Tp);
++    const double B = 0.5 * (Tp - Ts);
++    const double C = sqrt(Ts * Tp);
++
++    /* In the outgoing-pole limit sigma1->0 and sigma2->psi, with
++     * psi = phi-pi = 30 deg for the physical propagation directions. */
++    const double psi = 30.0 * M_PI / 180.0;
++    const double c2 = cos(2.0 * psi), s2 = sin(2.0 * psi);
++    const double expected[6] = {
++        (B/A) * c2, c2, -(C/A) * s2,
++        (B/A) * s2, s2,  (C/A) * c2
++    };
++    const int index[6] = {3,4,5,6,7,8};
++
++    double T[9] = {0};
++    surface_T_aw_coxmunk_trig_test(mu_i, mu_o, cphi, sphi,
++                                    3.0, 1, n, 1, T);
++    if (!(T[0] > 0.0)) {
++        fprintf(stderr, "FAIL polar limit: T11 is non-positive\n");
++        return 1;
++    }
++    int failed = 0;
++    for (int k=0; k<6; ++k) {
++        char name[48];
++        snprintf(name, sizeof(name), "polar M%d%d/M11",
++                 index[k]/3+1, index[k]%3+1);
++        failed |= close_value(name, T[index[k]]/T[0], expected[k], 2.0e-6);
++    }
++    return failed;
++}
++
++static int test_fourier_u_column(void)
++{
++    const double mu_i[1] = {cos(40.0 * M_PI / 180.0)};
++    const double mu_o[1] = {0.82};
++    const int mode = 1;
++    const int nphi = 4096;
++    const double dphi = 2.0 * M_PI / (double)nphi;
++    const int is_cos[9] = {1,1,0, 1,1,0, 0,0,1};
++    double raw[9] = {0};
++    for (int p=0; p<nphi; ++p) {
++        const double phi = (p + 0.5) * dphi;
++        const double cm = cos(mode * phi);
++        const double sm = sin(mode * phi);
++        double T[9];
++        surface_T_aw_coxmunk_trig_test(mu_i[0], mu_o[0], cos(phi), sin(phi),
++                                        3.0, 1, 1.34, 1, T);
++        for (int k=0; k<9; ++k) raw[k] += T[k] * (is_cos[k] ? cm : sm);
++    }
++    for (int k=0; k<9; ++k) raw[k] *= dphi / M_PI;
++
++    double stored[9] = {0};
++    if (surface_T_aw_coxmunk_fourier_kernel(mu_o, 1, mu_i, 1,
++                                             mode, nphi, 3.0, 1,
++                                             1.34, 1, stored) != 0) {
++        fprintf(stderr, "FAIL Fourier kernel call\n");
++        return 1;
++    }
++    int failed = 0;
++    for (int k=0; k<9; ++k) {
++        const double expected = (k == 2 || k == 5) ? -raw[k] : raw[k];
++        char name[48];
++        snprintf(name, sizeof(name), "Fourier M%d%d", k/3+1, k%3+1);
++        failed |= close_value(name, stored[k], expected,
++                              2.0e-12 * fmax(1.0, fabs(expected)));
++    }
++    return failed;
++}
++
++int main(void)
++{
++    int failed = 0;
++    failed |= test_polar_limit();
++    failed |= test_fourier_u_column();
++    if (failed) return EXIT_FAILURE;
++    puts("PASS: air-to-water signed-rotation and Fourier U-column regression");
++    return EXIT_SUCCESS;
++}
+diff -ruN a/tests/test_surface_aw_rotation.c b/tests/test_surface_aw_rotation.c
+--- a/tests/test_surface_aw_rotation.c	2026-07-24 01:28:13.628349425 +0000
++++ b/tests/test_surface_aw_rotation.c	1970-01-01 00:00:00.000000000 +0000
+@@ -1,90 +0,0 @@
+-#include <math.h>
+-#include <stdio.h>
+-#include <stdlib.h>
+-
+-#ifndef M_PI
+-#define M_PI 3.14159265358979323846
+-#endif
+-
+-/* Test export provided by src/shared/surface.c. */
+-void surface_T_aw_coxmunk_trig_test(double mu_i_air, double mu_o_water,
+-                                    double cphi, double sphi,
+-                                    double ws, int sigma_type,
+-                                    double n_water, int q_convention,
+-                                    double *T);
+-
+-static int check_close(const char *name, double got, double expected, double tol) {
+-    const double err = fabs(got - expected);
+-    if (err > tol) {
+-        fprintf(stderr, "FAIL %s: got %.17g expected %.17g |d|=%.3e tol=%.3e\n",
+-                name, got, expected, err, tol);
+-        return 1;
+-    }
+-    return 0;
+-}
+-
+-static int run_offset(double offset_deg, const double expected[9]) {
+-    const double n = 1.34;
+-    const double theta_air = 40.0 * M_PI / 180.0;
+-    const double mu_air = cos(theta_air);
+-    const double sin_water = sin(theta_air) / n;
+-    const double mu_water = sqrt(fmax(0.0, 1.0 - sin_water * sin_water));
+-    const double phi = M_PI + offset_deg * M_PI / 180.0;
+-    double T[9] = {0};
+-
+-    surface_T_aw_coxmunk_trig_test(mu_air, mu_water, cos(phi), sin(phi),
+-                                    3.0, 1, n, 1, T);
+-    if (!(T[0] > 0.0)) {
+-        fprintf(stderr, "FAIL offset %.3f: non-positive M00 %.17g\n", offset_deg, T[0]);
+-        return 1;
+-    }
+-
+-    int failed = 0;
+-    for (int k = 0; k < 9; ++k) {
+-        char name[64];
+-        snprintf(name, sizeof(name), "offset=%+.2f M%d%d/M00",
+-                 offset_deg, k / 3 + 1, k % 3 + 1);
+-        failed |= check_close(name, T[k] / T[0], expected[k], 2.0e-10);
+-    }
+-    return failed;
+-}
+-
+-int main(void) {
+-    /* Independent analytic reference for physical incident propagation:
+-     * k_i=(-sin(theta_air),0,-mu_air),
+-     * k_o=(sin(theta_water)cos(phi), sin(theta_water)sin(phi),-mu_water).
+-     * Hence k_i dot k_o = mu_air*mu_water - sin_air*sin_water*cos(phi),
+-     * equivalent to using (cos(phi-pi),sin(phi-pi))=(-cphi,-sphi) in the
+-     * Hovenier/Mishchenko meridian rotations.  These nine ratios were obtained
+-     * from that vector-basis construction, not from OSOAA output. */
+-    const double plus[9] = {
+-        1.000000000000000e+00,
+-        1.810590544853932e-02,
+-       -1.410656414309412e-02,
+-        1.424992522504437e-02,
+-        9.714237870322705e-01,
+-        2.366686869713999e-01,
+-       -1.799329305922956e-02,
+-       -2.369321228452541e-01,
+-        9.714216946286109e-01
+-    };
+-    const double minus[9] = {
+-        1.000000000000000e+00,
+-        1.810590544853929e-02,
+-        1.410656414309413e-02,
+-        1.424992522504435e-02,
+-        9.714237870322705e-01,
+-       -2.366686869714000e-01,
+-        1.799329305922957e-02,
+-        2.369321228452541e-01,
+-        9.714216946286109e-01
+-    };
+-
+-    int failed = 0;
+-    failed |= run_offset(+8.25, plus);
+-    failed |= run_offset(-8.25, minus);
+-    if (failed) return EXIT_FAILURE;
+-
+-    puts("PASS: air-to-water microfacet meridian rotation analytic regression");
+-    return EXIT_SUCCESS;
+-}

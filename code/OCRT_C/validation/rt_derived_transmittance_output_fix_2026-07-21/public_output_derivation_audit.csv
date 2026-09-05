@@ -1,0 +1,23 @@
+output_or_path,derivation_class,uses_solved_RT_field,approximation_status,action
+TOA_rho_IQU,RT assembly,yes,none in normal rigorous path,unchanged
+Rrs0plus_IQU,solved boundary radiance divided by solved Ed,yes,none,unchanged
+rrs0minus_IQU,solved boundary radiance divided by solved Ed,yes,none,unchanged
+Lu_Qu_Uu_Ed_Eu_0plus_0minus,angular RT field and quadrature,yes,none,unchanged
+T_dir_dn,analytic exact direct-beam subsolution,no,not a diffuse approximation,retained
+T_diff_dn_hemi,hemispheric integral of SOS BOA diffuse field,yes,none,retained
+T_total_dn_hemi,T_dir_dn plus solved T_diff_dn_hemi,yes,none,added
+T_diff_dn_dir,directional reconstruction of SOS BOA field,yes,none,retained
+T_dir_up_view,analytic exact unscattered path,no,not a diffuse approximation,retained
+T_diff_up_hemi_old,copy of downward hemispheric diffuse by reciprocity,no,invalid directional approximation,removed
+T_total_up_view_old,Beer-Lambert direct plus reciprocal downward diffuse,no,invalid directional approximation,removed
+TOA_water_signal_I,I_TOA_total minus I_atm_path,yes,none,added
+T_total_up_view,TOA_water_signal_I divided by actual Lu0plus,yes,source-dependent exact effective RT,added
+T_diff_up_view,T_total_up_view minus T_dir_up_view,yes,source-dependent RT residual,added
+T_up_rt_valid,rigorous bottom-source completion gate,yes,none,added
+T_sg_up_dir_old,rho_glint times mu_sun,no,mislabelled as transmittance,renamed diagnostic
+T_total_up_dir_old,rho_TOA times mu_sun,no,mislabelled as transmittance,renamed diagnostic
+Kd0minus_Ku0minus,finite difference of solved Ed_Eu fields,yes,numerical derivative diagnostic only,retained with documentation
+ocrt_ac_lut_Tup_old,downward RT table evaluated at VZA by reciprocity,no,invalid for BRDF-dependent upward source,removed
+ocrt_ac_lut_Tup_current,undefined for black surfaces with no upward BOA source,no,NaN plus validity zero,corrected
+legacy_ocean_TOA_fallback,hemispheric approximation only when rigorous pass fails,no,independent existing fallback not changed by output-only fix,flagged for separate fail-fast policy review
+ocean_full_grid_aerosol_wiring,driver passes aer NULL,no,independent silent aerosol omission not an analytic output approximation,separate high-priority issue

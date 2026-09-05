@@ -1,0 +1,15 @@
+PASS organic module strict build and model anchors
+PASS canonical required-field gate
+PASS explicit-zero constituent input
+PASS pico/nano/micro group selection
+PASS detritus slope default bit identity
+PASS organic wavelength range gate
+PASS three-component vector phase and exact bb/b identity
+PASS phase preparation count independent of SOS orders
+PASS cache enabled/disabled stdout byte identity
+PASS P12/P33 affect IQU with invariant P11-derived IOP
+ORGANIC_CHL_SMOKE pass=10 fail=0
+
+real	0m6.877s
+user	0m5.440s
+sys	0m1.200s

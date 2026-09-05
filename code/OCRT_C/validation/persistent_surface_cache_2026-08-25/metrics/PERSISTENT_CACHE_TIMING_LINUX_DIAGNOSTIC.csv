@@ -1,0 +1,3 @@
+case,off_s,build_s,required_s,off_over_required_speedup_x,build_over_required_speedup_x
+pure_water,3.1,3.12,0.66,4.696969696969697,4.7272727272727275
+red_clay_tsm0p5,6.34,5.39,5.3,1.1962264150943396,1.0169811320754716

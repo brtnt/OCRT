@@ -1,0 +1,15 @@
+item,handoff_status,final_decision,c_python_action,reason,range_nm
+pure_water_aw_bw,existing canonical,retain unchanged,verify SHA only,uploaded handoff and both implementations are byte-identical,200-2449
+psi_T,basic install,accept,replace paired C/Python files and enforce in-range interpolation,explicit full-range table and tests pass,330-1100
+phytoplankton_absorption,basic install,accept,replace paired table and remove runtime cutoff branch,PLOPS class-balanced spectrum plus explicit zero rows,330-1100
+ahn_mineral_scalar,basic install,accept,replace 8 paired files,400+ preserved and 330-399 OLS extension,330-1100
+ahn_mineral_mie,basic install with caveat,accept,replace 4 paired files and validate physicality/source-informed not exact historical reproduction,330-1100
+aerosol_snf_opac,basic install,accept,replace 16 paired Mie files,explicit endpoint nodes and tests pass,330-1100
+aerosol_ahmad2010_paper,basic install,accept,replace 80 paired Mie files,accepted handoff residual policy and tests pass,330-1100
+aerosol_ahmad2010_accurt,basic install,accept,replace 80 paired Mie files,legacy nodes preserved and tests pass,330-1100
+gas_xsec_6,basic install,accept,replace 6 paired tables and dynamic 771-point checks,350-1100 canonical preserved and UV extension documented,330-1100
+detritus_mie,conditional candidate,reject for production,archive candidate and restore validated legacy active file,L=200 negative reconstruction and SOS failure,active 350-850; candidate 330-1100
+EAP_17,excluded/disabled,retain disabled,no production activation,native range does not satisfy full contract and prior Stage-2 policy,350-850
+Raman,excluded,leave unchanged,no code/data expansion,excitation auxiliary domain outside current task,excluded
+OSOAA,reference only,leave unchanged,no spectral extension requested,current task focuses OCRT,unchanged
+legacy_CCRR,non-default/excluded,leave unchanged,no claim of 330-1100 support,not current production branch,non-default

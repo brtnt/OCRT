@@ -1,0 +1,74 @@
+523,527c523,589
+<     /* Upward coupling uses the analytically resolved Snell/Fresnel mapping.
+<      * The former node-sampled rough BTDF experiment was disabled by default:
+<      * near-delta transmission rows were under-resolved on the water grid, and
+<      * the inactive path allocated scratch arrays on every call. */
+<     (void)sigma_type;
+---
+>     /* [P2 / WORKORDER-5, 2026-08-18] Milestone-2b rough water->air coupling
+>      * RESTORED.  The former node-sampled variant was disabled because its
+>      * near-delta transmission rows were under-resolved on the coarse water
+>      * quadrature; the restored path resolves the lobe on a fine internal
+>      * water-mu GL grid (Nfw = 192), symmetric to the forward FIX-B fine-grid
+>      * technique.  wind <= 0 keeps the flat analytic path below untouched
+>      * (bit-identical requirement, gate G1). */
+>     if (wind_speed > 0.0) {
+>         const int Nfw     = 192;
+>         const int n_phi_q = 128;
+>         double *xf = (double*)malloc((size_t)Nfw * sizeof(double));
+>         double *wf = (double*)malloc((size_t)Nfw * sizeof(double));
+>         double *Ff = (double*)malloc((size_t)Nfw * 3 * sizeof(double));
+>         double *Tm = (double*)malloc((size_t)n_mu_atm * (size_t)Nfw * 9 *
+>                                      sizeof(double));
+>         int ok = (xf && wf && Ff && Tm) &&
+>                  (rt_quadrature_gauss_legendre_pos(Nfw, xf, wf) == 0);
+>         for (int m = 0; ok && m <= m_max; ++m) {
+>             if (surface_T_wa_coxmunk_fourier_kernel(mu_atm_pos, n_mu_atm,
+>                                                     xf, Nfw, m, n_phi_q,
+>                                                     wind_speed, sigma_type,
+>                                                     n_water, q_convention,
+>                                                     Tm) != 0) { ok = 0; break; }
+>             const double az = (m == 0) ? (2.0 * M_PI) : M_PI;
+>             const double *I_w_m = &I_water_per_m[(size_t)m * (size_t)n_mu_water];
+>             const double *Q_w_m = &Q_water_per_m[(size_t)m * (size_t)n_mu_water];
+>             const double *U_w_m = &U_water_per_m[(size_t)m * (size_t)n_mu_water];
+>             for (int i = 0; i < Nfw; ++i) {
+>                 Ff[3*i+0] = aw_interp_on_unsorted(mu_water_pos, I_w_m,
+>                                                   n_mu_water, xf[i]);
+>                 Ff[3*i+1] = aw_interp_on_unsorted(mu_water_pos, Q_w_m,
+>                                                   n_mu_water, xf[i]);
+>                 Ff[3*i+2] = aw_interp_on_unsorted(mu_water_pos, U_w_m,
+>                                                   n_mu_water, xf[i]);
+>             }
+>             for (int j_a = 0; j_a < n_mu_atm; ++j_a) {
+>                 double Ia = 0.0, Qa = 0.0, Ua = 0.0;
+>                 for (int i = 0; i < Nfw; ++i) {
+>                     double wj = az * xf[i] * wf[i];
+>                     const double *T = Tm + ((size_t)j_a * (size_t)Nfw
+>                                             + (size_t)i) * 9;
+>                     Ia += wj * (T[0]*Ff[3*i] + T[1]*Ff[3*i+1] + T[2]*Ff[3*i+2]);
+>                     Qa += wj * (T[3]*Ff[3*i] + T[4]*Ff[3*i+1] + T[5]*Ff[3*i+2]);
+>                     Ua += wj * (T[6]*Ff[3*i] + T[7]*Ff[3*i+1] + T[8]*Ff[3*i+2]);
+>                 }
+>                 I_air_per_m[(size_t)m * (size_t)n_mu_atm + (size_t)j_a] = Ia;
+>                 Q_air_per_m[(size_t)m * (size_t)n_mu_atm + (size_t)j_a] = Qa;
+>                 U_air_per_m[(size_t)m * (size_t)n_mu_atm + (size_t)j_a] = Ua;
+>             }
+>         }
+>         free(Tm); free(Ff);
+>         if (ok) {
+>             /* mb_re_escape retained per original OPTION-2 design (multi-
+>              * encounter add-on, both interface paths).  Gate measurement
+>              * 2026-08-18: on the weightless single-view path this term
+>              * contributes exactly zero (w_water NULL guard), so it does not
+>              * interact with the restored kernel there; node-grid double-
+>              * counting remains an open check (WORKORDER-5 follow-up). */
+>             mb_re_escape_add_m0(I_water_per_m, mu_water_pos, w_water_pos,
+>                                 n_mu_water, n_water, wind_speed,
+>                                 mu_atm_pos, n_mu_atm, w_atm_pos, I_air_per_m);
+>             free(xf); free(wf);
+>             return 0;
+>         }
+>         free(xf); free(wf);
+>         /* kernel/alloc failure: fall through to the flat analytic path */
+>     }

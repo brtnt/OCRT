@@ -1,0 +1,18 @@
+{
+  "source_package_name": "OCRT_paper_migration_2026-08-04.tar.gz",
+  "known_completed_runs": 8045,
+  "known_coupled_ocean_runs": 5525,
+  "known_black_fresnel_atmosphere_runs": 2520,
+  "bands_nm": [412, 555, 667, 748, 865],
+  "sza_deg": [25, 50, 75],
+  "vza_deg": {"start": 0, "stop": 85, "step": 5, "count": 18},
+  "raa_deg": {"start": 0, "stop": 355, "step": 5, "count": 72},
+  "directions_per_run": 1296,
+  "default_wind_ms_historical": 5,
+  "aerosol_model_count": 24,
+  "aod865_level_count": 7,
+  "water_state_count": 64,
+  "unique_aerosol_water_pairs_star_design": 87,
+  "exact_full_matrix_status": "NOT_AVAILABLE_IN_ACTIVE_RUNTIME_DO_NOT_INFER",
+  "pssa_policy_for_new_campaign": "ON"
+}

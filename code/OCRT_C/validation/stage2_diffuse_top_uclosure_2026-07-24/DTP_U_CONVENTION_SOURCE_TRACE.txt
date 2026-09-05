@@ -1,0 +1,38 @@
+OCRT diffuse-top U-field convention trace (2026-07-24)
+
+1. Atmospheric BOA field
+   src/rt_solver.c:492-495 documents I/Q cosine and U sine reconstruction.
+   src/rt_solver.c:863-893 copies the downward total_u Fourier coefficient
+   directly into boa_export->U_per_m. No sign conversion is applied.
+
+2. Air-to-water coupling
+   src/rt_air_water_coupling.c:183-220 contracts the BOA field with the
+   T_aw Fourier matrix as an ordinary 3x3 matrix-vector product and writes
+   the resulting Uw directly to coupled->U_inwater_per_m.
+   FIX3 has already folded the m>0 incoming-U storage sign into M13/M23.
+   No downstream U sign conversion is applied.
+
+3. Water external-top field
+   src/rt_solver.c:3948-3967 copies coupled.U_inwater_per_m directly to
+   ocrt_dt_U and assigns w_opts.ext_top_U = ocrt_dt_U.
+   The same direct assignment is used in the diagnostic/outer-coupling paths
+   at lines 5365 and 5458. No U sign conversion occurs between the interface
+   contraction and the water boundary source.
+
+4. Production water SOS convention
+   src/rt_sos_operator.c:371-394 defines the signed-direction vector source
+   operator. For a downward incident U basis, I/Q output terms carry the
+   minus signs shown in lines 372-386, while the U output is wrapped by the
+   global minus in lines 387-394.
+
+5. Diffuse-top injector
+   src/rt_water_rt.c:669-856 represents a discrete incident field by
+   AI/AQ/AU = 2*w*X and ch_c = 0.5*exp(-tau/mu), which exactly reproduces the
+   Gauss weight and attenuation used by the production operator.
+   Because src_u has an existing outer minus, the molecular incoming-U
+   coefficients ruI/ruQ/ruU must be negative to match the operator.
+
+Conclusion
+   ext_top_U is in the same sine-Fourier Stokes-U convention as the water SOS
+   field. The three incoming-U molecular coefficients must be negated. This
+   is an internal operator-closure requirement, not an OSOAA empirical fit.

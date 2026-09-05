@@ -1,0 +1,22 @@
+OCRT stage-2 coupling-clamp correction — final regression summary
+================================================================
+PASS: legacy 64-direction clamp absent
+PASS: 320-entry stack workspace and fail-loud heap fallback present
+PASS: n_mu_water=48 no-trigger full-grid byte-identical
+PASS: n_mu_water=64 full-grid reference
+PASS: n_mu_water=96 full-grid reference
+PASS: forbidden nadir m=0 Q component removed for Rrs and TOA
+PASS: rrs(0-) I/Q/U unchanged at n_mu_water=48/64/96
+PASS: single-target/full-grid Rrs/rrs consistency
+PASS: ASAN/UBSAN stack and heap workspace paths
+PASS: public water RAA regression
+PASS: FIX1+FIX2+FIX3 interface regression
+PASS: FIX4 diffuse-top closure (2.776e-17 / 5.551e-17)
+PASS: exact-pole continuity and spin-2 covariance
+PASS: direct-glint RAA convention
+PASS: external-bottom mode bounds
+PASS: 72/72 physical runs
+PASS: 72/72 output CSV byte-identical to pole-limit baseline
+PASS: 600-cell numeric columns exact, source-version text only changed
+PASS: production n_mu_water=96 runtime non-regression (mean +0.638%, median +0.254%)
+PASS: fixed-ISA clean rebuild byte-identical

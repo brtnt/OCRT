@@ -1,0 +1,6 @@
+PASS direct-cache-equivalence modes=7 seeds=4 array_compares=168 values_per_array=238
+TSM_PHASE_CACHE PASS builds=9 trace_sha256=89146542445cd110649942f6b09ce559f1a95225ed0fbc9ca9b5e13d1994b833
+
+real	0m9.042s
+user	0m8.000s
+sys	0m0.590s

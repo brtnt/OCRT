@@ -1,0 +1,10 @@
+comparison,comp,mean_abs_pct,max_abs_pct
+baseline_julyOCRT_vs_julyOSOAA,I,0.0584,0.2378
+baseline_julyOCRT_vs_julyOSOAA,Q,0.0297,0.0828
+baseline_julyOCRT_vs_julyOSOAA,U,0.0276,0.0958
+current_moment_vs_julyOSOAA,I,0.3303,0.5442
+current_moment_vs_julyOSOAA,Q,0.0231,0.0577
+current_moment_vs_julyOSOAA,U,0.0208,0.0595
+current_direct_vs_julyOSOAA,I,0.2285,0.4292
+current_direct_vs_julyOSOAA,Q,0.0318,0.1138
+current_direct_vs_julyOSOAA,U,0.0274,0.0974

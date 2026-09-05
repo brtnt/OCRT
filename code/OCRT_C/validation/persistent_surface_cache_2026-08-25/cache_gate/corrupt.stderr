@@ -1,0 +1,17 @@
+# TSM Ahn: C=0.5 g m^-3 species=red_clay data=inputs/tsm_ahn phase=inputs/tsm_ahn/Red_clay_AHN.mie
+# LUT grid output: /mnt/data/OCRT_PERSISTENT_SURFACE_CACHE_APPLIED_VALIDATED_2026-08-25/VALIDATION/cache_gate/out/corrupt.csv (vza step 20 deg, raa step 60 deg, vza max 60 deg)
+rt_absorption (SOS-integrated): λ=555.0nm τ_abs_col=0.0000e+00
+  h2o: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  o3: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  o2: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  co2: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  no2: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  ch4: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+rt_water_iop_lut: loaded 2250 rows from 'inputs/water_iop/water_coef_z09_1nm.txt' (λ 200.00..2449.00 nm)
+rt_water_iop_psi_T: loaded 771 rows from 'inputs/water_iop/psi_T_rottgers2014_OCRT.txt' (λ 330.0..1100.0 nm)
+[surface-pcache] mode=required dir=/mnt/data/OCRT_PERSISTENT_SURFACE_CACHE_APPLIED_VALIDATED_2026-08-25/VALIDATION/cache_gate/corrupt format=1 abi=2026082501 physics=2026082501 qfold=1 coordination=none
+[surface-pcache] stale-or-corrupt: /mnt/data/OCRT_PERSISTENT_SURFACE_CACHE_APPLIED_VALIDATED_2026-08-25/VALIDATION/cache_gate/corrupt/ocrt_surface_v1_rww_1efe01972887d9c2c801eb671d47f18f.bin
+[B3] rt_solver_sos_pol FAIL m=0, rc=-3
+[B.4] rt_water_rt_sos_pure FAIL rc=-3
+error: all-view coupled LUT is required (rc=-1003).  Per-cell VZA/RAA solver replay is prohibited by the OCRT execution contract.
+  Diagnostic-only override: OCRT_ALLOW_LEGACY_CELL_REPLAY=1

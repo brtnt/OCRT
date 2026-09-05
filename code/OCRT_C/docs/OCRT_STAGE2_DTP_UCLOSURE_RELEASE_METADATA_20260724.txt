@@ -1,0 +1,8 @@
+release_name=OCRT_v1.2_STAGE2_INTERFACE_FIX123_DTP_UCLOSURE_20260724
+version=OCRT-v1.2-2026-07-24-KST-stage2-interface-fix123-dtp-uclosure
+approved_binary=build/ocrt_stage2_dtp_uclosure
+approved_binary_sha256=7e5b2938e3529cc068a70cd11514dfa22cbbc3563aa5ec8a910ce4a6aa258fd7
+baseline=OCRT-v1.2-2026-07-24-KST-stage2-interface-fix123
+cumulative_instruction=docs/OCRT_STAGE2_CUMULATIVE_CODE_UPDATE_INSTRUCTION_20260724_REV3_KO.md
+review_report=docs/OCRT_STAGE2_OTHER_SESSION_REVIEW_AND_DTP_UCLOSURE_20260724_KO.md
+validation=validation/stage2_diffuse_top_uclosure_2026-07-24

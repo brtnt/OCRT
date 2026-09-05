@@ -1,0 +1,15 @@
+SnF aerosol generator reproducibility check
+Date: 2026-07-19 KST
+
+Command:
+  OMP_NUM_THREADS=32 ./scripts/generate_snf_aerosols.sh <temporary-output>
+
+Canonical settings:
+  wavelength grid: 20 OPAC wavelengths, 0.350-3.750 um
+  angular grid: 180.0 -> 0.0 deg, 0.5 deg spacing, 361 points
+  radius integration: rlogpas=0.011
+
+Result:
+  generated files: 16
+  byte-identical to the first controlled generation: 16/16
+  status: PASS

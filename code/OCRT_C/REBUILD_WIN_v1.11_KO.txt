@@ -1,0 +1,38 @@
+OCRT v1.11 (IPSS 단일화 + VZA 지상앵커) Windows 실행파일 재빌드
+================================================================
+2026-09-05
+
+sandbox 에서 소스·게이트·검증산출을 이미 반영했고 Linux 빌드/게이트는 전부
+통과했다. 남은 것은 Windows 실행파일 재빌드 하나다.  MSYS2 MinGW64 gcc 가
+PATH 에 있는 창(Anaconda PowerShell Prompt 도 가능)에서:
+
+    cd D:\Claud_Cowork\OCRT\code\OCRT_C
+    .\build_win.bat
+
+옵션 없이 실행하면 -march=x86-64-v3 (AVX2) 로 빌드해
+build\ocrt_x86-64-v3.exe 를 만든다.  그 다음:
+
+    copy /Y build\ocrt_x86-64-v3.exe build\ocrt.exe
+
+주의 (2026-09-05 확인)
+----------------------
+* 이 PC 의 CPU (Intel Core Ultra 9 275HX) 는 AVX-512 를 지원하지 않는다.
+  Makefile 기본값인 -march=cascadelake 로 빌드하면 실행 즉시
+  "Illegal instruction" 으로 죽는다.  반드시 x86-64-v3 (기본값) 로 빌드할 것.
+  Linux 쪽 make 를 직접 쓸 때도:
+      make CFLAGS="-std=c11 -O3 -march=x86-64-v3 -ffp-contract=fast \
+        -fassociative-math -fno-signed-zeros -fno-trapping-math \
+        -DOCRT_FAST_KERNELS -fopenmp -Isrc"
+* rt_pssa.c 는 삭제됐다.  build_win.bat 은 src 를 재귀 glob 하므로
+  파일 목록을 손댈 필요 없다.
+* 빌드 후 검증:
+      bash scripts\run_ipss_gates.sh      (MSYS2 셸에서)
+  전 항목 PASS 여야 한다.
+
+바뀐 동작
+---------
+* --pssa-mode 옵션 삭제.  --pssa 는 on/off 뿐이고 알고리즘은 IPSS 하나다.
+  기존 배치에 --pssa-mode 가 들어 있으면 exit 2 로 멈춘다.
+* --vza 는 지상 화소 기준(위성 L1B senz)으로 해석한다.  --pssa 산출이
+  이전 버전 대비 ρ_I 로 +2.6~+3.1 % 달라진다(이전 값이 틀렸다).
+  --pssa 없는 산출은 불변.

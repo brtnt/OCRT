@@ -1,0 +1,41 @@
+# ============================================================================
+# OCRT public repository — what stays OUT of git (kept on the local disk).
+# See MIGRATION_README_2026-09-05_KO.md §3 for where each excluded item lives.
+# ============================================================================
+
+# deliveries / archives / campaign outputs (multi-GB)
+/package/
+/task/
+
+# unpublished manuscript (LaTeX, PDF, figures) — local only until publication
+/docs/paper/
+
+# large scientific data, distributed separately (PART01–PART10 zips in package/)
+*.mie
+/code/OCRT_Python/data/
+/code/validation_05/runs/
+*.gz
+*.zip
+*.tar
+*.7z
+
+# build products and binaries (rebuild from source; see code/OCRT_C/REBUILD_WIN_*.txt)
+build/
+_RELEASE/
+*.o
+*.obj
+*.exe
+*.dll
+*.so
+__pycache__/
+*.pyc
+
+# local credentials — never commit
+/.github_token
+.git-credentials
+
+# OS / editor noise
+Thumbs.db
+.DS_Store
+desktop.ini
+*.swp

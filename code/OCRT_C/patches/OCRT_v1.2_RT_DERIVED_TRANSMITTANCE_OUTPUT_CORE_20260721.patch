@@ -1,0 +1,907 @@
+diff --git a/docs/CHANGELOG_RT_DERIVED_TRANSMITTANCE_OUTPUT_2026-07-21.md b/docs/CHANGELOG_RT_DERIVED_TRANSMITTANCE_OUTPUT_2026-07-21.md
+new file mode 100644
+index 0000000..c5ba3fd
+--- /dev/null
++++ b/docs/CHANGELOG_RT_DERIVED_TRANSMITTANCE_OUTPUT_2026-07-21.md
+@@ -0,0 +1,56 @@
++# OCRT v1.2 RT-derived transmittance output fix
++
++- Issue: `OCRT-OUTPUT-TRANS-RT-001`
++- Date: 2026-07-21
++- Target: `OCRT-v1.2-2026-07-20-KST-water-mmax-mode-bound-fix` plus Mie phase-wavelength PCHIP
++- Scope: output diagnostics only
++
++## Fixed
++
++- Removed the exported upward diffuse-transmittance approximation
++  `T_diff_up=T_diff_dn`.
++- Removed the exported sum
++  `T_total_up=exp(-tau/mu_view)+T_diff_dn`.
++- Added exact effective upward atmospheric transmission for the actual
++  ocean water-leaving BRDF:
++
++  ```text
++  TOA_water_signal_I = I_TOA_total - I_atm_path
++  T_total_up_view = TOA_water_signal_I / Lu0plus
++  T_diff_up_view = T_total_up_view - T_dir_up_view
++  ```
++
++- Added `T_up_rt_valid`.  When the rigorous atmospheric bottom-source SOS is
++  unavailable, upward transmission outputs are `NaN` and the flag is zero.
++- Added `T_total_dn_hemi`, the exact sum of direct and SOS-integrated diffuse
++  downward irradiance transmission.
++- Renamed `rho_glint*mu_sun` and `rho_TOA*mu_sun` public columns as explicit
++  flux-ratio diagnostics; they are not atmospheric transmittance.
++- Added exact transmittance fields to ocean full-grid CSV output.
++- Removed the production AC LUT script's reciprocity reconstruction
++  `Tup(vza)=Tdn(vza)`.  Black-surface LUT rows now report upward transmission as
++  undefined (`NaN`, valid flag zero).
++
++## Unchanged physics outputs
++
++The patch does not modify the SOS field, atmosphere-ocean coupling, water RT,
++TOA assembly, `Rrs`, `rrs`, IOPs or convergence controls.  The legacy fallback
++used internally when a rigorous water bottom-source pass fails remains unchanged
++so that existing TOA/Rrs behavior is not altered; the fallback is simply no
++longer labelled as a valid transmittance.
++
++## Validation
++
++- no-atmosphere, Rayleigh and Rayleigh+aerosol ocean cases: common
++  non-transmittance numeric outputs exactly unchanged versus the pre-fix binary;
++- exact upward and downward identities: PASS;
++- black-surface undefined upward output: PASS;
++- ocean full-grid exact fields and identities: PASS;
++- AC LUT reciprocity removal smoke: 324 rows PASS;
++- ASan/UBSan low-resolution no-atmosphere and Rayleigh: no findings;
++- PCHIP regression: PASS;
++- radiometry flux split: PASS;
++- water branch: 14/14 PASS.
++
++See `validation/rt_derived_transmittance_output_2026-07-21/` and
++`docs/OUTPUT_RT_DERIVATION_AUDIT_2026-07-21.md`.
+diff --git a/docs/OCRT_OUTPUT_VARIABLE_REFERENCE_KO.md b/docs/OCRT_OUTPUT_VARIABLE_REFERENCE_KO.md
+index 43194bf..f0fe6df 100644
+--- a/docs/OCRT_OUTPUT_VARIABLE_REFERENCE_KO.md
++++ b/docs/OCRT_OUTPUT_VARIABLE_REFERENCE_KO.md
+@@ -39,16 +39,27 @@
+ 
+ | 변수 | 의미 |
+ |---|---|
+-| `T_dir_dn` | 태양 직달 하향 투과율. PSSA 활성 시 구면 직달경로 사용 |
+-| `T_diff_dn_hemi` | BOA 하향 확산조도 투과율 |
+-| `T_diff_dn_dir` | 지정 방향의 하향 확산 성분 |
+-| `T_dir_up_view` | 지정 관측방향의 직접 상향 Beer–Lambert 투과율 |
+-| `T_diff_up_hemi` | 상향 확산 투과율의 현재 hemispheric reciprocity 근사 |
+-| `T_total_up_view` | `T_dir_up_view + T_diff_up_hemi` |
+-| `T_sg_up_dir` | 직달 선글린트 상향 기여를 투과율 형태로 표현 |
+-| `T_total_up_dir` | TOA 방향 반사도를 flux-ratio 형태로 변환한 진단값 |
+-
+-`T_diff_up_hemi`는 아직 방향별 Mueller 투과행렬의 독립 solve가 아니라 하향 hemispheric 값의 reciprocity 근사다. 해양 수광신호의 direct/sky 엄밀 역결합 경로는 별도로 계산된다.
++| `T_dir_dn` | 태양 직달 하향 투과율. 비산란 직달광의 정확한 Beer–Lambert/PSSA 경로 |
++| `T_diff_dn_hemi` | 대기 SOS가 계산한 BOA 하향 확산 radiance의 반구 적분값 |
++| `T_total_dn_hemi` | `T_dir_dn + T_diff_dn_hemi`; 총 하향조도 투과율 |
++| `T_diff_dn_dir` | 대기 SOS 하향장으로부터 재구성한 지정 방향 확산 성분 |
++| `T_dir_up_view` | 지정 관측방향의 비산란 직접 상향 Beer–Lambert 성분 |
++| `TOA_water_signal_I` | `I_TOA_total - I_atm_path`; 대기 SOS bottom-source pass가 전달한 수광신호의 TOA radiance |
++| `T_total_up_view` | `TOA_water_signal_I / Lu0plus`; 실제 해수 BRDF를 보존한 RT 유효 상향투과율 |
++| `T_diff_up_view` | `T_total_up_view - T_dir_up_view`; RT 유효 확산·각도재분배 성분 |
++| `T_up_rt_valid` | 위 상향값이 엄밀 bottom-source SOS로 계산되었으면 1. 정의 불가 또는 fallback이면 0 |
++| `diag_sunglint_up_flux_ratio` | `rho_glint*mu_sun`; 투과율이 아닌 legacy 진단비 |
++| `diag_TOA_up_flux_ratio` | `rho_TOA*mu_sun`; 투과율이 아닌 legacy 진단비 |
++
++상향 대기투과율은 대기의 고유 스칼라 상수가 아니다. 실제 `Lu(0+)`의 각도분포와
++해수 BRDF에 의존하는 source-dependent 유효값이다. 따라서 하향 반구투과율을
++상반성으로 복사하거나 `exp(-tau/mu_view)`에 더하지 않는다. 엄밀한 bottom-source
++RT가 완료되지 않은 실행은 `T_diff_up_view`와 `T_total_up_view`를 `NaN`,
++`T_up_rt_valid=0`으로 출력한다.
++
++`T_diff_up_view`는 방향별 에너지의 각도 재분배를 포함하므로 음수가 될 수도 있다.
++이는 총 투과율이 비물리적이라는 뜻이 아니라, 동일 view의 비산란 직접 성분에
++대한 RT 산란 보정이 음수임을 뜻한다.
+ 
+ ## 0+ 공기측
+ 
+@@ -100,5 +111,5 @@ Eu0minus = Eu0minus_direct + Eu0minus_diffuse
+ 
+ 1. air-side 전체 상향 반구 적분 `Eu0plus`.
+ 2. non-ocean surface 실행의 `rho_atm_path`, `rho_surface_diffuse`, `rho_surface_direct` 완전 분해.
+-3. 방향별 상향 diffuse Mueller transmittance `T_diff_up(mu_v,phi)`.
++3. 전체 방향·Stokes를 연결하는 상향 Mueller transmission operator의 선택적 공개 출력.
+ 4. LUT/배치 CSV에 단일실행과 동일한 전체 변수 집합을 선택적으로 출력하는 `--output-radiometry` 모드.
+diff --git a/docs/OUTPUT_RT_DERIVATION_AUDIT_2026-07-21.md b/docs/OUTPUT_RT_DERIVATION_AUDIT_2026-07-21.md
+new file mode 100644
+index 0000000..a4f86bd
+--- /dev/null
++++ b/docs/OUTPUT_RT_DERIVATION_AUDIT_2026-07-21.md
+@@ -0,0 +1,113 @@
++# OCRT public-output RT derivation audit — 2026-07-21
++
++- Issue: `OCRT-OUTPUT-TRANS-RT-001`
++- Priority: P0, scientific-output correctness
++- Scope: public stdout, ocean full-grid CSV, atmospheric-correction LUT scripts
++- Constraint: solver state, TOA reflectance and `Rrs/rrs` must not change
++
++## 1. Confirmed defect
++
++The previous public output used
++
++```text
++T_diff_up_hemi  = T_diff_dn_hemi
++T_total_up_view = exp(-tau_atm/mu_view) + T_diff_up_hemi
++```
++
++This is a reciprocity/hemispheric approximation.  It is not the directional
++transmission of the actual ocean water-leaving BRDF and therefore must not be
++published as an OCRT result.
++
++The current `scripts/ocrt_ac_lut.py` also reconstructed `Tup_total` by evaluating
++the downward irradiance-transmittance table at `theta=vza`.  That assignment is
++removed.  Black and black-Fresnel surface runs have no prescribed upward BOA
++source, so their upward transmission is undefined rather than reciprocal.
++
++## 2. Correct RT definitions
++
++### Downward
++
++The atmospheric SOS exports the BOA downward field.  OCRT integrates its `m=0`
++diffuse radiance over the downward hemisphere:
++
++```text
++T_diff_dn_hemi = E_diff_dn(BOA) / E_solar_TOA
++T_total_dn_hemi = T_dir_dn + T_diff_dn_hemi
++```
++
++`T_dir_dn` is the exact unscattered attenuation for the selected plane-parallel
++or PSSA direct path.  `T_diff_dn_dir` is reconstructed from the solved Fourier
++field at the requested direction.
++
++### Upward
++
++For an ocean-coupled solve, OCRT already propagates the actual water-leaving
++bottom source through a second atmospheric SOS pass.  The exact effective
++intensity transmission is therefore
++
++```text
++TOA_water_signal_I = I_TOA_total - I_atm_path
++T_total_up_view = TOA_water_signal_I / Lu(0+)
++T_diff_up_view = T_total_up_view - T_dir_up_view
++```
++
++This retains water BRDF, rough-surface transmission, multiple scattering and
++view azimuth.  The value is source dependent; it is not a medium-only scalar.
++When the rigorous bottom-source solve is absent or the denominator is zero,
++OCRT returns `NaN` and `T_up_rt_valid=0` rather than a fallback approximation.
++
++## 3. Full public-output audit
++
++| Output or path | Derivation | Status after fix |
++|---|---|---|
++| `TOA_rho_I/Q/U` | Atmospheric and ocean SOS assembly | RT result; unchanged |
++| `Rrs0plus`, `rrs0minus` | Solved boundary radiance divided by solved irradiance | RT result; unchanged |
++| `Lu/Qu/Uu`, `Ed/Eu` at 0+/0- | Solved angular fields and quadrature | RT result; unchanged |
++| `T_dir_dn` | Direct-beam attenuation; PSSA when enabled | Exact direct sub-solution |
++| `T_diff_dn_hemi` | BOA diffuse radiance hemispheric integration | Exact RT diagnostic |
++| `T_total_dn_hemi` | Direct plus solved diffuse | Exact RT diagnostic |
++| `T_diff_dn_dir` | Solved BOA Fourier field at view | Exact RT diagnostic |
++| old `T_diff_up_hemi=T_diff_dn_hemi` | Reciprocity approximation | Removed |
++| `T_total_up_view` | `(I_TOA-I_atm_path)/Lu0plus` | Exact effective RT diagnostic |
++| `T_diff_up_view` | Exact total minus exact direct | RT-derived diagnostic |
++| old `T_sg_up_dir` | `rho_glint*mu_sun` | Kept only under explicit `diag_*` label |
++| old `T_total_up_dir` | `rho_TOA*mu_sun` | Kept only under explicit `diag_*` label |
++| `Kd0minus`, `Ku0minus` | One-layer finite difference of solved `Ed/Eu` | RT-field numerical diagnostic; not an analytic transport replacement |
++| gas absorption output | Layer absorption is integrated in SOS in current v1.2 path | RT result; legacy standalone correction helpers are unused |
++| `ocrt_ac_lut.py:Tup_total` for black surfaces | Former downward-table reciprocity | Removed; now NaN/invalid |
++| `ocrt_ac_lut_ORIGINAL_pre3flag.py` | Historical reciprocity implementation | Marked historical/non-production |
++| ocean full-grid with aerosol request | current driver calls the ocean solver with `aer=NULL` | Independent wiring defect: aerosol is not represented; not modified by this output-only patch |
++
++
++## 4. Independent full-grid aerosol wiring issue
++
++`run_ocean_rrs_full_grid_csv()` currently invokes `rt_solve_case_ocean(..., aer=NULL, ...)`.
++Therefore an ocean `--output-full-grid` request cannot be used as an aerosol-coupled
++transmittance product even when the base command supplied a Mie model and AOD.  This is
++not an analytic-transmittance error and is outside the requested output-only patch,
++because correcting it would change full-grid TOA/Rrs values.  It is recorded as a
++separate high-priority wiring issue.  The exact transmittance columns added here are
++valid for the atmosphere actually solved; the validation grid uses no aerosol.
++
++## 5. Important independent fallback
++
++The ocean assembly retains a legacy first-cut TOA fallback only when the
++rigorous atmospheric bottom-source pass fails.  This patch does not alter that
++path because the requested invariant is that TOA and `Rrs/rrs` remain
++unchanged.  Crucially, the fallback is no longer exposed as a valid
++transmittance: `T_up_rt_valid=0` and the upward fields are `NaN`.
++
++A later solver-policy change may replace the fallback with fail-fast behavior,
++but that is a separate core-output availability decision and must receive its
++own regression review.
++
++## 6. Acceptance requirements
++
++1. All pre-existing physical outputs except transmission/diagnostic labels are
++   numerically identical before and after this patch.
++2. For valid ocean runs:
++   `T_total_up_view * Lu0plus == TOA_water_signal_I` within floating precision.
++3. `T_total_dn_hemi == T_dir_dn + T_diff_dn_hemi`.
++4. Black-surface atmospheric runs output `NaN`, `T_up_rt_valid=0` for upward T.
++5. No reciprocity-derived `Tup_total` remains in the production LUT script.
++6. Full-grid ocean CSV includes exact downward and upward RT diagnostics.
+diff --git a/scripts/ocrt_ac_lut.py b/scripts/ocrt_ac_lut.py
+index 9ed62ee..aba9161 100644
+--- a/scripts/ocrt_ac_lut.py
++++ b/scripts/ocrt_ac_lut.py
+@@ -12,11 +12,13 @@ Per (atm x model x aod865 x wavelength x sza x grid-point):
+   Rrs_I/Q/U          surface remote-sensing reflectance (=0 for black surfaces)
+   Tdn_total          COUPLED downward total transmittance = T(sza)  [surface solve, rigorous]
+   Ed_down            downward irradiance at surface = Tdn * mu_sun   (per unit F_sun)
+-  Tup_total          COUPLED upward total transmittance   = T(vza)   [reciprocity THEOREM, rigorous]
++  Tup_total          NaN for black/black_fresnel runs: no upward BOA source exists
++  Tup_rt_valid        0 for these runs
+ 
+-T(theta)=irradiance_transmittance from a SURF_FLAG solve, sun at zenith theta. Coupled (includes
+-surface-atmosphere coupling). Tdn=T(sza), Tup(vza)=T(vza). Table shared across all SZA (it is a
+-function of the view/source zenith only), so the SZA sweep only multiplies the reflectance solves.
++Tdn is obtained from an explicit m=0 RT surface solve.  The former assignment
++Tup(vza)=Tdn(theta=vza) by reciprocity has been removed: directional upward transmission
++is source/BRDF dependent and must be taken from an ocean-coupled OCRT solve that reports
++T_total_up_view with T_up_rt_valid=1.
+ """
+ import csv, math, os, subprocess, sys, tempfile
+ TMPDIR = tempfile.gettempdir()
+@@ -74,13 +76,16 @@ def aod_at(tbl,aod865,wl):
+ 
+ def _run(sza,wl,extra,tag,vstep,vmax,rstep):
+     out=os.path.join(TMPDIR, f"ocrt_{tag}.csv")
+-    cmd=[OCRT_BIN,"--surface",SURF_FLAG,"--decouple-sunglint","--gas-column-h2o","0","--gas-column-o3","0","--gas-column-no2","0","--gas-column-o2","0","--gas-column-co2","0","--gas-column-ch4","0","--sza",str(sza),"--vza","0","--raa","0",
++    cmd=[OCRT_BIN,"--surface",SURF_FLAG,"--decouple-sunglint","--gas-column-h2o","0","--gas-column-o3","0","--gas-column-no2","0","--gas-column-o2","0","--gas-column-co2","0","--gas-column-ch4","0","--sza",str(sza),
+          "--wavelength",str(wl),"--lut-vza-step",str(vstep),"--lut-vza-max",str(vmax),"--lut-raa-step",str(rstep),
+          "--output-full-grid",out]
+     if SURF_FLAG=="coxmunk": cmd+=["--wind-speed",str(WIND)]
+     else: cmd+=["--wind-speed","0"]  # 2026-07-15 G4: wind 필수화 -- 종전 ocean 경로는 미지정(=0) 물리였으므로 0 명시
+     cmd+=extra
+-    r=subprocess.run(cmd,cwd=RUNDIR,capture_output=True,text=True)
++    run_env=os.environ.copy()
++    # The internal m=0 irradiance solve is an intentional convergence override.
++    run_env.setdefault("OCRT_ADVANCED", "1")
++    r=subprocess.run(cmd,cwd=RUNDIR,capture_output=True,text=True,env=run_env)
+     if r.returncode!=0:
+         sys.stderr.write(f"[FAIL] {tag} sza={sza}: {r.stderr.strip()[-160:]}\n"); return None
+     path=out if os.path.isabs(out) else os.path.join(RUNDIR,out)
+@@ -95,11 +100,14 @@ def _force_m0(extra):
+     return out+["--m-max","0"]
+ 
+ def trans_table(extra,wl,tag):
+-    """Coupled T(theta)=irradiance_transmittance(SURF_FLAG, sun at theta), per VZA node. Shared across SZA.
+-    m=0 only: the downward irradiance is azimuthally integrated, so only the m=0 Fourier mode contributes."""
++    """Exact downward total transmittance at every requested SZA.
++
++    The hemispheric irradiance uses only m=0, but each SZA is solved explicitly;
++    no zenith-angle interpolation is used for the published Tdn_total values.
++    """
+     e0=_force_m0(extra)
+     T={}
+-    for th in VZA_NODES:
++    for th in sorted(set(SZA_LIST)):
+         rows=_run(th,wl,e0,f"{tag}_T{int(th)}",80.0,80.0,180.0)
+         if rows is None: return None
+         T[th]=float(rows[0][C_TIRRAD])
+@@ -113,22 +121,25 @@ def refl_grid(extra,wl,sza,tag):
+ 
+ FIELDS=["surface","atm","model","aod865","wavelength","sza","vza","raa",
+         "rho_I","rho_Q","rho_U","rho_rayleigh_I","rho_rayleigh_Q","rho_rayleigh_U",
+-        "Rrs_I","Rrs_Q","Rrs_U","Tdn_total","Ed_down","Tup_total"]
++        "Rrs_I","Rrs_Q","Rrs_U","Tdn_total","Ed_down",
++        "Tup_total","Tup_rt_valid","Tup_method"]
+ 
+ def config_rows(atm,model,aod865,wl,extra,tag,ray_by_sza):
+     T=trans_table(extra,wl,tag)
+     if T is None: return [],None
+-    Tn=[T[n] for n in VZA_NODES]
+     out=[]; my_ray={}
+     for sza in SZA_LIST:
+         grid=refl_grid(extra,wl,sza,tag)
+         if grid is None: continue
+         mu=math.cos(math.radians(sza))
+-        Tdn=T[sza] if sza in T else linterp(VZA_NODES,Tn,sza)
++        Tdn=T[sza]
+         Ed=Tdn*mu
+         if atm=="rayleigh": my_ray[sza]={}
+         for (vza,raa),(rI,rQ,rU) in sorted(grid.items()):
+-            Tup=T[vza] if vza in T else linterp(VZA_NODES,Tn,vza)
++            # No upward BOA source is prescribed in black/black_fresnel LUT solves.
++            # Reporting T(vza) from the downward table was a reciprocity approximation
++            # that ignored source angular distribution and BRDF.
++            Tup=float("nan")
+             if atm=="rayleigh_aerosol" and ray_by_sza:
+                 rr=ray_by_sza.get(sza,{}).get((vza,raa),("","",""))
+             elif atm=="rayleigh":
+@@ -137,7 +148,8 @@ def config_rows(atm,model,aod865,wl,extra,tag,ray_by_sza):
+             out.append(dict(surface=SURFACE,atm=atm,model=model,aod865=aod865,wavelength=wl,sza=sza,
+                 vza=vza,raa=raa,rho_I=rI,rho_Q=rQ,rho_U=rU,
+                 rho_rayleigh_I=rr[0],rho_rayleigh_Q=rr[1],rho_rayleigh_U=rr[2],
+-                Rrs_I=0.0,Rrs_Q=0.0,Rrs_U=0.0,Tdn_total=Tdn,Ed_down=Ed,Tup_total=Tup))
++                Rrs_I=0.0,Rrs_Q=0.0,Rrs_U=0.0,Tdn_total=Tdn,Ed_down=Ed,
++                Tup_total=Tup,Tup_rt_valid=0,Tup_method="undefined_no_upward_BOA_source"))
+     return out,(my_ray if atm=="rayleigh" else None)
+ 
+ def main():
+@@ -149,7 +161,7 @@ def main():
+     sys.stderr.write(f"OCRT_BIN = {OCRT_BIN}\nRUNDIR   = {RUNDIR}\nsurface  = {SURFACE}  models={MODELS}\n")
+     out_csv=os.path.abspath(sys.argv[1] if len(sys.argv)>1 else os.path.join(TMPDIR,"ac_lut.csv"))
+     tables={m:read_mie(m) for m in MODELS}
+-    rows=[]; nsolve=0; NPER=len(VZA_NODES)+len(SZA_LIST)
++    rows=[]; nsolve=0; NPER=2*len(SZA_LIST)
+     ray_by_wl={}
+     for wl in WAVELENGTHS:
+         r,ray=config_rows("rayleigh","none",0.0,wl,["--pressure","1013.25","--aod","0"],f"ray{int(wl)}",None)
+diff --git a/scripts/ocrt_ac_lut_ORIGINAL_pre3flag.py b/scripts/ocrt_ac_lut_ORIGINAL_pre3flag.py
+index 128fa84..aec39fe 100644
+--- a/scripts/ocrt_ac_lut_ORIGINAL_pre3flag.py
++++ b/scripts/ocrt_ac_lut_ORIGINAL_pre3flag.py
+@@ -1,4 +1,9 @@
+ #!/usr/bin/env python3
++# HISTORICAL SNAPSHOT ONLY.
++# This file retains the removed reciprocity approximation Tup(vza)=Tdn(vza)
++# for provenance.  It is not a valid production generator for BRDF-dependent
++# upward atmospheric transmittance.  Use scripts/ocrt_ac_lut.py and an
++# ocean-coupled T_total_up_view output with T_up_rt_valid=1.
+ """
+ OCRT atmospheric-correction LUT driver (rigorous, coupled, SZA-swept).
+ 
+@@ -12,7 +17,7 @@ Per (atm x model x aod865 x wavelength x sza x grid-point):
+   Rrs_I/Q/U          surface remote-sensing reflectance (=0 for black surfaces)
+   Tdn_total          COUPLED downward total transmittance = T(sza)  [surface solve, rigorous]
+   Ed_down            downward irradiance at surface = Tdn * mu_sun   (per unit F_sun)
+-  Tup_total          COUPLED upward total transmittance   = T(vza)   [reciprocity THEOREM, rigorous]
++  Tup_total          HISTORICAL INVALID: downward-table reciprocity approximation
+ 
+ T(theta)=irradiance_transmittance from a SURF_FLAG solve, sun at zenith theta. Coupled (includes
+ surface-atmosphere coupling). Tdn=T(sza), Tup(vza)=T(vza). Table shared across all SZA (it is a
+diff --git a/scripts/regression_rt_derived_transmittance_output.sh b/scripts/regression_rt_derived_transmittance_output.sh
+new file mode 100755
+index 0000000..3766f81
+--- /dev/null
++++ b/scripts/regression_rt_derived_transmittance_output.sh
+@@ -0,0 +1,162 @@
++#!/usr/bin/env bash
++set -euo pipefail
++
++ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
++FIXED=${1:-"$ROOT/build/ocrt"}
++BASELINE=${2:-}
++TMP=$(mktemp -d)
++trap 'rm -rf "$TMP"' EXIT
++
++export OMP_NUM_THREADS=${OMP_NUM_THREADS:-1}
++export OCRT_ADVANCED=1
++export OCRT_WATER_GRID_CACHE=0
++export OCRT_ATM_GRID_CACHE=0
++
++GAS_OFF=(
++  --gas-column-h2o 0 --gas-column-o3 0 --gas-column-no2 0
++  --gas-column-o2 0 --gas-column-co2 0 --gas-column-ch4 0
++)
++COMMON=(
++  --surface ocean --water-model ocrt
++  --ocrt-chl 0 --ocrt-tsm 0 --ocrt-adom440 0
++  --wind-speed 3 --sza 40 --vza 30 --raa 90 --wavelength 555
++  --water-m-max 16
++)
++
++run_set() {
++  local bin=$1 prefix=$2
++  (
++    cd "$ROOT"
++    "$bin" "${COMMON[@]}" --rayleigh off "${GAS_OFF[@]}" \
++      >"$TMP/${prefix}_noatm.out" 2>"$TMP/${prefix}_noatm.err"
++    "$bin" "${COMMON[@]}" "${GAS_OFF[@]}" \
++      >"$TMP/${prefix}_rayleigh.out" 2>"$TMP/${prefix}_rayleigh.err"
++    "$bin" "${COMMON[@]}" \
++      --mie inputs/M80C.mie --aod-865 0.1 --aer-l-max 80 --m-max 16 \
++      --aer-h-km 2 --n-layers 40 "${GAS_OFF[@]}" \
++      >"$TMP/${prefix}_rayaer.out" 2>"$TMP/${prefix}_rayaer.err"
++    "$bin" --surface black --wind-speed 0 --sza 40 --vza 30 --raa 90 \
++      --wavelength 555 "${GAS_OFF[@]}" \
++      >"$TMP/${prefix}_black.out" 2>"$TMP/${prefix}_black.err"
++  )
++}
++
++run_set "$FIXED" fixed
++if [[ -n "$BASELINE" ]]; then run_set "$BASELINE" baseline; fi
++
++(
++  cd "$ROOT"
++  OCRT_WATER_GRID_CACHE=1 OCRT_ATM_GRID_CACHE=1 \
++  "$FIXED" --surface ocean --water-model ocrt \
++    --ocrt-chl 0 --ocrt-tsm 0 --ocrt-adom440 0 --wind-speed 3 \
++    --sza 40 --wavelength 555 --n-mu 8 --n-mu-water 8 --water-m-max 4 --rayleigh off \
++    --lut-vza-step 60 --lut-vza-max 60 --lut-raa-step 180 \
++    --output-full-grid "$TMP/ocean_grid.csv" "${GAS_OFF[@]}" \
++    >"$TMP/ocean_grid.out" 2>"$TMP/ocean_grid.err"
++)
++
++python3 - "$TMP" "$BASELINE" "$ROOT/scripts/ocrt_ac_lut.py" <<'PY'
++from __future__ import annotations
++import csv
++import math
++import pathlib
++import sys
++
++root = pathlib.Path(sys.argv[1])
++have_baseline = bool(sys.argv[2])
++lut_script = pathlib.Path(sys.argv[3])
++
++
++def parse(path: pathlib.Path) -> dict[str, float | list[float]]:
++    line = path.read_text().strip().splitlines()[-1]
++    toks = line.split()
++    out: dict[str, float | list[float]] = {"_lead": [float(x) for x in toks[:3]]}
++    for tok in toks[3:]:
++        if "=" not in tok:
++            continue
++        key, value = tok.split("=", 1)
++        try:
++            out[key] = float(value)
++        except ValueError:
++            pass
++    return out
++
++
++def close(a: float, b: float, rel: float = 2e-9, abs_: float = 5e-12) -> bool:
++    return math.isclose(a, b, rel_tol=rel, abs_tol=abs_)
++
++
++for name in ("noatm", "rayleigh", "rayaer"):
++    d = parse(root / f"fixed_{name}.out")
++    required = {
++        "T_dir_dn", "T_diff_dn_hemi", "T_total_dn_hemi", "T_diff_dn_dir",
++        "T_dir_up_view", "T_diff_up_view", "T_total_up_view",
++        "TOA_water_signal_I", "T_up_rt_valid", "Lu0plus",
++    }
++    missing = sorted(required - d.keys())
++    if missing:
++        raise SystemExit(f"{name}: missing fields {missing}")
++    if int(d["T_up_rt_valid"]) != 1:
++        raise SystemExit(f"{name}: expected T_up_rt_valid=1")
++    if not close(d["T_total_dn_hemi"], d["T_dir_dn"] + d["T_diff_dn_hemi"], 2e-10, 2e-11):
++        raise SystemExit(f"{name}: downward RT identity failed")
++    # stdout Lu has fewer printed digits than the transmission fields.
++    if not close(d["T_total_up_view"] * d["Lu0plus"], d["TOA_water_signal_I"], 5e-6, 8e-10):
++        raise SystemExit(f"{name}: upward RT identity failed")
++    if name == "noatm":
++        for key, expected in (("T_total_dn_hemi", 1.0), ("T_total_up_view", 1.0), ("T_diff_up_view", 0.0)):
++            if not close(d[key], expected, 0.0, 2e-12):
++                raise SystemExit(f"noatm: {key}={d[key]} expected={expected}")
++
++black = parse(root / "fixed_black.out")
++if int(black.get("T_up_rt_valid", -1)) != 0:
++    raise SystemExit("black: upward T must be invalid without an upward BOA source")
++for key in ("T_diff_up_view", "T_total_up_view", "TOA_water_signal_I"):
++    if not math.isnan(float(black[key])):
++        raise SystemExit(f"black: {key} must be NaN")
++
++if have_baseline:
++    ignored_prefixes = ("T_", "diag_", "TOA_water_signal_I")
++    for name in ("noatm", "rayleigh", "rayaer", "black"):
++        old = parse(root / f"baseline_{name}.out")
++        new = parse(root / f"fixed_{name}.out")
++        if old["_lead"] != new["_lead"]:
++            raise SystemExit(f"{name}: leading TOA rho changed")
++        for key in sorted(set(old) & set(new)):
++            if key == "_lead" or key.startswith(ignored_prefixes):
++                continue
++            a, b = float(old[key]), float(new[key])
++            if math.isnan(a) and math.isnan(b):
++                continue
++            if a != b:
++                raise SystemExit(f"{name}: non-trans output changed: {key}: {a} -> {b}")
++
++with (root / "ocean_grid.csv").open(newline="") as f:
++    rows = list(csv.DictReader(f))
++if not rows:
++    raise SystemExit("ocean full-grid output is empty")
++required_grid = {
++    "T_dir_dn", "T_diff_dn_hemi", "T_total_dn_hemi", "T_diff_dn_dir",
++    "T_dir_up_view", "T_diff_up_view", "T_total_up_view",
++    "TOA_water_signal_I", "T_up_rt_valid", "Lu0plus_I",
++}
++missing = sorted(required_grid - rows[0].keys())
++if missing:
++    raise SystemExit(f"ocean grid missing exact T columns: {missing}")
++for i, row in enumerate(rows):
++    vals = {k: float(row[k]) for k in required_grid}
++    if int(vals["T_up_rt_valid"]) != 1:
++        raise SystemExit(f"grid row {i}: invalid upward RT")
++    if not close(vals["T_total_dn_hemi"], vals["T_dir_dn"] + vals["T_diff_dn_hemi"], 5e-10, 5e-12):
++        raise SystemExit(f"grid row {i}: downward identity failed")
++    if not close(vals["T_total_up_view"] * vals["Lu0plus_I"], vals["TOA_water_signal_I"], 5e-10, 5e-12):
++        raise SystemExit(f"grid row {i}: upward identity failed")
++
++text = lut_script.read_text()
++if "Tup=T[vza]" in text or "reciprocity THEOREM, rigorous" in text:
++    raise SystemExit("production AC LUT script still contains reciprocity-derived Tup")
++if 'Tup_rt_valid=0' not in text:
++    raise SystemExit("production AC LUT script does not invalidate undefined upward T")
++
++print(f"RT_DERIVED_TRANSMITTANCE_OUTPUT PASS cases=4 grid_rows={len(rows)} baseline_compare={int(have_baseline)}")
++PY
+diff --git a/scripts/smoke_radiometry_flux_split.sh b/scripts/smoke_radiometry_flux_split.sh
+index f41d64e..13997a2 100755
+--- a/scripts/smoke_radiometry_flux_split.sh
++++ b/scripts/smoke_radiometry_flux_split.sh
+@@ -52,6 +52,9 @@ keys = {
+     "Ed0plus_direct", "Ed0plus_diffuse",
+     "Ed0minus_direct", "Ed0minus_diffuse",
+     "Eu0minus_direct", "Eu0minus_diffuse",
++    "T_dir_dn", "T_diff_dn_hemi", "T_total_dn_hemi",
++    "T_dir_up_view", "T_diff_up_view", "T_total_up_view",
++    "TOA_water_signal_I", "T_up_rt_valid", "Lu0plus",
+ }
+ 
+ def parse_line(path: pathlib.Path) -> dict[str, float]:
+@@ -84,6 +87,12 @@ for name in ("noatm", "atm", "pssa"):
+     check_printed_sum(d, "Eu0minus", "Eu0minus_direct", "Eu0minus_diffuse")
+     if d["Eu0minus_direct"] != 0.0:
+         raise SystemExit(f"{name}: Eu0minus_direct must be zero in the current black-bottom model")
++    if abs(d["T_total_dn_hemi"] - (d["T_dir_dn"] + d["T_diff_dn_hemi"])) > 2.0e-10:
++        raise SystemExit(f"{name}: T_total_dn_hemi identity failed")
++    if int(d["T_up_rt_valid"]) != 1:
++        raise SystemExit(f"{name}: expected rigorous upward RT output")
++    if abs(d["T_total_up_view"] * d["Lu0plus"] - d["TOA_water_signal_I"]) > 8.0e-10:
++        raise SystemExit(f"{name}: T_total_up_view RT identity failed")
+ 
+ noatm = parse_line(root / "noatm.out")
+ atm = parse_line(root / "atm.out")
+diff --git a/src/main.c b/src/main.c
+index 9826afa..b8ea4c1 100755
+--- a/src/main.c
++++ b/src/main.c
+@@ -1073,7 +1073,10 @@ static int run_ocean_rrs_full_grid_csv(const char *out_csv,
+         "Ed0minus_water,Ed0minus_direct,Ed0minus_diffuse,"
+         "Eu0minus_water,Eu0minus_direct,Eu0minus_diffuse,"
+         "Lu0minus_I,Lu0minus_Q,Lu0minus_U,rrs_I,"
+-        "TOA_rho_I,TOA_rho_Q,TOA_rho_U,a_total,b_total,bb_total,omega_water,water_orders,water_converged\n");
++        "TOA_rho_I,TOA_rho_Q,TOA_rho_U,"
++        "T_dir_dn,T_diff_dn_hemi,T_total_dn_hemi,T_diff_dn_dir,"
++        "T_dir_up_view,T_diff_up_view,T_total_up_view,TOA_water_signal_I,T_up_rt_valid,"
++        "a_total,b_total,bb_total,omega_water,water_orders,water_converged\n");
+ 
+     /* v1.09 commit #16: full-grid single-solve mode.
+      * The water m-mode solve is view-independent; enable the sos_pure grid
+@@ -1132,7 +1135,10 @@ static int run_ocean_rrs_full_grid_csv(const char *out_csv,
+                 "%.12e,%.12e,%.12e,%.12e,%.12e,%.12e,"
+                 "%.12e,%.12e,%.12e,%.12e,%.12e,%.12e,"
+                 "%.12e,%.12e,%.12e,%.12e,"
+-                "%.12e,%.12e,%.12e,%.12e,%.12e,%.12e,%.12e,%d,%d\n",
++                "%.12e,%.12e,%.12e,"
++                "%.12e,%.12e,%.12e,%.12e,"
++                "%.12e,%.12e,%.12e,%.12e,%d,"
++                "%.12e,%.12e,%.12e,%.12e,%d,%d\n",
+                 cs.sza_deg, cs.wavelength_nm, cs.wind_speed, n_mu, iv, m, vza, raa,
+                 r.Ed_0plus_air, r.Ed_0plus_direct, r.Ed_0plus_diffuse,
+                 r.Lu_0plus_view, r.Qu_0plus_view, r.Uu_0plus_view,
+@@ -1142,6 +1148,9 @@ static int run_ocean_rrs_full_grid_csv(const char *out_csv,
+                 r.Lu_0minus_view, r.Qu_0minus_view, r.Uu_0minus_view,
+                 r.r_rs_0minus,
+                 r.rho_I, r.rho_Q, r.rho_U,
++                r.T_dir_dn, r.T_diff_dn_hemi, r.T_total_dn_hemi, r.T_diff_dn_dir,
++                r.T_dir_up_view, r.T_diff_up_view, r.T_total_up_view,
++                r.I_TOA_water_signal, r.T_up_rt_valid,
+                 r.a_total_used, r.b_total_used, r.bb_total_used, r.omega_water,
+                 r.n_orders_used, r.converged);
+         }
+@@ -3559,7 +3568,8 @@ int main(int argc, char **argv) {
+         fprintf(fp, "sza_deg,wavelength_nm,vza_deg,raa_deg,"
+                     "rho_I,rho_Q,rho_U,"
+                     "direct_transmittance,irradiance_transmittance,"
+-                    "diffuse_dn_hemi,diffuse_dn_dir,sunglint_up_dir,total_up_dir\n");
++                    "diffuse_dn_hemi,diffuse_dn_dir,"
++                    "sunglint_up_flux_ratio_diag,toa_up_flux_ratio_diag\n");
+         const double T_irrad_case = lut.T_dir_dn + lut.T_diff_dn_hemi;
+         for (int iv = 0; iv < n_vza; ++iv) {
+             for (int ir = 0; ir < n_raa; ++ir) {
+diff --git a/src/rt_io.c b/src/rt_io.c
+index de0eef0..c3001c4 100755
+--- a/src/rt_io.c
++++ b/src/rt_io.c
+@@ -290,15 +290,16 @@ int rt_io_run_batch(const char *in_csv, const char *out_csv,
+                  *                                (= F_BOA(0+) / F_TOA, total flux)
+                  *   diffuse_dn_hemi            = T_diff_dn_hemi (diffuse-only flux)
+                  *   diffuse_dn_dir(μ_v,φ)      = T_diff_dn_dir   (directional radiance T)
+-                 *   sunglint_up_dir(μ_v,φ)     = T_sg_up_dir     (directional radiance T)
+-                 *   total_up_dir(μ_v,φ)        = T_total_up_dir  (directional radiance T)
++                 *   sunglint_up_flux_ratio_diag = rho_glint * mu_sun (NOT atm T)
++                 *   toa_up_flux_ratio_diag      = rho_TOA   * mu_sun (NOT atm T)
+                  *
+                  * "0+ side" = atm-side at the surface (just above water);
+                  * 0- side (just below water) is not produced (black ocean). */
+                 fprintf(fl, "sza_deg,wavelength_nm,vza_deg,raa_deg,"
+                             "rho_I,rho_Q,rho_U,"
+                             "direct_transmittance,irradiance_transmittance,"
+-                            "diffuse_dn_hemi,diffuse_dn_dir,sunglint_up_dir,total_up_dir\n");
++                            "diffuse_dn_hemi,diffuse_dn_dir,"
++                            "sunglint_up_flux_ratio_diag,toa_up_flux_ratio_diag\n");
+                 const double T_irrad_case = lut.T_dir_dn + lut.T_diff_dn_hemi;
+                 for (int iv = 0; iv < lut.n_vza; ++iv) {
+                     for (int ir = 0; ir < lut.n_raa; ++ir) {
+@@ -462,8 +463,8 @@ void rt_io_print_single(const rt_case_t *cs, const rt_result_t *res) {
+                "TOA_rho_water_total_I=%.10e TOA_rho_water_total_Q=%.10e TOA_rho_water_total_U=%.10e "
+                "TOA_rho_glint_direct_I=%.10e TOA_rho_glint_direct_Q=%.10e TOA_rho_glint_direct_U=%.10e "
+                "TOA_rho_glint_on_I=%.10e TOA_rho_glint_on_Q=%.10e TOA_rho_glint_on_U=%.10e "
+-               "T_dir_dn=%.10e T_diff_dn_hemi=%.10e T_diff_dn_dir=%.10e "
+-               "T_dir_up_view=%.10e T_diff_up_hemi=%.10e T_total_up_view=%.10e "
++               "T_dir_dn=%.10e T_diff_dn_hemi=%.10e T_total_dn_hemi=%.10e T_diff_dn_dir=%.10e "
++               "T_dir_up_view=%.10e T_diff_up_view=%.10e T_total_up_view=%.10e TOA_water_signal_I=%.10e T_up_rt_valid=%d "
+                "AOD_ref=%.10e AOD_ref_nm=%.3f AOD_band=%.10e AOD_ext_ratio=%.10e "
+                "Lu0plus=%.6e Qu0plus=%.6e Uu0plus=%.6e Ed0plus=%.6e "
+                "Ed0plus_direct=%.6e Ed0plus_diffuse=%.6e "
+@@ -487,8 +488,8 @@ void rt_io_print_single(const rt_case_t *cs, const rt_result_t *res) {
+                res->rho_water_total_I, res->rho_water_total_Q, res->rho_water_total_U,
+                res->rho_glint_direct_I, res->rho_glint_direct_Q, res->rho_glint_direct_U,
+                res->rho_I_glint, res->rho_Q_glint, res->rho_U_glint,
+-               res->T_dir_dn, res->T_diff_dn_hemi, res->T_diff_dn_dir,
+-               res->T_dir_up_view, res->T_diff_up_hemi, res->T_total_up_view,
++               res->T_dir_dn, res->T_diff_dn_hemi, res->T_total_dn_hemi, res->T_diff_dn_dir,
++               res->T_dir_up_view, res->T_diff_up_view, res->T_total_up_view, res->I_TOA_water_signal, res->T_up_rt_valid,
+                res->aerosol_aod_ref, res->aerosol_aod_ref_nm, res->aerosol_aod_band, res->aerosol_extinction_ratio,
+                res->Lu_0plus_view, res->Qu_0plus_view, res->Uu_0plus_view, res->Ed_0plus_air,
+                res->Ed_0plus_direct, res->Ed_0plus_diffuse,
+@@ -510,16 +511,16 @@ void rt_io_print_single(const rt_case_t *cs, const rt_result_t *res) {
+     printf("%.10e %.10e %.10e  "
+            "TOA_rho_I=%.10e TOA_rho_Q=%.10e TOA_rho_U=%.10e "
+            "TOA_rho_glint_direct_I=%.10e TOA_rho_glint_direct_Q=%.10e TOA_rho_glint_direct_U=%.10e "
+-           "T_dir_dn=%.10e T_diff_dn_hemi=%.10e T_diff_dn_dir=%.10e "
+-           "T_dir_up_view=%.10e T_diff_up_hemi=%.10e T_total_up_view=%.10e "
+-           "T_sg_up_dir=%.10e T_total_up_dir=%.10e "
++           "T_dir_dn=%.10e T_diff_dn_hemi=%.10e T_total_dn_hemi=%.10e T_diff_dn_dir=%.10e "
++           "T_dir_up_view=%.10e T_diff_up_view=%.10e T_total_up_view=%.10e TOA_water_signal_I=%.10e T_up_rt_valid=%d "
++           "diag_sunglint_up_flux_ratio=%.10e diag_TOA_up_flux_ratio=%.10e "
+            "AOD_ref=%.10e AOD_ref_nm=%.3f AOD_band=%.10e AOD_ext_ratio=%.10e "
+            "tau_R=%.10e sza=%.3f vza=%.3f raa=%.3f wl=%.3f orders=%d conv=%d\n",
+            res->rho_I, res->rho_Q, res->rho_U,
+            res->rho_I, res->rho_Q, res->rho_U,
+            res->rho_glint_direct_I, res->rho_glint_direct_Q, res->rho_glint_direct_U,
+-           res->T_dir_dn, res->T_diff_dn_hemi, res->T_diff_dn_dir,
+-           res->T_dir_up_view, res->T_diff_up_hemi, res->T_total_up_view,
++           res->T_dir_dn, res->T_diff_dn_hemi, res->T_total_dn_hemi, res->T_diff_dn_dir,
++           res->T_dir_up_view, res->T_diff_up_view, res->T_total_up_view, res->I_TOA_water_signal, res->T_up_rt_valid,
+            res->T_sg_up_dir, res->T_total_up_dir,
+            res->aerosol_aod_ref, res->aerosol_aod_ref_nm, res->aerosol_aod_band, res->aerosol_extinction_ratio,
+            res->tau_R_total,
+diff --git a/src/rt_solver.c b/src/rt_solver.c
+index cc96358..41cad76 100644
+--- a/src/rt_solver.c
++++ b/src/rt_solver.c
+@@ -938,6 +938,7 @@ static int rt_solve_case_pol_impl(const rt_case_t *cs, const rt_options_t *opts,
+         }
+         F_dn_diff *= 2.0 * pi;
+         out->T_diff_dn_hemi = F_dn_diff / (pi * mu_solar);
++        out->T_total_dn_hemi = out->T_dir_dn + out->T_diff_dn_hemi;
+ 
+         /* Directional T_diff_dn at single-view (μ_view, raa). */
+         const double *mu_quad_pos = &atm.rm[+1];
+@@ -970,8 +971,14 @@ static int rt_solve_case_pol_impl(const rt_case_t *cs, const rt_options_t *opts,
+         out->rho_atm_path_Q = out->rho_Q;
+         out->rho_atm_path_U = out->rho_U;
+         out->T_dir_up_view = exp(-tau_tot / ((mu_view > 0.0) ? mu_view : 1.0));
+-        out->T_diff_up_hemi = out->T_diff_dn_hemi;
+-        out->T_total_up_view = out->T_dir_up_view + out->T_diff_up_hemi;
++        /* A solved atmosphere+surface case has no prescribed upward source at
++         * BOA, so an upward atmospheric transmission cannot be inferred from
++         * rho_TOA.  The former reciprocity shortcut T_diff_up=T_diff_dn was not
++         * an RT solution and is deliberately removed. */
++        out->T_diff_up_view = NAN;
++        out->T_total_up_view = NAN;
++        out->I_TOA_water_signal = NAN;
++        out->T_up_rt_valid = 0;
+ 
+         /* Direct sunglint upward at single-view: T_sg_up_dir = ρ_glint · μ_sun.
+          * Cox-Munk only; flat-Fresnel direct sunglint is part of the SOS BC. */
+@@ -5746,41 +5753,43 @@ int rt_solve_case_ocean(const rt_case_t *cs, const rt_options_t *opts,
+     out->omega_water     = w_res.omega_used;
+     out->tau_max_water   = w_res.tau_max_used;
+ 
+-    /* Atmospheric-pipeline output (Stage 2d):
+-     *   True TOA Stokes = atm path radiance + Lu_above × T_atm_up_total
++    /* Atmospheric-pipeline fallback used only when a rigorous bottom-source
++     * pass is unavailable:
++     *   TOA Stokes ~= atm path radiance + Lu_above × T_atm_up_fallback
+      *
+-     * Stage 2d step1: T_atm_up = exp(-τ_atm/μ_v_air)  (direct upward only)
+-     * Stage 2d step2 (this implementation):
+-     *   T_atm_up_total = T_dir_up + T_diff_up_hemi  (Lambertian-equivalent)
++     * Stage 2d step1: T_atm_dir_up = exp(-τ_atm/μ_v_air)
++     * Stage 2d step2 (legacy fallback only):
++     *   T_atm_up_fallback = T_dir_up + T_diff_dn_hemi
+      *
+      * Approximation rationale (짚어둘 limitations):
+      *   (i) Lu_above가 *Lambertian-equivalent isotropic source*로 근사. 실제로는
+      *       view-dependent 분포를 가지지만, *atm scattering이 directional spread를
+      *       완화*하므로 *hemispheric average*가 *합리적 first-cut*.
+-     *   (ii) *Reciprocity*: T_diff_up_hemi ≈ T_diff_dn_hemi (atm_res diagnostic).
++     *   (ii) legacy reciprocity approximation T_diff_up ~= T_diff_dn.
+      *        엄밀한 *directional Mueller*는 atm SOS의 *bottom Lambertian BC*로
+      *        별도 실행해야 정확 — step2d step3 (다음 작업).
+      *   (iii) *No absorption* term 가정 — Rayleigh+aerosol scattering atm에서
+      *         absorption τ_abs > 0이면 *T_diff_dn_hemi*가 이미 absorption 효과
+      *         포함하므로 *first-order 정확*.
+      *
++     * This approximation is NEVER exported as an atmospheric transmission
++     * diagnostic.  Public upward transmission is derived below from the
++     * rigorous RT water-signal numerator and is NaN when that solve is absent.
++     *
+      *   Q, U components: Lambertian-equivalent에서는 *unpolarized scattering*만
+      *   고려 → Qu_above, Uu_above에는 T_dir만 적용 (T_diff에 의한 polarization
+      *   mixing은 step3에서). */
+     double mu_v_air_for_T = (mu_v_air > 0.0) ? mu_v_air : 1.0;
+     double T_atm_dir_up_view = (atm_branch_executed && tau_atm > 0.0) ?
+                                 exp(-tau_atm / mu_v_air_for_T) : 1.0;
+-    double T_atm_diff_up_view = 0.0;
++    double T_atm_diff_up_fallback = 0.0;
+     if (atm_branch_executed) {
+         /* Retrieve T_diff_dn_hemi from atm SOS diagnostic.
+          * (atm_res was discarded after the SOS branch — preserve T_diff_dn_hemi
+          *  via a new outer-scope variable below.) */
+-        T_atm_diff_up_view = atm_T_diff_dn_hemi_cache;
++        T_atm_diff_up_fallback = atm_T_diff_dn_hemi_cache;
+     }
+-    double T_atm_up_view = T_atm_dir_up_view + T_atm_diff_up_view;
+-    out->T_dir_up_view   = T_atm_dir_up_view;
+-    out->T_diff_up_hemi  = T_atm_diff_up_view;
+-    out->T_total_up_view = T_atm_up_view;
++    double T_atm_up_fallback = T_atm_dir_up_view + T_atm_diff_up_fallback;
+ 
+     /* C3d: atmosphere present => the DIRECT-beam water-leaving is propagated
+      * rigorously by the 2nd atm SOS pass (TOA_wl_direct already includes the atm
+@@ -5790,12 +5799,12 @@ int rt_solve_case_ocean(const rt_case_t *cs, const rt_options_t *opts,
+     /* C3-full: skylight water-leaving TOA term — rigorous atm SOS bottom-source
+      * pass (wl_sky_rigorous_done) when available, else the prior C3d first-cut
+      * (hemispheric T_atm_up for I, direct-only T for Q/U). */
+-    double sky_TOA_I = wl_sky_rigorous_done ? TOA_wl_sky_I : (Lu_above_diff_from_atm * T_atm_up_view);
++    double sky_TOA_I = wl_sky_rigorous_done ? TOA_wl_sky_I : (Lu_above_diff_from_atm * T_atm_up_fallback);
+     double sky_TOA_Q = wl_sky_rigorous_done ? TOA_wl_sky_Q : (Qu_above_diff_from_atm * T_atm_dir_up_view);
+     double sky_TOA_U = wl_sky_rigorous_done ? TOA_wl_sky_U : (Uu_above_diff_from_atm * T_atm_dir_up_view);
+     if (getenv("OCRT_DUMP_C3FULL")) {
+-        double sky_fc_view  = Lu_above_diff_from_atm * T_atm_up_view;  /* N=4 view-radiance based */
+-        double sky_fc_field = sky_above_m0_at_view   * T_atm_up_view;  /* m=0 field based (kr0only-safe) */
++        double sky_fc_view  = Lu_above_diff_from_atm * T_atm_up_fallback;  /* N=4 view-radiance based */
++        double sky_fc_field = sky_above_m0_at_view   * T_atm_up_fallback;  /* m=0 field based (kr0only-safe) */
+         fprintf(stderr,
+             "[C3FULL] sky_rig_done=%d | TOA_wl_direct_I=%.6e | sky_rig_I=%.6e | "
+             "sky_fc_view=%.6e | sky_fc_field=%.6e | rig/fc_field=%.4f | sky_rig/direct=%.4f\n",
+@@ -5810,7 +5819,7 @@ int rt_solve_case_ocean(const rt_case_t *cs, const rt_options_t *opts,
+         Q_TOA_total = atm_path_Q + TOA_wl_direct_Q + sky_TOA_Q;
+         U_TOA_total = atm_path_U + TOA_wl_direct_U + sky_TOA_U;
+     } else {
+-        I_TOA_total = atm_path_I + Lu_total_above * T_atm_up_view;
++        I_TOA_total = atm_path_I + Lu_total_above * T_atm_up_fallback;
+         /* For Q, U: apply only direct upward (Lambertian diffuse approximation
+          * doesn't transfer linear polarization at first order) */
+         Q_TOA_total = atm_path_Q + Qu_total_above * T_atm_dir_up_view;
+@@ -5819,7 +5828,38 @@ int rt_solve_case_ocean(const rt_case_t *cs, const rt_options_t *opts,
+ 
+     out->T_dir_dn = ocrt_T_dir_beam;
+     out->T_diff_dn_hemi = atm_T_diff_dn_hemi_cache;
++    out->T_total_dn_hemi = out->T_dir_dn + out->T_diff_dn_hemi;
+     out->T_diff_dn_dir = atm_T_diff_dn_dir_cache;
++    out->T_dir_up_view = T_atm_dir_up_view;
++
++    /* Exact, source-dependent upward atmospheric transmission for the ACTUAL
++     * water-leaving BRDF at this view.  The numerator is the RT-propagated
++     * water signal at TOA, isolated by subtracting the independently solved
++     * atmospheric path radiance.  This is intentionally computed only after
++     * I_TOA_total has been assembled, and it does not feed back into TOA/Rrs.
++     *
++     * If a sky-origin water component is present, both the direct-water and
++     * sky-water bottom-source passes must have succeeded.  Otherwise exporting
++     * a number would silently reintroduce the deleted reciprocity fallback. */
++    {
++        const double signal_scale = fmax(1.0, fabs(Lu_total_above));
++        const int sky_signal_present =
++            fabs(Lu_above_diff_from_atm) > 64.0 * 2.2204460492503131e-16 * signal_scale;
++        const int exact_up_transport =
++            !atm_present || (wl_rigorous_done && (!sky_signal_present || wl_sky_rigorous_done));
++        if (exact_up_transport && fabs(Lu_total_above) > 1.0e-300) {
++            const double water_TOA_I = I_TOA_total - atm_path_I;
++            out->I_TOA_water_signal = water_TOA_I;
++            out->T_total_up_view = water_TOA_I / Lu_total_above;
++            out->T_diff_up_view = out->T_total_up_view - out->T_dir_up_view;
++            out->T_up_rt_valid = 1;
++        } else {
++            out->T_diff_up_view = NAN;
++            out->T_total_up_view = NAN;
++            out->I_TOA_water_signal = NAN;
++            out->T_up_rt_valid = 0;
++        }
++    }
+     double rho_factor = (F_sun_TOA > 0.0 && mu_sun_air > 0.0) ?
+                          (M_PI / (F_sun_TOA * mu_sun_air)) : 0.0;
+     out->I_TOA = I_TOA_total;
+@@ -5850,7 +5890,7 @@ int rt_solve_case_ocean(const rt_case_t *cs, const rt_options_t *opts,
+         out->rho_Q = atm_path_Q * atm_refl_norm + (TOA_wl_direct_Q + sky_TOA_Q) * rho_factor;
+         out->rho_U = atm_path_U * atm_refl_norm + (TOA_wl_direct_U + sky_TOA_U) * rho_factor;
+     } else {
+-        out->rho_I = atm_path_I * atm_refl_norm + (Lu_total_above * T_atm_up_view)     * rho_factor;
++        out->rho_I = atm_path_I * atm_refl_norm + (Lu_total_above * T_atm_up_fallback) * rho_factor;
+         out->rho_Q = atm_path_Q * atm_refl_norm + (Qu_total_above * T_atm_dir_up_view) * rho_factor;
+         out->rho_U = atm_path_U * atm_refl_norm + (Uu_total_above * T_atm_dir_up_view) * rho_factor;
+     }
+@@ -5867,7 +5907,7 @@ int rt_solve_case_ocean(const rt_case_t *cs, const rt_options_t *opts,
+         out->rho_water_sky_Q = sky_TOA_Q * rho_factor;
+         out->rho_water_sky_U = sky_TOA_U * rho_factor;
+     } else {
+-        out->rho_water_direct_I = Lu_total_above * T_atm_up_view * rho_factor;
++        out->rho_water_direct_I = Lu_total_above * T_atm_up_fallback * rho_factor;
+         out->rho_water_direct_Q = Qu_total_above * T_atm_dir_up_view * rho_factor;
+         out->rho_water_direct_U = Uu_total_above * T_atm_dir_up_view * rho_factor;
+     }
+diff --git a/src/rt_types.h b/src/rt_types.h
+index 7e491c8..6156176 100755
+--- a/src/rt_types.h
++++ b/src/rt_types.h
+@@ -496,11 +496,11 @@ typedef struct {
+      *   T_diff_dn_hemi = (2π Σ_quad μ·w·I_dn^{m=0}(μ)) / (π·μ_sun)
+      *                                                 (hemispheric diffuse down)
+      *   T_diff_dn_dir  = 2π·μ_v·I_dn(μ_v, φ) / (π·μ_sun)   (directional, at vza/raa)
+-     *   T_sg_up_dir    = ρ_glint(μ_v, φ) · μ_sun      (direct sunglint upward)
+-     *   T_total_up_dir = ρ_TOA(μ_v, φ) · μ_sun        (full upward, atm + surface)
++     *   T_sg_up_dir    = ρ_glint(μ_v, φ) · μ_sun      (legacy flux-ratio diagnostic)
++     *   T_total_up_dir = ρ_TOA(μ_v, φ) · μ_sun        (legacy flux-ratio diagnostic)
+      *
+-     * The pure-atm upward path (T_atm_only) requires a separate --surface black
+-     * SOS pass and is not stored by default. */
++     * These last two are NOT atmospheric transmission coefficients.  Public
++     * output labels identify them as diagnostics. */
+     double T_dir_dn;
+     double T_diff_dn_hemi;
+     double T_diff_dn_dir;
+@@ -518,13 +518,31 @@ typedef struct {
+     double rho_water_total_I, rho_water_total_Q, rho_water_total_U;
+     double rho_glint_direct_I, rho_glint_direct_Q, rho_glint_direct_U;
+ 
+-    /* Upward atmospheric transmission at the requested view direction.
+-     * T_dir_up_view is Beer-Lambert direct transmission; T_diff_up_hemi is
+-     * the hemispheric diffuse approximation currently used by the coupled
+-     * water-leaving path; T_total_up_view is their sum. */
++    /* Atmospheric transmission diagnostics.
++     *
++     * Downward quantities are obtained from the solved BOA atmosphere field:
++     *   T_dir_dn         exact unscattered beam attenuation;
++     *   T_diff_dn_hemi   hemispheric diffuse BOA irradiance / incident irradiance;
++     *   T_total_dn_hemi  their exact sum.
++     *
++     * Upward quantities are defined for the ACTUAL ocean water-leaving field
++     * at the requested view direction, so atmospheric angular redistribution
++     * and the water BRDF are retained:
++     *
++     *   T_total_up_view = (I_TOA_total - I_atm_path) / Lu(0+)
++     *   T_diff_up_view  = T_total_up_view - T_dir_up_view
++     *
++     * T_dir_up_view is the exact unscattered Beer-Lambert component.
++     * T_up_rt_valid is one only when the upward water signal was propagated by
++     * the rigorous atmospheric bottom-source SOS pass (or no atmosphere is
++     * present).  Invalid/undefined values are NaN; no reciprocity or
++     * hemispheric approximation is exported. */
++    double T_total_dn_hemi;
+     double T_dir_up_view;
+-    double T_diff_up_hemi;
++    double T_diff_up_view;
+     double T_total_up_view;
++    double I_TOA_water_signal; /* exact numerator: I_TOA_total - I_atm_path */
++    int    T_up_rt_valid;
+ 
+     /* Aerosol spectral-input metadata. AOD is always supplied at a fixed
+      * reference wavelength and converted internally using .mie extinction. */
+@@ -762,8 +780,8 @@ typedef struct {
+     /* v1.01 transmittances at each grid point (caller-allocated; may be NULL
+      * to skip). Layout matches rho_*: row-major [iv * n_raa + ir]. */
+     double *T_diff_dn_dir;     /* downward diffuse transmittance per direction */
+-    double *T_sg_up_dir;       /* upward direct sunglint transmittance per direction */
+-    double *T_total_up_dir;    /* upward total transmittance per direction */
++    double *T_sg_up_dir;       /* legacy diagnostic: rho_glint * mu_sun, not atm T */
++    double *T_total_up_dir;    /* legacy diagnostic: rho_TOA * mu_sun, not atm T */
+ 
+     /* Case-level (scalar) transmittances filled by solver (not per direction). */
+     double T_dir_dn;           /* exp(-τ/μ_sun), independent of view */

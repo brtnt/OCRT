@@ -1,0 +1,39 @@
+OCRT-RT-C3D-EXTBOTTOM-001 validation summary
+Date: 2026-07-20
+
+Defect reproduction
+- baseline water_m_max=2/4/8 returned success and conv=1 but TOA Stokes
+  reached 1e19..1e244.
+- baseline ASan reproduced heap-buffer-overflow at
+  rt_surface_boundary.c:add_external_bottom_source().
+
+Fixed production matrix
+- water_m_max=2,4,8,16,30,48,64: all finite, abs(TOA I/Q/U)<100.
+- all cases converged at orders=64, conv=1 in the representative setup.
+- m=16,30,48,64 stdout/stderr byte-identical to baseline.
+
+Sanitizers
+- fixed low-mode n_mu=48 case: ASan/UBSan clean.
+- fixed cached full-grid low-mode case: ASan/UBSan clean.
+- dedicated zero-padding/shape-guard test: PASS.
+
+Regression
+- water branch 14/14 PASS
+- CCRR Chl 11/11 PASS
+- OCRT organic Chl 10/10 PASS
+- Ahn TSM 6/6 PASS
+- TSM phase cache 168 arrays PASS; trace hash unchanged
+- US62 atmosphere PASS
+- PSSA numeric fixes 4/4 PASS
+- radiometry flux split PASS
+- PSSA layer warning PASS
+
+Performance
+- m=30 paired benchmark, five interleaved runs:
+  baseline median 1.73 s; fixed median 1.70 s; ratio 0.9827.
+
+Cache note
+- S7b external-source stride mismatch was fixed with a Gauss-only source
+  projection and shape-aware fingerprint.
+- Existing S7/S7b cache ON/OFF non-Gauss-view interpolation differences remain
+  a separate multi-view issue; no OOB or shape mismatch remains.

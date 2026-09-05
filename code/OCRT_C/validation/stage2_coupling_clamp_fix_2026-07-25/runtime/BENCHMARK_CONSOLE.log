@@ -1,0 +1,66 @@
+n=48 before warmup 4.929085s
+n=48 after warmup 4.879525s
+n=48 before rep=1 4.880124s
+n=48 after rep=2 4.829851s
+n=48 after rep=3 4.831480s
+n=48 before rep=4 4.944299s
+n=48 before rep=5 4.928063s
+n=48 after rep=6 4.830806s
+n=64 before warmup 8.490962s
+n=64 after warmup 8.545852s
+n=64 before rep=1 10.553887s
+n=64 after rep=2 8.491439s
+n=64 after rep=3 8.494188s
+n=64 before rep=4 8.590564s
+n=64 before rep=5 8.490613s
+n=64 after rep=6 8.507329s
+n=96 before warmup 19.031348s
+n=96 after warmup 18.979101s
+n=96 before rep=1 18.970295s
+n=96 after rep=2 19.081766s
+n=96 after rep=3 18.968343s
+n=96 before rep=4 18.920248s
+n=96 before rep=5 18.719607s
+n=96 after rep=6 18.921360s
+{
+  "profile_required": false,
+  "threshold_pct": 5.0,
+  "summary": [
+    {
+      "n_mu_water": 48,
+      "repetitions_per_variant": 3,
+      "before_mean_s": 4.91749547833327,
+      "after_mean_s": 4.830712428000045,
+      "mean_change_pct": -1.764781497321044,
+      "before_median_s": 4.928063201999976,
+      "after_median_s": 4.830805718000192,
+      "median_change_pct": -1.9735437638119802,
+      "before_min_s": 4.880124197999976,
+      "after_min_s": 4.829851231000021
+    },
+    {
+      "n_mu_water": 64,
+      "repetitions_per_variant": 3,
+      "before_mean_s": 9.211688149666694,
+      "after_mean_s": 8.497652309666591,
+      "mean_change_pct": -7.751411341752146,
+      "before_median_s": 8.59056398000007,
+      "after_median_s": 8.494188134999831,
+      "median_change_pct": -1.1218803005788036,
+      "before_min_s": 8.490613016999987,
+      "after_min_s": 8.491439483000022
+    },
+    {
+      "n_mu_water": 96,
+      "repetitions_per_variant": 3,
+      "before_mean_s": 18.87004983666664,
+      "after_mean_s": 18.99048978833336,
+      "mean_change_pct": 0.6382598493867686,
+      "before_median_s": 18.92024794200006,
+      "after_median_s": 18.968342672999825,
+      "median_change_pct": 0.25419714977943375,
+      "before_min_s": 18.71960676399999,
+      "after_min_s": 18.921360201000198
+    }
+  ]
+}

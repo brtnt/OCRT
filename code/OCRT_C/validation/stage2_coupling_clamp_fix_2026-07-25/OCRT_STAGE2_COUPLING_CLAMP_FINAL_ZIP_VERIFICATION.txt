@@ -1,0 +1,6 @@
+OCRT stage-2 coupling clamp final ZIP verification
+ZIP: OCRT_v1.2_STAGE2_COUPLING_CLAMP_FIX_20260725.zip
+included_binary_sha256: 328f28b8f50b6d98207eabe57309dde3538e4658a1ceec8f53d970b9dda3587a
+clean_rebuild_sha256:   328f28b8f50b6d98207eabe57309dde3538e4658a1ceec8f53d970b9dda3587a
+byte_identical:         PASS
+version: ocrt OCRT-v1.2-2026-07-25-KST-stage2-coupling-clamp-fix

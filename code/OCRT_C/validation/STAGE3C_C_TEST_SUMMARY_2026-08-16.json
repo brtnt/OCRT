@@ -1,0 +1,79 @@
+{
+  "all_pass": true,
+  "passed": 12,
+  "total": 12,
+  "tests": [
+    {
+      "test": "scripts/test_stage3c_active_mie_cache.sh",
+      "pass": true,
+      "evidence": "final rerun",
+      "result": "worker-private parsed Mie + complete kernel cache; cache/no-cache exact; replay prohibited"
+    },
+    {
+      "test": "scripts/test_stage3c_batch_row_independence.sh",
+      "pass": true,
+      "evidence": "final rerun",
+      "result": "4 independent rows; serial/parallel byte-identical; replay=0"
+    },
+    {
+      "test": "scripts/regression_value_kernel_native_lut.sh",
+      "pass": true,
+      "evidence": "final rerun",
+      "result": "native vs diagnostic replay max_abs ~1e-14; native replay=0"
+    },
+    {
+      "test": "scripts/test_stage3b_direct_kernel.sh",
+      "pass": true,
+      "evidence": "passed on identical Stage3B/Stage3C kernel sources before final main.c version-string-only change",
+      "result": "direct-kernel compile gate"
+    },
+    {
+      "test": "scripts/test_value_kernel_pol.sh",
+      "pass": true,
+      "evidence": "final rerun",
+      "result": "FR631 physicality and scalar/vector direct-kernel identity"
+    },
+    {
+      "test": "scripts/test_phase_wavelength_pchip.sh",
+      "pass": true,
+      "evidence": "final rerun",
+      "result": "legacy PCHIP and direct common-weight linear wavelength contract"
+    },
+    {
+      "test": "scripts/test_pure_water_z09_table.sh",
+      "pass": true,
+      "evidence": "final rerun",
+      "result": "2250-row Z09 table and key bands"
+    },
+    {
+      "test": "scripts/test_spectral_iop_330_1100.sh",
+      "pass": true,
+      "evidence": "final rerun",
+      "result": "330–1100 nm IOP coverage"
+    },
+    {
+      "test": "scripts/test_stage2_eap_disabled.sh",
+      "pass": true,
+      "evidence": "final rerun",
+      "result": "EAP scattering remains disabled; detritus-only Chl phase contract"
+    },
+    {
+      "test": "scripts/test_eap_mie_phase.sh",
+      "pass": true,
+      "evidence": "final rerun",
+      "result": "EAP phase API normalization/physicality/determinism"
+    },
+    {
+      "test": "scripts/regression_immutable_cache_reuse.sh",
+      "pass": true,
+      "evidence": "final rerun",
+      "result": "12-cell byte-identical; native water solve once"
+    },
+    {
+      "test": "scripts/regression_raa_convention.sh",
+      "pass": true,
+      "evidence": "final rerun",
+      "result": "public RAA helpers and direct-glint convention"
+    }
+  ]
+}

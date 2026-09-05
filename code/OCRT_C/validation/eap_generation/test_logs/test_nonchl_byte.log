@@ -1,0 +1,2 @@
+PASS: 18 non-Chl CDOM/TSM cases stdout/stderr byte-identical
+See validation/eap_generation/NONCHL_18CASE_BYTE_REGRESSION_20260726.csv

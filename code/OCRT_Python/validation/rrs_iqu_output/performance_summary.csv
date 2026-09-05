@@ -1,0 +1,4 @@
+test,baseline_seconds,modified_seconds,change_percent,delta_seconds
+C full-grid 36 cells,2.48,2.48,0.0,0.0
+Python low-resolution one-case warm,0.5258241065,0.5349335240,1.7324,0.0091094175
+Python realistic one-case warm,2.3086153890,2.2344871100,-3.2109,-0.0741282790

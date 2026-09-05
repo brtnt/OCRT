@@ -1,0 +1,5 @@
+US62_PROFILE anchors=8 inverse=1001 layer_sum=1.0000000000000002 fail=0
+PASS rayleigh_black_gas_off byte-exact
+PASS rayleigh_surface_gas_off byte-exact
+PASS legacy non-positive aerosol scale height rejected
+ATMOSPHERE_PROFILE_US62 PASS

@@ -1,0 +1,8 @@
+{
+  "n_runs": 72,
+  "n_success": 72,
+  "n_water_converged": 72,
+  "all_grid_rows_24": true,
+  "max_water_orders": 29,
+  "binary_version": "OCRT-v1.2-2026-07-24-KST-stage2-interface-fix123-dtp-uclosure-pole-limit"
+}

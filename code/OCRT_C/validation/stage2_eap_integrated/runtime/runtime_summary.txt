@@ -1,0 +1,6 @@
+old_mean_seconds=0.227288931
+new_mean_seconds=0.227610398
+mean_change_pct=0.141435
+old_median_seconds=0.229265348
+new_median_seconds=0.228228037
+median_change_pct=-0.452450

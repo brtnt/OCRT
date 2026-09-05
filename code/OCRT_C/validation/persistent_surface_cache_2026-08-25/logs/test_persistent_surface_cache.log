@@ -1,0 +1,1 @@
+PASS: persistent surface cache off/build/required bit-identical; required miss fail-loud; batch build forbidden

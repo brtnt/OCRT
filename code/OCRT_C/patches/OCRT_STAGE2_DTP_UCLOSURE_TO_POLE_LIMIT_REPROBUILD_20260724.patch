@@ -1,0 +1,4215 @@
+diff -ruN a/README.md b/README.md
+--- a/README.md	2026-07-24 02:31:04.000000000 +0000
++++ b/README.md	2026-07-24 15:09:42.098023399 +0000
+@@ -4,7 +4,7 @@
+ 
+ ## Current validated release
+ 
+-`OCRT-v1.2-2026-07-24-KST-stage2-interface-fix123-dtp-uclosure`
++`OCRT-v1.2-2026-07-24-KST-stage2-interface-fix123-dtp-uclosure-pole-limit`
+ 
+ This source includes:
+ 
+@@ -32,12 +32,28 @@
+ - Adds a reference-free source/operator contraction regression for pure-Rayleigh and mixed Rayleigh–aerosol media.
+ - The correction materially reduces high-SZA Q/U residuals, while exposing separate low-SZA/intensity residuals that remain under investigation; it is not an empirical fit to OSOAA.
+ 
++### Exact-pole surface rotation and reproducible build (2026-07-24)
++
++- Applies the analytical meridian-rotation limit when either incident or outgoing direction is exactly vertical in all four rough-interface Mueller kernels (`R_air`, `T_wa`, `R_ww`, and `T_aw`).
++- Preserves the already validated non-pole equations, FIX1–FIX4 conventions, and atmospheric harness.
++- Adds exact-pole/one-sided-limit continuity and vertical spin-2 covariance regressions.
++- Documents that the simultaneous double-pole ambiguity is multiplied by zero quadrature weight in production boundary sums; a deliberately perturbed double-pole rotation leaves the audited full-grid outputs unchanged.
++- Replaces host-dependent `-march=native` release builds with a fixed default `-march=cascadelake`. Set `OCRT_MARCH=<target>` only when a different documented CPU baseline is required; changing it intentionally changes the binary fingerprint and may change last-bit floating-point results.
++
+ ## Build
+ 
+ ```bash
+ ./scripts/build_release_v1.2.sh build/ocrt
+ ```
+ 
++The default build target is `cascadelake` for deterministic code generation on the validated toolchain. Reproducibility claims require the same source, compiler/linker versions, flags, environment, and `OCRT_MARCH`. To use another explicit target:
++
++```bash
++OCRT_MARCH=x86-64-v3 ./scripts/build_release_v1.2.sh build/ocrt
++```
++
++For bit-level CSV comparisons, use raw byte comparison or `scripts/compare_csv_bitexact.py`. Do not use values already parsed through `pandas` as the source of a bit-exact assertion.
++
+ ## Verification
+ 
+ Run from the full package root:
+diff -ruN a/docs/OCRT_STAGE2_CUMULATIVE_CODE_UPDATE_INSTRUCTION_20260724_REV4_KO.md b/docs/OCRT_STAGE2_CUMULATIVE_CODE_UPDATE_INSTRUCTION_20260724_REV4_KO.md
+--- a/docs/OCRT_STAGE2_CUMULATIVE_CODE_UPDATE_INSTRUCTION_20260724_REV4_KO.md	1970-01-01 00:00:00.000000000 +0000
++++ b/docs/OCRT_STAGE2_CUMULATIVE_CODE_UPDATE_INSTRUCTION_20260724_REV4_KO.md	2026-07-24 15:12:31.502026702 +0000
+@@ -0,0 +1,1766 @@
++# OCRT–OSOAA 2단계 누적 코드 업데이트 작업지시서 — 개정 4
++
++문서 기준일: 2026-07-24  
++적용 시작점: 세션 시작 시점 OCRT 소스 `OCRT_v1.2_RAA_CONVENTION_COMMENT_AUDIT_2026-07-22`  
++적용 종료점: `OCRT-v1.2-2026-07-24-KST-stage2-interface-fix123-dtp-uclosure-pole-limit`  
++본 문서는 마지막 수정분만을 기술하지 않는다. **세션 시작 소스에서 최종 수정본까지의 전체 누적 절차**를 기술한다.
++
++2026-07-24의 FIX1-only TAW 회전 후보와 FIX123 시점의 diffuse-top U 보류 결론은 역사적 checkpoint로 보존한다. 본 개정본의 단계 21 이후가 FIX1-only checkpoint를 대체하고, 단계 25 이후가 FIX123 시점의 보류 결론을 대체한다. 단계 31 이후는 정확한 수면 극한 회전 및 재현 빌드 규약을 추가한다. 최종 생산 범위는 water RAA 출력 수정 + FIX1+FIX2+FIX3 + diffuse-top incoming-U column closure + rough-interface exact-pole limit이다.
++
++## 1. 변경관리 원칙
++
++1. 기준 소스 ZIP의 SHA-256은 다음과 같아야 한다.
++
++```text
++bb6ecca0a4bab5463832dae92416b5e7cd3d28eb03da150398c32625a89ce377
++```
++
++2. 기준선 재현 단계에서는 소스를 수정하지 않는다. 기존 72개 실행 단위와 600개 비교 셀을 먼저 재현하고, 그 결과를 변경 전 동결 기준으로 보존한다.
++3. OCRT와 OSOAA의 입력 데이터 및 옵션은 완전히 일치시킨다. 불명확한 입력은 임의 선택하지 않는다.
++4. RAA 보정과 U 부호 보정을 중복 적용하지 않는다.
++5. OSOAA `Rrs(0+)`는 최종 전달규약 확정 전까지 두 branch를 병행 보존한다. level-27 수중 Fourier 장 + 별도 TWA를 잠정 기준으로 사용하고, level-26 water-minus-black 차감값은 독립 진단 branch로 유지한다. 어느 branch도 TWA/TAW 물리 불변량 검증 전에 유일한 정본으로 선언하지 않는다.
++6. 코드 변경 전후 실행시간을 동일 조건에서 교차 측정한다. 평균 또는 중앙값이 5% 이상 증가하면 프로파일링을 수행한 뒤 승인한다.
++7. 정합성 결과는 Rrs I/Q/U와 rrs I/Q/U를 각각 독립 산포도로 작성한다. Q/U는 MAPE를 주 지표로 사용하지 않고 기준 I 정규화 차이를 함께 제시한다.
++8. 비교코드에 대한 상대 오차 감소만으로 물리코드를 수정하지 않는다. 단일 연산자 대조, contraction closure, reciprocity/energy/étendue 또는 독립 해석해 중 하나 이상이 수정 방향을 지지하여야 한다.
++9. 릴리스 빌드는 `-march=native`를 사용하지 않는다. 기본 ISA는 `cascadelake`로 고정하고, 다른 ISA를 사용할 때에는 `OCRT_MARCH` 값과 새 바이너리 해시를 별도 기록한다. 동일 해시 주장은 동일 compiler/linker/toolchain에 한정한다.
++10. 비트 동일 CSV 검사는 원시 바이트 또는 Python 내장 `float()` 기반 binary64 비교를 사용한다. `pandas`로 이미 파싱된 값을 비트 동일 판정의 근거로 사용하지 않는다.
++
++## 2. 단계 0 — 세션 시작 기준선 동결
++
++### 2.1 기준 소스 준비
++
++```bash
++unzip "OCRT_v1.2_RAA_CONVENTION_COMMENT_AUDIT_2026-07-22 (1)(1).zip"
++cd OCRT_v1.2_RAA_CONVENTION_COMMENT_AUDIT_2026-07-22
++```
++
++원본은 읽기 전용 보관본으로 유지하고, 수정 작업은 복사본에서 수행한다.
++
++```bash
++cp -a OCRT_v1.2_RAA_CONVENTION_COMMENT_AUDIT_2026-07-22       OCRT_v1.2_STAGE2_WATER_RAA_OUTPUT_FIX_WORK
++cd OCRT_v1.2_STAGE2_WATER_RAA_OUTPUT_FIX_WORK
++```
++
++### 2.2 기준 바이너리 빌드
++
++```bash
++./scripts/build_release_v1.2.sh build/ocrt_stage2_base
++./build/ocrt_stage2_base --version
++sha256sum build/ocrt_stage2_base
++```
++
++기준 바이너리의 확인값은 다음과 같다.
++
++```text
++1ff23e3fd53dd38faf6d7069efef2b2e0cbe02acafe8979010c450360dfe8b28
++```
++
++### 2.3 기준선 재현 조건
++
++다음 입력계약을 고정한다.
++
++```text
++Atmosphere:
++  Rayleigh on
++  pressure = 1013.25 hPa
++  aerosol = 0
++  gas columns H2O/O3/NO2/O2/CO2/CH4 = 0
++  n_mu = 48
++  n_layers = 40
++  m_max = 2
++  sos_max_orders = 100
++  water max orders = 100 via OCRT_DEBUG=1 and --debug-water-max-orders 100
++
++Ocean:
++  pure water and CDOM a440 = 0.01, 0.1, 1.0 m^-1
++  CDOM slope = 0.014 nm^-1
++  Chl = 0
++  TSM = 0
++  n_water = 1.34
++  temperature = 20 degC
++  salinity = 38.4 PSU
++  seawater depolarization = 0.039
++  black bottom
++  water shared grid
++  wind speed = 3 m/s
++  direct sunglint decoupled
++
++Spectral/geometric grid:
++  wavelength = 412, 443, 490, 555, 660, 865 nm
++  SZA = 0, 40, 80 deg
++  VZA = 0, 30, 60 deg
++  RAA = 0, 45, 90, 135, 180 deg
++```
++
++72개 실행 명령은 최종 패키지의 다음 파일에 수록한다.
++
++```text
++validation/stage2_water_raa_output_fix_2026-07-23/RUN_MANIFEST_72CASES.csv
++```
++
++기준선의 승인 조건은 72/72 실행 수렴과 600/600 비교 셀 생성이다.
++
++## 3. 단계 1 — 수중 공개 RAA 출력 규약 수정
++
++### 3.1 `src/rt_water_rt.c`
++
++#### 3.1.1 주 수중 Fourier 재구성
++
++다음 변경을 적용한다.
++
++```diff
++- double dphi_rad = rt_raa_to_water_view_phi(raa_recon_deg);
+++ double dphi_rad = rt_raa_to_atm_fourier_phi(raa_recon_deg);
++
++- double U_diffuse_view = -rt_solver_reconstruct_phi_sin(...);
+++ double U_diffuse_view =  rt_solver_reconstruct_phi_sin(...);
++```
++
++목적은 `Rrs(0+)`와 `rrs(0-)`의 보고 방위각을 대기 출력과 동일한 공개 OCRT RAA로 통일하는 것이다.
++
++#### 3.1.2 정확 단일산란 보정
++
++정확 단일산란 전파벡터 기하는 출력 재구성과 구분한다.
++
++```diff
++- double phv = rt_raa_to_water_view_phi(raa_deg);
+++ double phv = rt_raa_to_water_scatter_phi(raa_deg);
++```
++
++이 지점의 `pi-RAA`는 물리적 입사·출사 벡터 구성에 필요한 국소 좌표이므로 제거하지 않는다.
++
++정확 단일산란 U의 내부 Fourier 재구성에서는 추가 음수를 제거한다.
++
++```diff
++- double Uss_int = -rt_solver_reconstruct_phi_sin(...);
+++ double Uss_int =  rt_solver_reconstruct_phi_sin(...);
++```
++
++#### 3.1.3 TWA 노드별 수면 위 U 재구성
++
++동일 패턴의 세 실행문을 모두 수정한다.
++
++```diff
++- double Lw_U = -rt_solver_reconstruct_phi_sin(...) * f_scale;
+++ double Lw_U =  rt_solver_reconstruct_phi_sin(...) * f_scale;
++```
++
++세 지점 중 하나라도 남으면 branch 또는 보간 경로에 따라 U 부호가 다시 갈릴 수 있으므로 일괄 적용한다.
++
++#### 3.1.4 풍속 양수 rough-interface 출력
++
++```diff
++- const double phi_v = rt_raa_to_water_view_phi(raa_deg);
+++ const double phi_v = rt_raa_to_atm_fourier_phi(raa_deg);
++```
++
++이 변경은 풍속 양수 Cox–Munk/TWA 분기의 `Rrs(0+)` 공개 방위각을 바로잡는다.
++
++#### 3.1.5 결합 Fourier U 재구성
++
++```diff
++- LU += -f * Ua[mm] * s;
+++ LU +=  f * Ua[mm] * s;
++```
++
++### 3.2 `src/rt_solver.c`
++
++D3 외부 하향장 보정 경로에서 다음을 적용한다.
++
++```diff
++- double dphi = rt_raa_to_water_view_phi(cs->raa_deg);
+++ double dphi = rt_raa_to_atm_fourier_phi(cs->raa_deg);
++
++- double dvU = -rt_solver_reconstruct_phi_sin(...);
+++ double dvU =  rt_solver_reconstruct_phi_sin(...);
++```
++
++### 3.3 변경 지점 계수
++
++실제 실행문 변경은 총 10개이다.
++
++- RAA 변환: 3개
++- U 부호: 7개
++- 논리 패턴으로 묶을 경우: 8종
++
++검토 문서에 “아홉 곳”이라고 적지 않는다.
++
++## 4. 단계 2 — 규약 helper와 주석의 강제 분리
++
++`src/rt_raa_convention.h`에서 다음을 적용한다.
++
++```diff
++- rt_raa_to_water_view_phi
+++ rt_raa_to_water_scatter_phi
++```
++
++새 helper의 주석에는 다음 제한을 명시한다.
++
++```text
++이 helper는 정확 단일산란에서 실제 전파벡터를 구성할 때만 사용한다.
++보고되는 Rrs(0+) 및 rrs(0-) Fourier 출력 재구성에는 사용하지 않는다.
++```
++
++OSOAA 대응 주석은 다음 두 동등한 방식으로 갱신한다.
++
++```text
++A. Phi_OSOAA = (180 - RAA_OCRT) mod 360, then U_OSOAA *= -1
++B. Phi_OSOAA = (RAA_OCRT + 180) mod 360, no U reversal
++```
++
++정확히 하나만 사용한다.
++
++소스와 시험 디렉터리에서 legacy helper의 실행 코드 잔존을 금지한다.
++
++```bash
++grep -RIn --include='*.c'   'rt_raa_to_water_view_phi' src tests
++```
++
++결과가 없어야 한다.
++
++## 5. 단계 3 — 회귀시험 추가
++
++### 5.1 단위시험 확장
++
++`tests/test_raa_convention.c`에 다음을 추가한다.
++
++- `rt_fourier.h` 포함
++- `rt_raa_to_water_scatter_phi()`의 0°/180° 국소 기하 검사
++- 합성 cosine 모드로 공개 RAA의 I/Q branch 검사
++- 합성 sine 모드로 U의 양의 sine 재구성 검사
++
++### 5.2 소스 감사 스크립트
++
++다음 파일을 추가한다.
++
++```text
++scripts/test_stage2_water_raa_fix.sh
++```
++
++실행:
++
++```bash
++bash scripts/test_stage2_water_raa_fix.sh
++```
++
++기대 출력:
++
++```text
++PASS: OCRT public RAA convention helpers
++PASS: stage-2 water RAA source audit
++```
++
++### 5.3 기준코드 비의존 실행 회귀시험
++
++다음 파일을 추가한다.
++
++```text
++tests/test_water_raa_output_regression.py
++```
++
++검사 항목은 다음과 같다.
++
++1. 순수해수 443 nm, SZA 40°, VZA 60°, RAA 0/45/90/135/180°에서 `rrs_I / TOA_water_increment_I` 상대 범위가 8% 미만
++2. RAA 0°와 180° 주평면에서 `Rrs_U/I`, `rrs_U/I`가 \(10^{-10}\) 미만
++3. full-grid와 단일 기하 출력이 허용오차 내 일치
++4. 풍속 0 분기 실행 및 수렴
++5. 풍속 0 주평면 U 검사
++
++실행:
++
++```bash
++python3 tests/test_water_raa_output_regression.py build/ocrt_stage2_final
++```
++
++기대 결과:
++
++```text
++PASS: water RAA output regression
++```
++
++## 6. 단계 4 — 버전과 문서
++
++`src/main.c`의 버전을 다음과 같이 변경한다.
++
++```c
++#define V2_VERSION "OCRT-v1.2-2026-07-23-KST-stage2-water-raa-output-fix"
++```
++
++`README.md`의 Current validated release를 동일하게 변경하고, 다음 세 항목을 추가한다.
++
++- water-output RAA convention correction
++- public output와 local single-scatter geometry 분리
++- RAA/full-grid/wind-zero 회귀시험 추가
++
++다음 문서를 포함한다.
++
++```text
++docs/STAGE2_WATER_RAA_OUTPUT_FIX_REVIEW_2026-07-23_KO.md
++docs/OCRT_STAGE2_CUMULATIVE_CODE_UPDATE_INSTRUCTION_2026-07-23_KO.md
++```
++
++## 7. 단계 5 — 최종 빌드
++
++```bash
++./scripts/build_release_v1.2.sh build/ocrt_stage2_final
++./build/ocrt_stage2_final --version
++sha256sum build/ocrt_stage2_final
++```
++
++기대 버전:
++
++```text
++ocrt OCRT-v1.2-2026-07-23-KST-stage2-water-raa-output-fix
++```
++
++본 작업에서 생성한 최종 바이너리 SHA-256:
++
++```text
++41391518435c788c4d99f798c82fd39a016c8e4227ce220cedc2096f001838df
++```
++
++## 8. 단계 6 — 수치 검증
++
++### 8.1 72개 실행 재실행
++
++`RUN_MANIFEST_72CASES.csv`의 각 명령에서 다음 placeholder를 치환한다.
++
++```text
++<OCRT_BINARY> = build/ocrt_stage2_final
++<OUTPUT_CSV>  = 실행별 full-grid CSV 경로
++```
++
++환경은 다음과 같이 고정한다.
++
++```bash
++export OCRT_ADVANCED=1
++export OCRT_DEBUG=1
++export OMP_NUM_THREADS=1
++export OPENBLAS_NUM_THREADS=1
++export MKL_NUM_THREADS=1
++export LC_ALL=C
++```
++
++승인 조건:
++
++```text
++72/72 runs complete
++72/72 water_converged = 1
++600/600 comparison cells present
++```
++
++### 8.2 거울변환 항등식
++
++모든 비교 셀에 대해 다음을 검사한다.
++
++```text
++new I(r) == old I(180-r)
++new Q(r) == old Q(180-r)
++new U(r) == -old U(180-r)
++```
++
++검사 대상은 Rrs와 rrs의 I/Q/U 전부이다. 최대 절대차 기대값은 0이다.
++
++### 8.3 비영향성
++
++동일 RAA에서 다음 값은 기준선과 동일하여야 한다.
++
++```text
++TOA_rho_I
++TOA_rho_Q
++TOA_rho_U
++Ed0plus_air
++Ed0minus_water
++```
++
++최대 절대차 기대값은 0이다.
++
++### 8.4 OSOAA 공식 비교
++
++잠정 기준 OSOAA reference branch는 다음 순서로 생성한다.
++
++```text
++1. level-27 underwater Fourier field extraction
++2. Snell-mapped underwater VZA reconstruction
++3. separate TWA water-to-air transfer
++4. Ed(0+) normalization for Rrs(0+)
++5. Ed(0-) normalization for rrs(0-)
++6. one and only one RAA/U mapping from section 4
++```
++
++첨부 `compare_entry.py`의 level-26 water-minus-black `Rrs(0+)`도 독립 진단 branch로 보존하며, 두 branch의 차이를 매 gate에서 기록한다.
++
++## 9. 단계 7 — 산포도 작성 규칙
++
++각 비교 범위에 대해 다음 6개 파일을 각각 생성한다.
++
++```text
++Rrs0plus_I_scatter.png
++Rrs0plus_Q_scatter.png
++Rrs0plus_U_scatter.png
++rrs0minus_I_scatter.png
++rrs0minus_Q_scatter.png
++rrs0minus_U_scatter.png
++```
++
++본 패키지는 세 범위에 대해 총 18개 그림을 제공한다.
++
++```text
++all600_*
++purewater150_*
++purewater84_sza_le40_*
++```
++
++그림 작성 규칙:
++
++- x축은 OSOAA, y축은 OCRT
++- 1:1 선 포함
++- SZA를 서로 다른 marker로 표시
++- I에는 MAPE 병기
++- Q/U에는 `RMS[100*(OCRT-OSOAA)/OSOAA_I]` 병기
++- Q/U 축은 0을 중심으로 대칭
++- 표만으로 정합성을 판정하지 않음
++
++## 10. 단계 8 — 계산시간 검증
++
++다음 대표 조건을 기준과 수정본에서 각각 1회 예열 후 5회 교차 실행한다.
++
++```text
++pure water
++443 nm
++SZA 40°
++VZA grid 0/30/60°
++RAA step 45°
++n_mu 48
++m_max 2
++wind 3 m/s
++gas off
++```
++
++본 검증 결과:
++
++```text
++baseline mean  = 4.848507 s
++updated mean   = 4.848084 s
++mean change    = -0.0087%
++
++baseline median = 4.827955 s
++updated median  = 4.828572 s
++median change   = +0.0128%
++```
++
++승인 규칙:
++
++- 평균·중앙값 모두 5% 미만 증가: 성능 PASS
++- 5% 이상 증가: `perf`, `gprof` 또는 sampling profiler로 hotspot 확인
++- 새 반복문·할당·적분이 추가된 경우에는 증가율과 무관하게 hotspot 검토
++
++본 수정은 단순 방위각 argument와 U 부호의 치환이며 실행시간 증가는 관측되지 않았다.
++
++## 11. 단계 9 — 승인 및 보류 항목
++
++### 11.1 승인
++
++- 수중 공개 RAA와 대기 공개 RAA의 통일
++- 추가 U 부호반전 제거
++- 국소 단일산란 `pi-RAA` helper 분리
++- 풍속 0 및 풍속 양수 분기 회귀시험
++- full-grid/단일 기하 일치
++- TOA 비영향성
++- 실행시간 비증가
++
++### 11.2 보류
++
++- SZA 80° 편광 잔차의 물리 원인
++- Chl/TSM 위상함수 포함 정합성
++- aerosol 포함 coupled-field 정합성
++- 누락된 Tier-0 phase LUT 자산을 사용하는 정규 Tier-0 실행
++
++## 12. 롤백
++
++수정 패치를 제거할 때는 세션 시작 기준 소스로 되돌린다.
++
++```bash
++rm -rf OCRT_v1.2_STAGE2_WATER_RAA_OUTPUT_FIX_WORK
++cp -a OCRT_v1.2_RAA_CONVENTION_COMMENT_AUDIT_2026-07-22       OCRT_v1.2_STAGE2_WATER_RAA_OUTPUT_FIX_WORK
++```
++
++부분 롤백은 금지한다. RAA argument만 되돌리거나 U 부호만 되돌리면 동일 결함이 다른 형태로 재발한다.
++
++## 13. 납품물 확인
++
++최종 납품에는 다음을 포함한다.
++
++```text
++updated full source tree
++final binary
++cumulative patch
++cumulative work instruction
++review and validation report
++600-cell corrected matched CSV
++72-case run manifest
++runtime raw/summary CSV
++attached-method vs approved-TWA audit CSV
++mirror identity/TOA invariance CSV
++Rrs/rrs IQU scatterplots
++SHA-256 manifest
++```
++
++
++## 14. 단계 10 — 첨부 계면 분석 재계산 및 범위 감사
++
++### 14.1 원자료 단일화
++
++첨부 패키지의 본문·그림·CSV가 서로 다른 지표 또는 분석 스냅샷을 혼합할 수 있으므로, 판정은 다음 두 CSV에서 직접 재계산한다.
++
++```text
++gate5_2026-07-22.csv
++interface_testbed_2026-07-22.csv
++```
++
++재계산 결과와 그림은 다음 디렉터리에 보존한다.
++
++```text
++validation/stage2_taw_operator_audit_2026-07-24/recalculated/
++```
++
++순수해수 gate는 Rrs/rrs I/Q/U를 6개 독립 산포도로 작성한다. 계면 시험대는 I, Q/I, U/I를 각각 독립 산포도로 작성한다.
++
++### 14.2 첨부 gate의 적용 범위
++
++첨부 gate를 다음의 **국소 회귀시험**으로 정의한다.
++
++```text
++wavelength = 412, 443, 490, 555, 660 nm
++SZA = 40 deg
++VZA = 60 deg
++RAA = 0,45,90,135 deg
++wind = 3 m/s
++pure water
++aerosol = 0
++```
++
++이 gate의 결과를 SZA 80°, 다른 VZA, 865 nm, 풍속 0 또는 입자·에어로솔 조건으로 일반화하지 않는다.
++
++### 14.3 지표 고정
++
++각 결과 파일에는 지표 정의를 문자열로 기록한다.
++
++```text
++I: MAPE 또는 NMAE/max|I_ref| 중 사용한 식을 명시
++Q/U: RMS[(OCRT-OSOAA)/OSOAA_I]
++보조: NMAE/max|Q_ref|, NMAE/max|U_ref|
++```
++
++signed bias, MAE, RMSE를 혼용하지 않는다.
++
++## 15. 단계 11 — OSOAA TAW Fourier 연산자 직접 감사
++
++### 15.1 추가 도구
++
++다음 도구를 추가한다.
++
++```text
++tools/stage2_taw_operator_audit.py
++scripts/run_stage2_taw_operator_audit.sh
++```
++
++도구는 생산 solver 호출경로에 연결하지 않는다. `src/` 물리코드는 이 단계에서 수정하지 않는다.
++
++### 15.2 입력
++
++```text
++OSOAA TAW:
++  TAW-1.340-03.0-RadMU48-NB200-SZA40.000-TSZA28.665
++angles:
++  pure_water_b443_s40/Advanced_outputs/RAD_UsedAngles.txt
++OCRT:
++  surface_T_aw_coxmunk_fourier_kernel
++wind = 3.0
++n_water = 1.34
++sigma_type = 1
++q_convention = 1
++n_phi = 1024
++m = 0..4
++active nodes = weight > 0, 48 nodes
++```
++
++### 15.3 OSOAA→OCRT 정규화
++
++OSOAA Step 7과 OCRT contraction을 다음과 같이 맞춘다.
++
++```text
++K_OSOAA^m = 2 * TAW^m / (C_m * mu_water * mu_air)
++C_0 = 2*pi
++C_m = pi  for m>0
++```
++
++공개 OCRT RAA와 OSOAA azimuth의 180° 차이는 mode별 `(-1)^m`으로 한 번만 적용한다.
++
++### 15.4 baseline signature
++
++현재 수정 전 TAW 편광 잔차의 진단 signature를 다음과 같이 기록한다.
++
++```text
++M11: best-fit scale 0.999988..1.000003, max/maxref 0.011..0.091%
++M12: OCRT/OSOAA ~1.010..1.011
++M21: OCRT/OSOAA ~1.017..1.018
++M23: sign/shape nearly identical
++M32: nearly equal magnitude, opposite sign
++M13/M31: not explained by one global scale/sign
++```
++
++이는 승인된 최종 상태가 아니라, 수정 전 국소화 baseline이다.
++
++### 15.5 배제시험
++
++다음을 함께 수행한다.
++
++- n_phi 128/256/512/1024 convergence
++- q_convention 0/1
++- input/output rotation sine sign diagnostic variants
++- zero-weight auxiliary node 포함/제외
++- 기본 TAW와 SZA-specific TAW의 active submatrix identity
++
++현재 결과에서 n_phi 128→1024 최대 차이는 0.000768% 이하이고, q_convention=0은 M12/M21을 약 12% 수준으로 악화시킨다.
++
++## 16. 단계 12 — 해수 깊이 입력계약 보정
++
++### 16.1 기존 상태 기록
++
++기준 OSOAA raw run은 `SEA.Depth=1000 m`를 사용한다. OCRT 기존 순수해수 기준은 adaptive depth로 443 nm에서 약 `tau=20`, `z=1674.8 m`를 사용하였다. 두 조건은 사실상 반무한 수심으로 결과가 수렴하지만 입력값은 문자 그대로 동일하지 않다.
++
++### 16.2 공식 parity gate
++
++향후 공식 OCRT–OSOAA gate에서는 다음을 양쪽에 고정한다.
++
++```text
++physical water depth = 1000 m
++black bottom
++```
++
++OCRT 현 CLI에서는 검증용으로 다음을 명시한다.
++
++```bash
++export OCRT_DEBUG=1
++--debug-water-max-depth 1000
++```
++
++이 옵션은 비교 입력계약을 고정하는 검증용이며 운영 기본값으로 승격하지 않는다.
++
++### 16.3 수렴 근거
++
++pure water 443 nm, SZA40, VZA60, RAA90 sweep 결과:
++
++```text
++200 m  (tau 2.388): deep reference 대비 I 약 -0.7%
++500 m  (tau 5.971): 약 -0.0005%
++1000 m (tau 11.941): 약 -0.00002%
++adaptive no-cap (tau 20): reference
++```
++
++따라서 200 m cap의 위험은 인정하되, 고정 `minimum tau=30`을 일반 규칙으로 도입하지 않는다. 매 IOP별 depth convergence로 결정한다.
++
++## 17. 단계 13 — contraction closure
++
++물리코드 수정 전 다음 세 입력 Stokes basis를 mode/node별로 주입한다.
++
++```text
++I basis = [1,0,0]^T
++Q basis = [0,1,0]^T
++U basis = [0,0,1]^T
++```
++
++OSOAA Step 7과 OCRT coupling contraction이 각 basis에서 생성하는 in-water Stokes를 직접 대조한다. 이후 실제 level-26 Rayleigh BOA Fourier field를 입력한다.
++
++승인 조건:
++
++1. 행렬 차이가 level-27 Q/U 차이를 수치적으로 재현한다.
++2. residual이 다른 solver block에서 추가로 생성되지 않음을 확인한다.
++3. node ordering, `mu*w`, `2/mu_water`, Fourier normalization을 각각 독립 검증한다.
++
++## 18. 단계 14 — 물리 불변량 판정
++
++다음 gate 중 최소 두 개가 동일 수정 방향을 지지할 때만 생산 코드를 변경한다.
++
++- flat-interface analytical Mueller limit
++- wind→0 continuity
++- TAW/TWA reciprocity
++- flux energy conservation
++- Snell–Bouguer/étendue `L/n^2` invariance
++- principal-plane U=0
++- independent Jones-vector basis calculation
++
++OSOAA를 무조건 정답으로 두지 않는다. OCRT 또는 OSOAA 어느 쪽도 수정 후보가 될 수 있다.
++
++## 19. 단계 15 — 후속 생산 패치 승인 절차
++
++### 19.1 최소 패치
++
++불일치 성분과 물리 원인이 확정된 뒤 해당 함수·성분만 수정한다. 전역 U 부호반전 또는 회전행렬 전체 반전은 금지한다.
++
++### 19.2 필수 재검증
++
++```text
++20-cell SZA40 interface gate
++150-cell pure-water stress gate
++66-cell SZA80 subset
++600-cell full comparison
++Rrs/rrs IQU six scatterplots per scope
++mirror identity and TOA invariance
++flat/wind-zero/reciprocity/energy gates
++```
++
++### 19.3 계산시간
++
++생산 패치 전후 대표 조건을 각각 1회 예열 후 5회 교차 측정한다. 평균 또는 중앙값이 5% 이상 증가하면 profiling을 수행한다.
++
++2026-07-24 진단 도구 추가는 생산 binary를 변경하지 않는다.
++
++```text
++production binary SHA-256:
++41391518435c788c4d99f798c82fd39a016c8e4227ce220cedc2096f001838df
++runtime impact on production solver: exactly zero (byte-identical binary)
++standalone TAW audit elapsed: about 5.83 s for 48x48, m=0..4, n_phi=1024
++```
++
++## 20. 2026-07-24 1차 진단 시점 승인 및 보류 — 역사적 checkpoint
++
++### 20.1 승인
++
++- 첨부 계면 국소화 가설을 후속 우선 분석축으로 채택
++- OSOAA TAW decoder와 OCRT kernel 직접 감사 도구
++- q convention/sigma/n_phi/depth의 manifest 의무화
++- water depth 1000 m parity gate
++- Rrs 두 extraction branch 병행 보존
++- 해당 checkpoint의 production physics code 무변경(FIX1+FIX2+FIX3 판정 전)
++
++### 20.2 보류
++
++- TAW sine/reference-plane 불일치의 물리적 정답
++- OCRT 또는 OSOAA 중 수정 대상 결정
++- SZA80 잔차가 TAW 수정만으로 해소되는지 여부
++- level-27+TWA와 level-26 subtraction 중 최종 Rrs 정본
++- 입자 phase-function truncation 정합성
++- aerosol 포함 coupled-field 정합성
++
++## 21. 단계 16 — 추가 결함 패키지 검토와 원자적 변경 범위 확정
++
++### 21.1 첨부 주장 분해
++
++추가 분석 패키지의 세 수정은 다음과 같이 분리한다.
++
++```text
++FIX1: surface_T_aw_coxmunk_trig에서 cphi_r=-cphi, sphi_r=-sphi
++FIX2: 동일 회전 블록에서 mu_i_s=-mu_i, mu_o_s=-mu_o
++FIX3: surface_T_aw_coxmunk_fourier_kernel 정규화 후 m>0의 M13/M23 부호 반전
++```
++
++세 수정은 독립적으로 선택하지 않는다. 다음 이유로 하나의 원자적 변경으로 적용한다.
++
++1. FIX1은 실제 광자 진행방향에 대응하는 상대방위각의 π 이동이다.
++2. FIX2는 공기→물 투과광의 입사·출사 방향여현을 signed propagation cosine으로 변환한다.
++3. FIX3은 각도공간 Mueller 행렬이 아니라 sine-Fourier 저장·축약 convention을 공통화한다.
++4. FIX2 없이 FIX3을 적용하면 이미 잘못된 각도공간 회전에 저장 부호만 덧씌우게 된다.
++5. FIX2를 적용한 뒤 FIX3을 생략하면 M31/M32는 교정되지만 m>0 입사-U column contraction이 OSOAA Step 7과 달라진다.
++
++### 21.2 기존 FIX1-only 후보의 지위
++
++다음 버전은 최종 생산본이 아니라 중간 진단본으로 분류한다.
++
++```text
++OCRT-v1.2-2026-07-24-KST-stage2-taw-rotation-fix
++```
++
++FIX1-only 결과와 바이너리는 회귀 비교를 위해 보존하되 신규 생산 실행에는 사용하지 않는다.
++
++## 22. 단계 17 — FIX1+FIX2 물리 회전식 적용
++
++### 22.1 수정 파일
++
++```text
++src/shared/surface.c
++```
++
++### 22.2 `surface_T_aw_coxmunk_trig()` 수정
++
++기존 FIX1-only 블록을 다음과 같이 확장한다.
++
++```c
++const double cphi_r = -cphi;
++const double sphi_r = -sphi;
++const double mu_i_s = -mu_i;
++const double mu_o_s = -mu_o;
++
++double cosPsi = mu_i_s * mu_o_s + si * so * cphi_r;
++cosPsi = fmax(-1.0, fmin(1.0, cosPsi));
++
++double ci1 = (mu_o_s - mu_i_s * cosPsi) / (dnm * s1_safe);
++double si1 = so * sphi_r / dnm;
++
++double ci2 = (mu_i_s - mu_o_s * cosPsi) / (dnm * s2_safe);
++double si2 = si * sphi_r / dnm;
++```
++
++미시면 법선/Fresnel 입사각 계산에 사용하는 away-from-interface 벡터는 변경하지 않는다. signed cosine은 Stokes 회전 블록에만 적용한다.
++
++### 22.3 독립 물리 근거
++
++공기→물 진행벡터는 다음과 같다.
++
++\[
++\mathbf{k}_i=(-\sin\theta_i,0,-\mu_i),
++\qquad
++\mathbf{k}_o=(\sin\theta_o\cos\phi,\sin\theta_o\sin\phi,-\mu_o).
++\]
++
++따라서
++
++\[
++\mathbf{k}_i\cdot\mathbf{k}_o
++=\mu_i\mu_o-\sin\theta_i\sin\theta_o\cos\phi.
++\]
++
++코드의 `mu_i_s`, `mu_o_s`, `cphi_r` 조합은 이 내적을 직접 재현해야 한다.
++
++## 23. 단계 18 — FIX3 Fourier 입사-U 열 저장
++
++### 23.1 적용 위치
++
++`surface_T_aw_coxmunk_fourier_kernel()`에서 azimuth 적분과 mode 정규화를 완료한 직후 적용한다.
++
++```c
++for (int kl = 0; kl < 9; kl++) T_pair[kl] *= norm * dphi;
++
++if (m > 0) {
++    T_pair[0*3 + 2] = -T_pair[0*3 + 2];
++    T_pair[1*3 + 2] = -T_pair[1*3 + 2];
++}
++```
++
++### 23.2 금지사항
++
++다음을 적용하지 않는다.
++
++```text
++M31/M32/M33 U-output row 전체 반전
++M33 반전
++m=0 반전
++downstream contraction에서 동일 부호를 다시 적용
++```
++
++FIX3의 의미는 `m>0` sine-Fourier field에서 **incoming U column**에 필요한 음수를 저장 operator에 한 번 접어 넣는 것이다. 이후 contraction은 일반 3×3 행렬-벡터 곱으로 유지한다.
++
++### 23.3 OSOAA Step 7 계약
++
++OSOAA TAW contraction은 다음 구조로 해석한다.
++
++```text
++Iout = T11*Iin + T12*Qin + T13*Uin
++Qout = T21*Iin + T22*Qin + T23*Uin
++Uout = T31*Iin + T32*Qin + T33*Uin
++```
++
++따라서 저장 규약 보정은 입력 column 기준으로 판정한다.
++
++## 24. 단계 19 — FIX123 독립 회귀시험
++
++### 24.1 신규 단위시험
++
++다음 파일을 추가한다.
++
++```text
++tests/test_surface_aw_interface_conventions.c
++```
++
++시험 1: outgoing-pole 해석 극한
++
++```text
++air incidence = 40 deg
++water outgoing zenith = 1e-4 deg
++physical azimuth offset = 30 deg
++wind = 3 m/s
++n_water = 1.34
++```
++
++다음 정규화 성분을 독립 Fresnel 해석식과 비교한다.
++
++```text
++M21/M11, M22/M11, M23/M11,
++M31/M11, M32/M11, M33/M11
++```
++
++허용오차:
++
++```text
++2e-6 absolute
++```
++
++시험 2: Fourier incoming-U column
++
++1. `surface_T_aw_coxmunk_trig_test()`를 `n_phi=4096`, `m=1`로 직접 적분한다.
++2. `surface_T_aw_coxmunk_fourier_kernel()`의 저장값과 비교한다.
++3. M13/M23만 direct integral의 음수이고 나머지 7성분은 동일해야 한다.
++
++### 24.2 실행 스크립트
++
++다음 파일을 추가한다.
++
++```text
++scripts/test_stage2_interface_fix123.sh
++```
++
++필수 검사:
++
++```bash
++grep -F 'const double cphi_r = -cphi;' src/shared/surface.c
++grep -F 'const double sphi_r = -sphi;' src/shared/surface.c
++grep -F 'const double mu_i_s = -mu_i;' src/shared/surface.c
++grep -F 'const double mu_o_s = -mu_o;' src/shared/surface.c
++grep -F 'T_pair[0*3 + 2] = -T_pair[0*3 + 2];' src/shared/surface.c
++grep -F 'T_pair[1*3 + 2] = -T_pair[1*3 + 2];' src/shared/surface.c
++```
++
++또한 단계 26에서 기각한 확산상단 단순 부호반전이 소스에 존재하면 실패시킨다.
++
++기대 출력:
++
++```text
++PASS: air-to-water signed-rotation and Fourier U-column regression
++PASS: stage-2 interface FIX1+FIX2+FIX3 source audit
++```
++
++## 25. 단계 20 — OSOAA TAW 전 성분 감사
++
++### 25.1 고정 입력
++
++```text
++TAW file = TAW-1.340-03.0-RadMU48-NB200-SZA40.000-TSZA28.665
++active nodes = 48 x 48
++m = 0..4
++matrix = 3 x 3 full
++wind = 3 m/s
++n_water = 1.34
++sigma_type = 1
++q_convention = 1
++n_phi = 1024
++```
++
++### 25.2 승인 기준
++
++각 성분과 mode에 대해 다음을 저장한다.
++
++```text
++mean(abs(delta))/max(abs(reference))
++RMS(delta)/max(abs(reference))
++max(abs(delta))/max(abs(reference))
++correlation
++best-fit scale
++```
++
++FIX123 승인 결과는 다음 범위여야 한다.
++
++```text
++worst mean/max_ref <= 0.0023272%
++worst RMS/max_ref  <= 0.020464%
++minimum correlation >= 0.999995
++```
++
++극단적 grazing node의 단일점 max는 약 0.653%까지 허용하되, 해당 위치와 절대 커널 크기를 보고서에 기록한다.
++
++### 25.3 과거 해석 정정
++
++FIX1-only 감사에서 M31/M32의 반대부호를 OSOAA의 “U 행 저장부호”로 해석한 결론은 폐기한다. FIX123 이후의 올바른 공통계약은 다음과 같다.
++
++```text
++physical angle-space rotation: FIX1+FIX2
++m>0 Fourier storage: incoming-U column M13/M23 sign folded once
++```
++
++## 26. 단계 21 — 확산상단 U 가설의 역사적 보류와 해제 조건
++
++### 26.1 FIX123 시점의 보류 근거
++
++443 nm, SZA40, VZA60, RAA90, wind3, `aDOM440=20 m^-1`, water `n_mu=64`, `m_max=4`의 한 종단 시험에서는 molecular incoming-U 세 항의 부호를 바꿀 때 Q가 개선되고 U가 악화되었다. 이 시점에는 외부 U field의 저장규약과 주 SOS 연산자의 홀수 signed-index 채널을 완전히 추적하지 못했으므로 생산 변경을 보류하였다.
++
++이 보류는 안전한 잠정조치였지만, 최종 물리 판정은 아니었다. 종단 Q/U 비는 여러 잔여 오차의 상쇄를 포함하므로 해당 값만으로 국소 source operator의 부호를 판정해서는 안 된다.
++
++### 26.2 보류 해제에 요구된 시험
++
++각 Fourier mode, incident node 및 I/Q/U basis에 대해 다음 두 경로를 같은 source normalization으로 직접 비교한다.
++
++1. `rt_sos_operator_apply_vector()`
++2. `ocrt_add_diffuse_top_primary()`
++
++비교 manifest에는 signed input/output index, `xpl/xrl/xtl`, particle/molecular weight, Gauss weight, attenuation, U-output wrapper sign 및 external U storage convention을 기록한다.
++
++### 26.3 등가빔 제한
++
++`mu_sun_water_override>0`에서 `atm.beam_q=0`을 사용하는 equivalent-beam path는 확산 하늘광의 full Q/U Fourier field를 보존하지 않는다. 이 경로는 intensity fallback 또는 진단용으로만 유지하며 편광 정본으로 사용하지 않는다.
++
++## 27. 단계 22 — FIX123 72개 실행 및 600셀 재검증
++
++### 27.1 실행계약
++
++단계 0의 72개 실행 manifest와 OSOAA 기준표를 그대로 사용한다. FIX1-only와 FIX123 사이에서 입력 데이터, depth, quadrature, Fourier order, SOS cap 또는 Rrs extraction branch를 변경하지 않는다.
++
++### 27.2 성공조건
++
++```text
++72/72 runs complete
++24 full-grid rows per run
++water_converged = 1 for every run
++600/600 matched cells
++```
++
++### 27.3 필수 산포도
++
++다음 각 scope마다 Rrs/rrs I/Q/U 6개 산포도를 독립 생성한다.
++
++```text
++all600
++purewater150
++purewater84_sza_le40
++purewater66_sza80
++gate_sza40_vza60
++```
++
++Q/U의 주 통계는 `RMS(delta component / OSOAA I)`로 고정한다. I는 MAPE를 병기한다.
++
++### 27.4 승인된 결과 해석
++
++FIX123은 FIX1-only보다 최종 aggregate 오차를 소폭 악화시킨다.
++
++```text
++all600 Rrs Q: 9.6507 -> 9.8699%
++all600 Rrs U: 7.2323 -> 7.3925%
++all600 rrs Q: 9.6010 -> 9.8236%
++all600 rrs U: 7.1738 -> 7.3361%
++
++purewater SZA80 Rrs Q: 13.0636 -> 13.3605%
++purewater SZA80 Rrs U:  9.7614 ->  9.9786%
++```
++
++이는 rollback 조건이 아니다. 극한해와 TAW operator가 개선되므로 기존 FIX1-only 결함이 다른 미해결 오차와 상쇄되고 있었던 것으로 기록한다.
++
++## 28. 단계 23 — 계산시간 및 병목 판정
++
++### 28.1 benchmark 조건
++
++```text
++wavelength = 443 nm
++pure water
++SZA/VZA/RAA = 40/60/90 deg
++wind = 3 m/s
++water n_mu = 48
++water m_max = 2
++1 warm-up + 5 interleaved measured runs per binary
++```
++
++### 28.2 결과
++
++```text
++FIX1-only mean   = 2.477739 s
++FIX123 mean      = 2.476390 s
++mean change      = -0.0544%
++
++FIX1-only median = 2.455856 s
++FIX123 median    = 2.479298 s
++median change    = +0.9546%
++```
++
++5% 증가 기준에 미달하므로 별도 병목 프로파일링은 수행하지 않는다. FIX123은 상수 부호와 두 방향여현의 사용만 바꾸며 신규 반복문, 적분, 할당을 추가하지 않는다.
++
++## 29. 단계 24 — FIX123 checkpoint 버전, 빌드 및 동결
++
++### 29.1 버전 문자열
++
++`src/main.c`의 버전을 다음으로 갱신한다.
++
++```text
++OCRT-v1.2-2026-07-24-KST-stage2-interface-fix123
++```
++
++### 29.2 빌드
++
++```bash
++./scripts/build_release_v1.2.sh build/ocrt_interface_fix123
++./build/ocrt_interface_fix123 --version
++sha256sum build/ocrt_interface_fix123
++```
++
++승인 바이너리 SHA-256:
++
++```text
++4a2269a13f81f4112dfb351ec3cac3dc5548915a8913670efa6efe2aa79180c8
++```
++
++### 29.3 필수 회귀 실행
++
++```bash
++bash scripts/test_stage2_interface_fix123.sh
++bash scripts/test_stage2_water_raa_fix.sh
++python tests/test_water_raa_output_regression.py \
++  --binary build/ocrt_interface_fix123
++```
++
++기존 build/release smoke와 패키지 ZIP integrity 검사도 수행한다.
++
++## 30. FIX123 checkpoint 승인 및 보류 상태
++
++### 30.1 생산 승인
++
++- 수중 공개 RAA 및 U positive-sine 출력 수정
++- 공기→물 rough-interface FIX1+FIX2
++- m>0 TAW incoming-U column FIX3
++- 극한해 및 Fourier storage 회귀시험
++- OSOAA TAW 9성분 감사도구
++- 72/72, 600/600 재검증
++- 실행시간 증가 없음
++
++### 30.2 분석 승인
++
++- 확산상단 polarized boundary-source path를 다음 최우선 분석축으로 설정
++- equivalent-beam `beam_q=0` 편광 제한 명문화
++- SZA40과 SZA80를 동시 gate로 유지
++- Rrs 두 extraction branch 병행 유지
++
++### 30.3 보류 또는 금지
++
++- `ocrt_add_diffuse_top_primary` molecular U coefficients의 단순 전역 부호반전
++- M31/M32/M33 U-row 전체 반전
++- FIX2 없는 FIX3 단독 적용
++- 최종 aggregate MAPE 감소만을 기준으로 FIX123 rollback
++- level-27+TWA 또는 level-26 subtraction을 유일한 Rrs 정본으로 조기 확정
++
++## 31. FIX123 checkpoint 납품물 요구사항
++
++최종 배포묶음에는 다음을 포함한다.
++
++```text
++full source + approved binary
++this cumulative instruction
++additional defect review report
++session-start-to-final cumulative patch
++FIX1-only-to-FIX123 delta patch
++TAW/polar/DTP validation package
++72-run status + 600-cell matched table
++Rrs/rrs IQU scatterplots
++runtime raw and summary CSV
++SHA-256 manifest
++```
++
++## 32. 단계 25 — 다른 세션 인수인계 묶음의 독립 감사
++
++### 32.1 검토 자료
++
++다음 첨부를 읽기 전용으로 해제한다.
++
++```text
++ocrt_osoaa_session_2026-07-22.tar.gz
++```
++
++핵심 자료는 `HANDOFF_FINAL_2026-07-22.md`, `PATCH_water_FIX4_candidate.diff`, `compare_entry.py`, Gate B 자료 및 계면 분석문서이다. 문서의 결론을 그대로 적용하지 않고 실제 patch와 production source를 대조한다.
++
++### 32.2 주장 분류
++
++- 결함 A, B, C: 기존 독립 검증과 일치하므로 유지한다.
++- 결함 D 코드 대조: 유력하며 직접 closure가 필요하다.
++- 결함 D “적용 금지”: 한 종단 비율 시험에 의존하므로 재판정한다.
++- “계면 0.05% 종결”: SZA40 강흡수 계면 gate의 국소 결론으로만 인정한다.
++- “최소 수중 광학두께 30”: 보수 guard일 뿐 보편 물리 상수로 사용하지 않는다.
++
++### 32.3 첨부 하네스 입력계약 감사
++
++`compare_entry.py`는 OSOAA에 `depth_m=48/(a+b)`를 전달하지만 OCRT 명령에는 동일 물리 깊이를 전달하지 않는다. 또한 412 nm 순수해수는 수중 SOS 20차에서 종료한다. 따라서 해당 하네스는 방위각·계면 원인진단에는 사용할 수 있으나, 입력 완전일치가 요구되는 최종 1% parity gate로 승인하지 않는다.
++
++후속 하네스는 `water_depth_m`, `water_max_orders`, `n_mu`, `m_max`, surface matrix order, phase function, depolarization 및 Rrs extraction branch를 행 단위 manifest에 명시한다.
++
++## 33. 단계 26 — external U Fourier 규약의 소스 추적
++
++다음 경로를 줄 단위로 확인한다.
++
++```text
++atmospheric total_u at BOA
++ -> boa_export->U_per_m
++ -> rt_air_water_couple_atm_to_water ordinary 3x3 contraction
++ -> coupled.U_inwater_per_m
++ -> memcpy to ocrt_dt_U
++ -> w_opts.ext_top_U
++ -> ocrt_add_diffuse_top_primary
++```
++
++어느 단계에서도 추가 U 부호변환이 없어야 한다. FIX3은 m>0 incoming-U storage sign을 TAW `M13/M23`에 이미 한 번 접어 넣으므로, downstream field는 water SOS와 동일한 sine-Fourier U convention이다.
++
++검증 결과 이 조건이 충족되었다. 따라서 `ext_top_U`를 반대부호 field로 해석하여 FIX4를 기각해서는 안 된다.
++
++## 34. 단계 27 — diffuse-top source/operator mode–node–basis closure
++
++### 34.1 신규 시험
++
++다음 파일을 추가한다.
++
++```text
++tests/test_diffuse_top_primary_operator_closure.c
++scripts/test_stage2_diffuse_top_uclosure.sh
++```
++
++시험은 pure Rayleigh와 synthetic Rayleigh–aerosol 혼합에서 m=0…4, 모든 incident node 및 I/Q/U basis를 순회한다.
++
++Discrete incident field는 injector에서 다음과 같이 표현된다.
++
++```text
++AI/AQ/AU = 2 * Gauss_weight * incident_coefficient
++ch_c     = 0.5 * exp(-tau/mu)
++```
++
++따라서 두 인자의 곱은 production SOS operator의 `weight * field * attenuation`과 정확히 동일하다.
++
++### 34.2 수정 전 결과
++
++FIX123은 I/Q basis에서 machine precision으로 닫히지만 incoming-U basis에서 다음 불일치를 보인다.
++
++```text
++m=1 max abs = 4.512674445328e-2
++m=2 max abs = 2.239091465088e-2
++```
++
++external U를 인위적으로 반전하면 닫힌다는 사실은 injector의 incoming-U column sign이 반대임을 뜻한다.
++
++### 34.3 FIX4 적용
++
++`src/rt_water_rt.c::ocrt_add_diffuse_top_primary()`의 molecular incoming-U 세 항을 다음과 같이 변경한다.
++
++```diff
++- const double ruI = ray_on ? +gamma2 * atm->xpl[j] * xtlc_u : 0.0;
++- const double ruQ = ray_on ? +alpha2 * atm->xrl[j] * xtlc_u : 0.0;
++- const double ruU = ray_on ? +alpha2 * atm->xtl[j] * xtlc_u : 0.0;
+++ const double ruI = ray_on ? -gamma2 * atm->xpl[j] * xtlc_u : 0.0;
+++ const double ruQ = ray_on ? -alpha2 * atm->xrl[j] * xtlc_u : 0.0;
+++ const double ruU = ray_on ? -alpha2 * atm->xtl[j] * xtlc_u : 0.0;
++```
++
++`src_u`에 존재하는 외부 전역 음수는 유지한다. particle/table kernel 또는 `raU/rqU`는 변경하지 않는다.
++
++### 34.4 수정 후 승인 기준과 결과
++
++```text
++pure Rayleigh max abs closure = 2.776e-17
++mixed medium max abs closure  = 5.551e-17
++```
++
++허용 기준 `1e-13`을 충분히 만족한다. 이 시험은 OSOAA를 사용하지 않으므로 FIX4를 내부 연산자 불변량으로 승인한다.
++
++## 35. 단계 28 — FIX4 72개 실행 및 600셀 재검증
++
++### 35.1 실행계약
++
++단계 0과 FIX123 checkpoint의 72개 manifest를 그대로 사용한다.
++
++```text
++atmosphere n_mu=48, n_layers=40, m_max=2
++water shared grid
++sos_max_orders=100
++OCRT_DEBUG=1 and --debug-water-max-orders 100
++wind=3 m/s
++n_water=1.34
++T=20 C, S=38.4 PSU, dpol_water=0.039
++gas columns=0, aerosol=0
++```
++
++### 35.2 성공조건
++
++```text
++72/72 physical runs
++24 full-grid rows per run
++water_converged=1
++600/600 matched cells
++pure-water 412-nm water orders = 29/29/28 for SZA 0/40/80
++```
++
++모든 조건을 만족하였다.
++
++### 35.3 결과 해석
++
++FIX4는 전체 및 SZA80 편광 잔차를 크게 감소시킨다.
++
++```text
++all600 Rrs Q: 9.8699 -> 3.6677%
++all600 Rrs U: 7.3925 -> 3.2794%
++all600 rrs Q: 9.8236 -> 3.4496%
++all600 rrs U: 7.3361 -> 3.1436%
++
++pure-water SZA80 Rrs Q: 13.3605 -> 4.5349%
++pure-water SZA80 Rrs U:  9.9786 -> 3.9543%
++pure-water SZA80 rrs Q: 13.3118 -> 4.3228%
++pure-water SZA80 rrs U:  9.9037 -> 3.7766%
++```
++
++반면 pure-water SZA≤40 및 I MAPE는 일부 악화된다. 이는 rollback 조건이 아니다. 내부 source/operator closure가 machine precision으로 개선되므로 기존 결함이 저 SZA의 다른 잔여 오차를 상쇄하고 있었던 것으로 기록한다.
++
++### 35.4 필수 산포도
++
++최종 보고에는 다음 6개를 독립 그림으로 포함한다.
++
++```text
++purewater150_Rrs0plus_I_scatter_dtp_uclosure.png
++purewater150_Rrs0plus_Q_scatter_dtp_uclosure.png
++purewater150_Rrs0plus_U_scatter_dtp_uclosure.png
++purewater150_rrs0minus_I_scatter_dtp_uclosure.png
++purewater150_rrs0minus_Q_scatter_dtp_uclosure.png
++purewater150_rrs0minus_U_scatter_dtp_uclosure.png
++```
++
++Q/U는 `RMS(delta component / OSOAA I)`, I는 MAPE를 사용하며 각 그림에 FIX123과 FIX4 값을 병기한다.
++
++## 36. 단계 29 — FIX4 계산시간 및 병목 판정
++
++동일 443 nm 순수해수 조건에서 1회 예열 후 3회씩 교차 측정한다.
++
++```text
++FIX123 mean       = 2.649036 s
++FIX123+FIX4 mean  = 2.640879 s
++mean change       = -0.3079%
++
++FIX123 median      = 2.653287 s
++FIX123+FIX4 median = 2.640050 s
++median change      = -0.4989%
++```
++
++계산시간 증가는 없다. FIX4는 상수 부호 세 개만 변경하며 신규 반복문, 적분, 메모리 할당 또는 phase-function 평가를 추가하지 않는다. 5% 병목 프로파일링 기준에 해당하지 않는다.
++
++## 37. 단계 30 — 최종 버전, 빌드 및 회귀시험
++
++### 37.1 버전
++
++```text
++OCRT-v1.2-2026-07-24-KST-stage2-interface-fix123-dtp-uclosure
++```
++
++### 37.2 빌드
++
++```bash
++bash scripts/build_release_v1.2.sh build/ocrt_stage2_dtp_uclosure
++./build/ocrt_stage2_dtp_uclosure --version
++sha256sum build/ocrt_stage2_dtp_uclosure
++```
++
++승인 바이너리 SHA-256:
++
++```text
++7e5b2938e3529cc068a70cd11514dfa22cbbc3563aa5ec8a910ce4a6aa258fd7
++```
++
++### 37.3 필수 회귀
++
++```bash
++bash scripts/test_stage2_interface_fix123.sh
++bash scripts/test_stage2_diffuse_top_uclosure.sh
++bash scripts/test_stage2_water_raa_fix.sh
++python tests/test_water_raa_output_regression.py \
++  --binary build/ocrt_stage2_dtp_uclosure
++```
++
++최종 ZIP을 별도 디렉터리에 다시 풀어 동일 회귀와 `--version`을 반복한다.
++
++## 38. 최종 승인·보류 상태와 다음 분석축
++
++### 38.1 생산 승인
++
++- water public RAA/U output correction
++- air-to-water FIX1+FIX2
++- m>0 TAW incoming-U FIX3
++- diffuse-top molecular incoming-U FIX4
++- source/operator closure regression
++- 72/72 및 600/600 재검증
++- 계산시간 증가 없음
++
++### 38.2 계속 보류
++
++- level-27+TWA와 level-26 subtraction 중 하나를 유일한 Rrs 정본으로 조기 확정
++- 해수 최소 광학두께 30을 보편 상수로 강제
++- 입력 물리 깊이가 다른 비교 하네스의 최종 1% gate 사용
++- SZA40 한 조건의 종단 Q/U 비만을 근거로 부호 수정 승인 또는 기각
++- hydrosol truncation 입력을 맞추지 않은 Chl/TSM 비교
++
++### 38.3 후속 최우선 분석
++
++1. SZA≤40에서 FIX4 이후 증가한 I/Q/U 잔차를 Ed 정규화, depth, Rrs branch 및 source I/Q 열로 분리한다.
++2. SZA80 잔여 3–4%를 direct source, BOA diffuse field, TAW contraction 및 water scattering order별로 분해한다.
++3. 두 코드에 동일한 physical depth와 SOS cap을 강제하는 `compare_entry` 개정판을 만든다.
++4. Rrs 두 extraction branch를 같은 결과행에 병기하여 branch 차이를 degree of freedom에서 제거한다.
++
++## 39. 개정 3 최종 납품물 요구사항
++
++```text
++full source + approved binary
++this revision-3 cumulative instruction
++other-session review report
++session-start-to-final cumulative patch
++FIX123-to-DTP-U-closure delta patch
++source/operator closure raw and regression log
++72-run status + 600-cell matched table
++Rrs/rrs IQU scatterplots
++runtime raw and summary CSV
++SHA-256 manifest
++```
++
++
++
++## 40. 단계 31 — 첨부 극한 패치의 무결성 및 적용 전 판정
++
++### 40.1 첨부 무결성
++
++`files (41).zip`에서 실제 제공된 다음 네 파일의 SHA-256은 manifest와 일치하여야 한다.
++
++```text
++NOTE_double_pole_and_build_2026-07-24.md
++PATCH_surface_POLE_2026-07-24.diff
++surface.c
++surface_double_pole_perturbed.c
++```
++
++manifest에 기재되었으나 ZIP에 포함되지 않은 다음 다섯 파일은 외부 미제공 자료로 기록한다.
++
++```text
++ADDENDUM2_atmval_pole_2026-07-24.md
++atmval_v4_2026-07-24.csv
++atmval_v4_2026-07-24.png
++polecont.c
++probe_nadir_pole_constraint.py
++```
++
++따라서 첨부의 종단 통계나 224조건 전수검사 주장을 그대로 인용하지 않고, 포함된 코드 패치의 물리식과 별도 회귀시험을 독립 검증한다.
++
++### 40.2 적용 승인 기준
++
++수정은 다음 세 조건을 모두 만족할 때 승인한다.
++
++1. 정확한 극과 일방 극한의 Mueller 행렬 연속성이 복원될 것.
++2. 연직 출력의 Q/U가 불필요한 m=0 누출 없이 spin-2 공변성을 만족할 것.
++3. 기존 비극 식, FIX1–FIX4 및 대기 하네스가 변경되지 않을 것.
++
++종단 Rrs/rrs 또는 TOA 상대오차 감소 여부는 승인 기준으로 사용하지 않는다.
++
++## 41. 단계 32 — `src/shared/surface.c`의 정확한 극 한계 적용
++
++### 41.1 공통 문턱
++
++파일 상단에 다음 상수를 추가한다.
++
++```c
++#define OCRT_SURF_POLE_EPS 1.0e-8
++```
++
++주석에는 일반 회전식이 `sin(theta_self)->0`에서 0/0이 되며, 해석 극한이 다음임을 명시한다.
++
++```text
++cos(sigma) -> -sign(mu_self) cos(phi)
++sin(sigma) -> sin(phi)
++```
++
++### 41.2 수정 대상 네 함수
++
++다음 네 함수의 입사측·출사측 회전각 계산에 동일 원칙을 적용한다.
++
++```text
++surface_R_coxmunk_trig
++surface_T_coxmunk_trig
++surface_R_ww_coxmunk_trig
++surface_T_aw_coxmunk_trig
++```
++
++각 방향의 `sin(theta_self)`가 문턱 이하면 극한식을 사용하고, 그보다 크면 기존 일반식을 글자 단위로 유지한다.
++
++대표 패턴은 다음과 같다.
++
++```c
++if (s_self <= OCRT_SURF_POLE_EPS) {
++    ci = -copysign(1.0, mu_self) * cos_phi;
++    si = sin_phi;
++} else {
++    /* 기존 일반식 및 정규화 */
++}
++```
++
++공기→물 FIX1+FIX2 경로에서는 이미 정의된 signed propagation cosine과 `pi` 이동 상대방위각을 그대로 사용한다. 극한 패치가 FIX1+FIX2를 다시 해석하거나 부호를 중복 적용해서는 안 된다.
++
++### 41.3 금지사항
++
++- 비극 구간의 회전식을 변경하지 않는다.
++- 정확한 극에서 임의로 identity rotation을 강제하지 않는다.
++- 양쪽 극 축퇴를 종단 오차 감소 목적으로 조정하지 않는다.
++- FIX3의 m>0 incoming-U 열 및 FIX4의 diffuse-top U 열을 변경하지 않는다.
++- 대기 입력과 1단계 하네스 설정을 변경하지 않는다.
++
++## 42. 단계 33 — 극한 및 양쪽 극 회귀시험
++
++### 42.1 새 단위시험
++
++다음 파일을 추가한다.
++
++```text
++tests/test_surface_pole_limit.c
++scripts/test_stage2_surface_pole_limit.sh
++```
++
++시험은 네 kernel 각각에서 입사 또는 출사 방향 하나만 극인 8개 경우를 포함한다.
++
++수정 전 대표 결과:
++
++```text
++exact-pole / one-sided-limit relative discontinuity ≈ 1.49995–1.50005
++```
++
++수정 후 승인 기준과 실측 결과:
++
++```text
++R_air max relative discontinuity  = 9.43e-6
++T_wa  max relative discontinuity  = 4.92e-5
++R_ww  max relative discontinuity  = 5.31e-6
++T_aw  max relative discontinuity  = 4.92e-5
++acceptance threshold              = 1e-4
++```
++
++연직 spin-2 시험은 다음을 요구한다.
++
++```text
++m=0 leakage / spin-2 amplitude < 1e-12
++paired Q/U m=2 amplitude mismatch < 1e-12
++```
++
++수정 후 네 kernel의 m=0 누출은 약 `6e-17–8e-17`, Q/U pair mismatch는 `0–1.6e-15`이다.
++
++### 42.2 양쪽 극 축퇴
++
++양쪽 방향이 모두 극이면 상대방위각 기준면은 접근경로에 의존한다. 생산 격자에서 해당 쌍은 삽입 special node이며 경계 적분에서 zero quadrature weight와 곱해진다.
++
++첨부의 perturbation source를 사용하되, 본 세션에서는 최소 다음 독립 범위를 재실행한다.
++
++```text
++pure water
++SZA = 0 deg
++bands = 412, 443, 490, 555, 660, 865 nm
++full grid = 24 rows per band
++```
++
++정본과 double-pole identity-perturbation 판의 6개 CSV가 모두 byte-identical이어야 한다. 첨부가 주장한 224조건 전체를 독립 반복하지 않았으면 그 사실을 보고서에 명시한다.
++
++## 43. 단계 34 — 호스트 독립 빌드 규약
++
++### 43.1 릴리스 스크립트
++
++다음 파일에서 `-march=native`를 제거한다.
++
++```text
++scripts/build_release_v1.1.sh
++scripts/build_release_v1.2.sh
++scripts/regression_ext_bottom_mode_bounds.sh
++```
++
++공통 구현:
++
++```bash
++OCRT_MARCH=${OCRT_MARCH:-cascadelake}
++...
++-march="$OCRT_MARCH"
++```
++
++기본 릴리스는 `cascadelake`로 빌드한다. 다른 CPU 기준이 필요한 경우 명시적인 `OCRT_MARCH`를 사용하고 기존 승인 해시를 재사용하지 않는다.
++
++### 43.2 재현성 시험
++
++다음 스크립트를 추가한다.
++
++```text
++scripts/test_release_build_reproducibility.sh
++```
++
++동일 소스와 동일 toolchain으로 독립 디렉터리에 두 번 빌드하여 binary SHA-256과 byte identity를 비교한다.
++
++본 개정 승인값:
++
++```text
++version = OCRT-v1.2-2026-07-24-KST-stage2-interface-fix123-dtp-uclosure-pole-limit
++march   = cascadelake
++sha256  = 6c7f4b61d311323374233e0be9643541570d3b15289457ca9336d14d8f12ffde
++```
++
++두 독립 빌드는 동일 SHA-256을 생성하여야 한다. 이 주장은 동일 compiler/linker 버전과 환경에 한정한다.
++
++### 43.3 CSV bit-exact 도구
++
++다음 도구를 추가한다.
++
++```text
++scripts/compare_csv_bitexact.py
++```
++
++- `--raw`: 파일 바이트 직접 비교
++- 기본: Python 내장 `float()`로 numeric cell을 binary64로 변환하여 비트 비교
++- 문자열 cell은 정확한 텍스트 비교
++
++`pandas` 파싱 결과를 bit-exact assertion에 사용하지 않는다.
++
++## 44. 단계 35 — 기존 회귀의 비회귀 확인
++
++다음 시험을 모두 실행한다.
++
++```bash
++bash scripts/test_stage2_surface_pole_limit.sh
++bash scripts/test_stage2_interface_fix123.sh
++bash scripts/test_stage2_diffuse_top_uclosure.sh
++bash scripts/test_stage2_water_raa_fix.sh
++bash scripts/regression_ext_bottom_mode_bounds.sh
++bash scripts/regression_raa_convention.sh
++bash scripts/test_release_build_reproducibility.sh
++```
++
++`regression_raa_convention.sh`는 `tests/test_raa_convention.c` 링크 시 `src/rt_fourier.c`를 포함하도록 수정한다. 이는 물리 변경이 아니라 기존 회귀스크립트의 누락 링크 수정이다.
++
++필수 결과:
++
++```text
++FIX123 interface regression: PASS
++FIX4 pure-Rayleigh closure: 2.776e-17
++FIX4 mixed closure:         5.551e-17
++water public RAA regression: PASS
++ext-bottom bounds regression: PASS
++RAA glint anchors: unchanged
++```
++
++## 45. 단계 36 — 72개 실행 및 종단 영향 범위
++
++### 45.1 입력계약
++
++단계 0의 72개 manifest를 그대로 사용한다. 대기 설정, Rayleigh optical depth, depolarization, layer/Fourier/SOS 옵션을 변경하지 않는다.
++
++승인 결과:
++
++```text
++72/72 runs
++24 rows/run
++water_converged = 1 for all runs
++max water order = 29
++600/600 regression-reference cells
++```
++
++### 45.2 동일 아키텍처 수정 전·후 비교
++
++수정 전 FIX123+FIX4와 수정 후 pole-limit 바이너리를 모두 `-march=cascadelake`로 빌드한다.
++
++SZA 40°, VZA 0°, 순수해수 6개 파장·8개 RAA에서:
++
++```text
++TOA rho_I: unchanged
++TOA rho_Q/U: exact-pole reference-plane component corrected
++Rrs I/Q/U: unchanged
++rrs I/Q/U: unchanged
++```
++
++443 nm의 최대 절대 변화는 대략 다음이다.
++
++```text
++TOA rho_Q max |delta| = 4.48e-4
++TOA rho_U max |delta| = 3.78e-4
++```
++
++따라서 이 패치는 수면 연산자의 exact-nadir 편광 기준면을 교정하지만, 기존 Rrs/rrs 해양 결과를 우연한 오차상쇄 목적으로 변경하지 않는다.
++
++### 45.3 Rrs/rrs 산포도
++
++동일 OSOAA 회귀 기준표를 사용하여 다음 6개 그림을 각각 생성한다.
++
++```text
++purewater150_Rrs0plus_I_scatter.png
++purewater150_Rrs0plus_Q_scatter.png
++purewater150_Rrs0plus_U_scatter.png
++purewater150_rrs0minus_I_scatter.png
++purewater150_rrs0minus_Q_scatter.png
++purewater150_rrs0minus_U_scatter.png
++```
++
++현재 기준표는 최신 OSOAA 수심 정정 이전 자료이므로 물리 정확도 최종 승인값이 아니라 코드 비회귀 대조용으로만 사용한다. pole-limit 패치 전후 지표는 동일하다.
++
++## 46. 단계 37 — 계산시간 및 병목 판정
++
++동일 compiler, `-march=cascadelake`, `OMP_NUM_THREADS=1`, 443 nm 순수해수 SZA 40° full-grid 조건에서 각 variant 1회 예열 후 5회 교차 측정한다.
++
++```text
++before mean   = 4.831627 s
++pole mean     = 4.856947 s
++mean change   = +0.5241%
++
++before median = 4.819624 s
++pole median   = 4.873949 s
++median change = +1.1272%
++```
++
++5% 미만이므로 병목 프로파일링을 수행하지 않는다. 새 반복문·적분·동적 할당은 추가되지 않았다.
++
++## 47. 단계 38 — 최종 버전 및 패키지 검증
++
++### 47.1 버전과 바이너리
++
++```text
++OCRT-v1.2-2026-07-24-KST-stage2-interface-fix123-dtp-uclosure-pole-limit
++```
++
++승인 바이너리 SHA-256:
++
++```text
++6c7f4b61d311323374233e0be9643541570d3b15289457ca9336d14d8f12ffde
++```
++
++### 47.2 최종 ZIP 검증
++
++최종 ZIP을 빈 디렉터리에 풀고 다음을 수행한다.
++
++```bash
++./scripts/build_release_v1.2.sh build/ocrt_stage2_pole_limit_clean
++cmp build/ocrt_stage2_pole_limit build/ocrt_stage2_pole_limit_clean
++bash scripts/test_stage2_surface_pole_limit.sh
++bash scripts/test_stage2_interface_fix123.sh
++bash scripts/test_stage2_diffuse_top_uclosure.sh
++bash scripts/test_stage2_water_raa_fix.sh
++```
++
++포함 바이너리와 clean rebuild 바이너리가 byte-identical이어야 한다.
++
++## 48. 개정 4 최종 승인·보류 상태
++
++### 48.1 동결 모듈
++
++- 1단계 대기 모듈과 대기 하네스
++- public water RAA/U output reconstruction
++- air-to-water FIX1+FIX2+FIX3
++- diffuse-top incoming-U FIX4
++- 네 rough-interface kernel의 exact-pole meridian limit
++- fixed-ISA release build contract
++
++### 48.2 계속 미해결
++
++- corrected-depth OSOAA 기준의 SZA 80° `rrs(0-)`
++- corrected-depth OSOAA `Rrs(0+)` 두 extraction branch
++- rough direct-solar boundary field와 in-water solver의 완전 분리 폐합
++- water-side `R_ww` 전 성분·전 mode 독립 감사
++- 동일 물리수심·층경계·n_mu·m_max·SOS tolerance를 강제한 최종 1% gate
++
++극한 패치가 이 미해결 항목을 해결했다고 주장하지 않는다.
++
++## 49. 개정 4 최종 납품물 요구사항
++
++```text
++full source + approved fixed-ISA binary
++revision-4 cumulative instruction
++surface pole-limit review report
++session-start-to-final cumulative patch
++DTP-U-closure-to-pole-limit incremental patch
++exact-pole and spin-2 regression logs/figures
++same-architecture before/after audit
++72-run status + 600-cell regression table
++Rrs/rrs IQU scatterplots
++runtime raw/summary
++clean-zip rebuild verification
++SHA-256 manifest
++```
+diff -ruN a/docs/OCRT_STAGE2_SURFACE_POLE_LIMIT_AND_REPROBUILD_REVIEW_20260724_KO.md b/docs/OCRT_STAGE2_SURFACE_POLE_LIMIT_AND_REPROBUILD_REVIEW_20260724_KO.md
+--- a/docs/OCRT_STAGE2_SURFACE_POLE_LIMIT_AND_REPROBUILD_REVIEW_20260724_KO.md	1970-01-01 00:00:00.000000000 +0000
++++ b/docs/OCRT_STAGE2_SURFACE_POLE_LIMIT_AND_REPROBUILD_REVIEW_20260724_KO.md	2026-07-24 15:12:31.502026702 +0000
+@@ -0,0 +1,309 @@
++# OCRT–OSOAA 2단계 수면 극한 회전 및 재현 빌드 업데이트 검토 보고서
++
++문서 기준일: 2026-07-24  
++검토 대상: `files (41).zip`  
++적용 전 기준선: `OCRT-v1.2-2026-07-24-KST-stage2-interface-fix123-dtp-uclosure`  
++적용 후 기준선: `OCRT-v1.2-2026-07-24-KST-stage2-interface-fix123-dtp-uclosure-pole-limit`
++
++## 1. 종합 판정
++
++첨부 업데이트의 두 핵심 제안은 타당하다.
++
++1. rough-interface Mueller kernel에서 입사 또는 출사 방향이 정확히 연직일 때 일반 자오면 회전식이 0/0이 되므로 해석 극한을 명시적으로 사용하여야 한다.
++2. 릴리스 빌드에 `-march=native`를 사용하면 실행 호스트의 CPU에 따라 코드 생성과 부동소수 연산순서가 달라지므로 고정 ISA를 사용하여야 한다.
++
++이에 따라 다음을 코드에 반영하였다.
++
++- 네 rough-interface kernel의 exact-pole meridian limit
++- 극 연속성과 연직 spin-2 공변성 회귀시험
++- 기본 릴리스 ISA를 `cascadelake`로 고정
++- 독립 두 번 빌드의 binary SHA-256 재현성 시험
++- pandas를 통하지 않는 CSV binary64 비트 비교 도구
++- 누적 작업지시서 개정 4
++
++대기 물리모듈과 1단계 대기 하네스, public water RAA/U 출력, FIX1–FIX4는 변경하지 않았다.
++
++## 2. 첨부 패키지 무결성
++
++ZIP에 실제 포함된 다음 네 파일은 첨부 manifest의 SHA-256과 일치하였다.
++
++```text
++NOTE_double_pole_and_build_2026-07-24.md
++PATCH_surface_POLE_2026-07-24.diff
++surface.c
++surface_double_pole_perturbed.c
++```
++
++반면 manifest에 기재된 다음 다섯 파일은 ZIP에 포함되지 않았다.
++
++```text
++ADDENDUM2_atmval_pole_2026-07-24.md
++atmval_v4_2026-07-24.csv
++atmval_v4_2026-07-24.png
++polecont.c
++probe_nadir_pole_constraint.py
++```
++
++따라서 첨부의 종단 정확도 수치 및 224조건 전수 교란시험은 원자료로 직접 재현하지 않았다. 대신 포함된 패치의 수학적 극한과 별도의 C 회귀시험을 독립 구성하였다.
++
++## 3. 물리·수학 검토
++
++일반 자오면 회전의 한쪽 각도는 다음 구조를 갖는다.
++
++\[
++\cos\sigma
++=
++\frac{\mu_{\mathrm{other}}-\mu_{\mathrm{self}}\cos\Theta}
++{\sin\Theta\,\sin\theta_{\mathrm{self}}},
++\qquad
++\sin\sigma
++=
++\frac{\sin\theta_{\mathrm{other}}\sin\phi}{\sin\Theta}.
++\]
++
++`sin(theta_self) -> 0`에서 분자와 분모가 동시에 0으로 수렴한다. 분모에만 `1e-12` 바닥값을 적용하면 정확한 극에서 회전이 identity에 가까워지며 실제 일방 극한과 불연속이 된다.
++
++방향벡터를 일차 전개하면 다음 극한을 얻는다.
++
++\[
++\cos\sigma\rightarrow -\operatorname{sign}(\mu_{\mathrm{self}})\cos\phi,
++\qquad
++\sin\sigma\rightarrow \sin\phi.
++\]
++
++첨부 패치는 이 식을 사용하며 물리적으로 타당하다. `OCRT_SURF_POLE_EPS=1e-8`은 대략 `sqrt(DBL_EPSILON)` 규모로, 원식의 상쇄오차와 극한식의 절단오차가 교차하는 합리적 문턱이다. 생산 격자에서는 연직 특수절점 또는 충분히 큰 비극 사인값만 나타나므로 문턱 미세조정에 민감하지 않다.
++
++## 4. 코드 변경
++
++### 4.1 `src/shared/surface.c`
++
++다음 네 함수의 입사측·출사측 회전 블록에 극한 분기를 적용하였다.
++
++```text
++surface_R_coxmunk_trig
++surface_T_coxmunk_trig
++surface_R_ww_coxmunk_trig
++surface_T_aw_coxmunk_trig
++```
++
++각 방향에서 `sin(theta_self) <= 1e-8`이면 해석 극한을 사용하고, 그 외에는 기존 일반식과 정규화를 그대로 사용한다.
++
++공기→물 경로에서는 기존 FIX1+FIX2의 signed propagation cosine과 pi-shifted relative azimuth를 그대로 사용하였다. FIX3 incoming-U Fourier 열과 FIX4 diffuse-top incoming-U 열은 변경하지 않았다.
++
++### 4.2 빌드 스크립트
++
++다음 파일에서 `-march=native`를 제거하였다.
++
++```text
++scripts/build_release_v1.1.sh
++scripts/build_release_v1.2.sh
++scripts/regression_ext_bottom_mode_bounds.sh
++```
++
++기본값은 다음과 같다.
++
++```bash
++OCRT_MARCH=${OCRT_MARCH:-cascadelake}
++```
++
++다른 ISA가 필요한 경우 명시적으로 override할 수 있으나, 그 경우 승인 바이너리 해시를 재사용하지 않는다.
++
++### 4.3 부수적인 회귀스크립트 수정
++
++`regression_raa_convention.sh`가 `tests/test_raa_convention.c`를 링크할 때 `src/rt_fourier.c`를 포함하지 않아 현재 소스에서 링크 실패하던 문제를 수정하였다. 이는 물리코드 변경이 아니다.
++
++### 4.4 CSV 비트 비교
++
++`scripts/compare_csv_bitexact.py`를 추가하였다. numeric cell은 pandas가 아니라 Python 내장 `float()`로 파싱하여 IEEE-754 binary64 비트열을 비교한다. `--raw`를 사용하면 원시 파일 바이트를 비교한다.
++
++## 5. 독립 모듈 회귀시험
++
++### 5.1 정확한 극과 일방 극한의 연속성
++
++수정 전에는 네 kernel의 입사/출사 극 8개 경우 모두에서 상대 불연속이 약 1.5였다.
++
++```text
++R_air 1.499990
++T_wa  1.499951–1.499953
++R_ww  1.499995
++T_aw  1.500047–1.500049
++```
++
++수정 후 결과는 다음과 같다.
++
++```text
++R_air 9.43e-6
++T_wa  4.67e-5–4.92e-5
++R_ww  5.31e-6
++T_aw  4.67e-5–4.92e-5
++```
++
++모든 경우가 회귀 기준 `1e-4` 이내이다.
++
++### 5.2 연직 spin-2 공변성
++
++수정 전에는 극에서 Q/U의 물리적 m=2 진폭이 거의 소실되고 Q에 큰 m=0 누출이 발생하였다. 수정 후에는 다음과 같다.
++
++```text
++kernel  spin-2 amplitude   m=0 leakage/amplitude  paired-mode mismatch
++R_air   2.163445e-05       8.31e-17               3.13e-16
++T_wa    7.897087e-04       7.88e-17               8.24e-16
++R_ww    1.026800e-03       6.38e-17               0
++T_aw    2.901195e-02       5.91e-17               1.56e-15
++```
++
++이는 기준코드의 종단값이 아니라 회전 연산자의 대칭성 자체를 검증한다.
++
++### 5.3 기존 폐합 모듈의 비회귀
++
++다음 회귀시험을 모두 통과하였다.
++
++```text
++FIX123 air-to-water signed rotation and U-column regression: PASS
++FIX4 pure-Rayleigh source/operator closure: 2.776e-17
++FIX4 Rayleigh–aerosol mixed closure: 5.551e-17
++public water RAA/U regression: PASS
++full-grid/single-geometry parity: PASS
++wind=0 branch: PASS
++external-bottom mode bounds: PASS
++RAA glint anchors: unchanged
++```
++
++따라서 이미 폐합된 모듈을 건드리지 않았다는 조건이 충족된다.
++
++## 6. 양쪽 극 축퇴
++
++입사와 출사 방향이 동시에 연직이면 상대방위각 기준면은 본질적으로 정의되지 않는다. 생산 격자에서 해당 방향쌍은 삽입 special node이며 경계 적분에서 zero quadrature weight와 곱해진다.
++
++첨부의 `surface_double_pole_perturbed.c`를 사용하여 양쪽 극의 Q/U 회전 블록을 identity로 크게 교란한 바이너리를 별도 빌드하였다. 본 세션에서는 다음 독립 범위를 실행하였다.
++
++```text
++pure water
++SZA = 0 deg
++bands = 412, 443, 490, 555, 660, 865 nm
++24 full-grid rows per band
++```
++
++6개 출력 CSV가 정본과 모두 byte-identical하였다. 이는 양쪽 극의 회전 모호성이 해당 범위의 종단출력에 기여하지 않는다는 독립 근거이다.
++
++첨부가 기재한 224조건 전수검사는 누락된 원자료 때문에 전부 반복하지 않았으며, 본 보고서는 6개 파장 독립시험까지만 주장한다.
++
++## 7. 동일 아키텍처 수정 전·후 종단 영향
++
++수정 전 FIX123+FIX4와 수정 후 pole-limit 바이너리를 모두 동일 compiler와 `-march=cascadelake`로 빌드하였다.
++
++SZA 40°, 정확한 VZA 0°, 순수해수 6개 파장과 8개 RAA에서 다음을 확인하였다.
++
++```text
++TOA rho_I       : 정확히 불변
++TOA rho_Q/rho_U : exact-pole 기준면 교정으로 변화
++Rrs I/Q/U       : 정확히 불변
++rrs I/Q/U       : 정확히 불변
++```
++
++443 nm에서 최대 절대변화는 다음과 같다.
++
++```text
++max |delta TOA rho_Q| = 4.48e-4
++max |delta TOA rho_U| = 3.78e-4
++```
++
++412–865 nm 전체에서는 TOA Q/U 변화가 파장이 길어질수록 감소한다. 이 결과는 패치가 exact-nadir surface-coupled polarization을 교정하지만 기존 해양 Rrs/rrs 모듈을 종단오차 조정 목적으로 변경하지 않았음을 보여준다.
++
++## 8. 72개 실행 및 Rrs/rrs 회귀 대조
++
++기존 72개 manifest와 대기 설정을 그대로 사용하였다.
++
++```text
++72/72 physical runs successful
++24 rows per run
++water_converged = 1 for all runs
++maximum water order = 29
++600/600 matched regression cells
++```
++
++대기 optical depth, depolarization, layer/Fourier/SOS 옵션 및 gas/aerosol off 설정은 변경하지 않았다.
++
++기존 OSOAA 600셀 표는 최신 수심 정정 이전 자료이므로 최종 물리 정확도 기준으로 사용하지 않고 코드 비회귀 대조로만 사용하였다. pole-limit 적용 전후의 Rrs/rrs 지표는 표시 자릿수에서 동일하다.
++
++순수해수 150셀의 회귀 지표는 다음과 같다.
++
++```text
++Rrs I MAPE             2.276658%
++Rrs RMS(delta Q / I)   3.340291%
++Rrs RMS(delta U / I)   2.958578%
++
++rrs I MAPE             2.137283%
++rrs RMS(delta Q / I)   3.149931%
++rrs RMS(delta U / I)   2.823816%
++```
++
++이 수치는 pole-limit 패치의 정확도 개선량이 아니라 동일 기준표에 대한 비회귀 상태를 나타낸다.
++
++## 9. 빌드 재현성
++
++호스트 의존 pre-patch 바이너리와 fixed-ISA pre-patch 바이너리의 SHA-256이 달랐다.
++
++```text
++old prebuilt/native provenance: 7e5b2938e3529cc068a70cd11514dfa22cbbc3563aa5ec8a910ce4a6aa258fd7
++same source cascadelake build:   3ce8efee2983ae77774dfa04c42b4bec76cad07114bb128439eea3027a209e38
++```
++
++pole-limit 최종 소스를 동일 조건에서 두 번 독립 빌드한 결과는 모두 다음 해시였다.
++
++```text
++6c7f4b61d311323374233e0be9643541570d3b15289457ca9336d14d8f12ffde
++```
++
++따라서 고정 ISA는 현재 동일 toolchain에서 재현된다. 단, compiler/linker 버전까지 다른 환경의 cross-toolchain byte identity를 보장하는 것은 아니다.
++
++`cascadelake` 명령어를 지원하지 않는 구형 CPU에서는 명시적으로 더 낮은 ISA를 사용해야 하며, 그 빌드는 별도 해시와 별도 검증기준을 가져야 한다.
++
++## 10. 계산시간
++
++443 nm 순수해수, SZA 40°, full-grid 24행, `OMP_NUM_THREADS=1` 조건에서 각 variant를 1회 예열한 뒤 5회 교차 측정하였다.
++
++```text
++before mean   = 4.831627 s
++after mean    = 4.856947 s
++mean change   = +0.5241%
++
++before median = 4.819624 s
++after median  = 4.873949 s
++median change = +1.1272%
++```
++
++변화는 5% 병목조사 문턱보다 충분히 작다. 새 반복문, 적분, 메모리 할당 또는 phase-function 평가를 추가하지 않았으므로 별도 프로파일링은 수행하지 않았다.
++
++## 11. 최종 코드 상태
++
++최종 버전:
++
++```text
++OCRT-v1.2-2026-07-24-KST-stage2-interface-fix123-dtp-uclosure-pole-limit
++```
++
++승인 바이너리 SHA-256:
++
++```text
++6c7f4b61d311323374233e0be9643541570d3b15289457ca9336d14d8f12ffde
++```
++
++동결 모듈:
++
++- 1단계 대기 모듈 및 대기 하네스
++- public water RAA/U reconstruction
++- FIX1+FIX2+FIX3 TAW kernel
++- FIX4 diffuse-top incoming-U source
++- 네 rough-interface kernel의 exact-pole meridian limit
++- fixed-ISA release build contract
++
++계속 미해결인 항목:
++
++- corrected-depth OSOAA SZA 80° `rrs(0−)`
++- corrected-depth OSOAA `Rrs(0+)` 두 extraction branch
++- rough direct-solar boundary field와 in-water solver의 분리 폐합
++- water-side `R_ww` 전 성분 독립 감사
++- 동일 수심·층경계·n_mu·m_max·SOS tolerance의 최종 1% gate
++
++이번 패치는 위 미해결 물리정합 문제를 해결했다고 주장하지 않는다.
+diff -ruN a/docs/STAGE2_SURFACE_POLE_LIMIT_AND_REPRODUCIBLE_BUILD_20260724_KO.md b/docs/STAGE2_SURFACE_POLE_LIMIT_AND_REPRODUCIBLE_BUILD_20260724_KO.md
+--- a/docs/STAGE2_SURFACE_POLE_LIMIT_AND_REPRODUCIBLE_BUILD_20260724_KO.md	1970-01-01 00:00:00.000000000 +0000
++++ b/docs/STAGE2_SURFACE_POLE_LIMIT_AND_REPRODUCIBLE_BUILD_20260724_KO.md	2026-07-24 15:09:42.234023401 +0000
+@@ -0,0 +1,54 @@
++# 2단계 수면 연산자 극한 및 재현 빌드 규약
++
++## 1. 적용 범위
++
++본 규약은 다음 네 rough-interface Mueller kernel의 자오면 회전에 적용한다.
++
++- 공기측 반사 `surface_R_coxmunk_trig`
++- 물→공기 투과 `surface_T_coxmunk_trig`
++- 수중 내부반사 `surface_R_ww_coxmunk_trig`
++- 공기→물 투과 `surface_T_aw_coxmunk_trig`
++
++기존 FIX1–FIX4, 공개 water RAA/U 재구성 및 대기 하네스는 변경하지 않는다.
++
++## 2. 정확한 극 한계
++
++자기 방향의 `sin(theta)`가 0으로 접근할 때 일반 회전식은 0/0이 된다. 분모에 작은 바닥값만 적용하면 극에서 잘못된 기준면 회전이 생성된다. 해석 극한은 다음과 같다.
++
++```text
++cos(sigma) -> -sign(mu_self) cos(phi)
++sin(sigma) -> sin(phi)
++```
++
++`OCRT_SURF_POLE_EPS = 1e-8` 이하에서 위 식을 적용한다. 비극 구간의 기존 식은 변경하지 않는다.
++
++## 3. 양쪽 극 축퇴
++
++입사·출사 방향이 모두 연직이면 상대방위각 자체가 정의되지 않는다. 생산 격자에서 이 배치는 삽입 특수절점끼리의 쌍이며 적어도 한쪽 구적 가중치가 0이므로 경계 적분에 기여하지 않는다. 따라서 임의의 추가 물리 보정을 적용하지 않는다.
++
++## 4. 빌드 재현성
++
++릴리스 빌드의 기본 ISA를 `-march=cascadelake`로 고정한다. `-march=native`는 실행 호스트가 바뀌면 벡터화·FMA·연산 결합 순서를 바꾸므로 바이너리 해시와 최하위 비트를 재현할 수 없다.
++
++```bash
++./scripts/build_release_v1.2.sh build/ocrt
++```
++
++다른 CPU 기준이 필요한 경우에만 명시적으로 지정한다.
++
++```bash
++OCRT_MARCH=x86-64-v3 ./scripts/build_release_v1.2.sh build/ocrt
++```
++
++동일 해시 주장은 동일 소스, 컴파일러·링커 버전, 플래그, 환경변수, `OCRT_MARCH`에 한정한다.
++
++## 5. 비트 동일 CSV 검사
++
++`pandas`의 고속 CSV 파서는 매우 작은 수의 마지막 비트를 변경할 수 있다. 비트 동일 판정에는 다음 중 하나를 사용한다.
++
++```bash
++cmp file_a.csv file_b.csv
++python scripts/compare_csv_bitexact.py file_a.csv file_b.csv
++```
++
++후자는 Python 내장 `float()`로 다시 파싱한 binary64 비트열을 비교한다.
+diff -ruN a/scripts/build_release_v1.1.sh b/scripts/build_release_v1.1.sh
+--- a/scripts/build_release_v1.1.sh	2026-07-24 02:09:26.000000000 +0000
++++ b/scripts/build_release_v1.1.sh	2026-07-24 14:44:07.921993478 +0000
+@@ -5,6 +5,7 @@
+ cd "$ROOT"
+ 
+ CC_BIN=${CC:-gcc}
++OCRT_MARCH=${OCRT_MARCH:-cascadelake}
+ OUT=${1:-build/ocrt_v1.1}
+ mkdir -p "$(dirname "$OUT")"
+ 
+@@ -15,7 +16,7 @@
+ export SOURCE_DATE_EPOCH=${SOURCE_DATE_EPOCH:-1784332800}
+ 
+ "$CC_BIN" \
+-  -std=c11 -O3 -march=native \
++  -std=c11 -O3 -march="$OCRT_MARCH" \
+   -ffp-contract=fast -fassociative-math \
+   -fno-signed-zeros -fno-trapping-math \
+   -DOCRT_FAST_KERNELS -fopenmp \
+@@ -27,6 +28,6 @@
+   if [[ "$OUT" != "$target" ]]; then cp -f "$OUT" "$target"; fi
+ done
+ 
+-printf 'built %s\n' "$OUT"
++printf 'built %s (march=%s)\n' "$OUT" "$OCRT_MARCH"
+ "$OUT" --version
+ sha256sum "$OUT"
+diff -ruN a/scripts/build_release_v1.2.sh b/scripts/build_release_v1.2.sh
+--- a/scripts/build_release_v1.2.sh	2026-07-24 02:09:26.000000000 +0000
++++ b/scripts/build_release_v1.2.sh	2026-07-24 14:44:07.921993478 +0000
+@@ -5,6 +5,7 @@
+ cd "$ROOT"
+ 
+ CC_BIN=${CC:-gcc}
++OCRT_MARCH=${OCRT_MARCH:-cascadelake}
+ OUT=${1:-build/ocrt_v1.2}
+ mkdir -p "$(dirname "$OUT")"
+ 
+@@ -15,7 +16,7 @@
+ export SOURCE_DATE_EPOCH=${SOURCE_DATE_EPOCH:-1784332800}
+ 
+ "$CC_BIN" \
+-  -std=c11 -O3 -march=native \
++  -std=c11 -O3 -march="$OCRT_MARCH" \
+   -ffp-contract=fast -fassociative-math \
+   -fno-signed-zeros -fno-trapping-math \
+   -DOCRT_FAST_KERNELS -fopenmp \
+@@ -27,6 +28,6 @@
+   if [[ "$OUT" != "$target" ]]; then cp -f "$OUT" "$target"; fi
+ done
+ 
+-printf 'built %s\n' "$OUT"
++printf 'built %s (march=%s)\n' "$OUT" "$OCRT_MARCH"
+ "$OUT" --version
+ sha256sum "$OUT"
+diff -ruN a/scripts/compare_csv_bitexact.py b/scripts/compare_csv_bitexact.py
+--- a/scripts/compare_csv_bitexact.py	1970-01-01 00:00:00.000000000 +0000
++++ b/scripts/compare_csv_bitexact.py	2026-07-24 15:09:42.234023401 +0000
+@@ -0,0 +1,78 @@
++#!/usr/bin/env python3
++"""Compare two CSV files without pandas numeric parsing.
++
++Numeric cells are parsed with Python's built-in float() and compared by their
++IEEE-754 binary64 bit pattern. Non-numeric cells are compared as exact text.
++Use --raw to require byte-for-byte file identity.
++"""
++from __future__ import annotations
++
++import argparse
++import csv
++import math
++import struct
++import sys
++from pathlib import Path
++
++
++def float_bits(text: str) -> bytes | None:
++    try:
++        value = float(text)
++    except ValueError:
++        return None
++    if math.isnan(value):
++        return b"nan"
++    return struct.pack(">d", value)
++
++
++def main() -> int:
++    parser = argparse.ArgumentParser()
++    parser.add_argument("left", type=Path)
++    parser.add_argument("right", type=Path)
++    parser.add_argument("--raw", action="store_true", help="require byte identity")
++    parser.add_argument("--ignore-column", action="append", default=[])
++    args = parser.parse_args()
++
++    if args.raw:
++        same = args.left.read_bytes() == args.right.read_bytes()
++        print("PASS: raw byte identity" if same else "FAIL: raw bytes differ")
++        return 0 if same else 1
++
++    with args.left.open(newline="") as fa, args.right.open(newline="") as fb:
++        ra = csv.DictReader(fa)
++        rb = csv.DictReader(fb)
++        if ra.fieldnames != rb.fieldnames:
++            print("FAIL: CSV headers differ", file=sys.stderr)
++            return 1
++        ignored = set(args.ignore_column)
++        for row_index, (a, b) in enumerate(zip(ra, rb), start=2):
++            for key in ra.fieldnames or []:
++                if key in ignored:
++                    continue
++                av, bv = a[key], b[key]
++                ab, bb = float_bits(av), float_bits(bv)
++                equal = (ab == bb) if ab is not None and bb is not None else (av == bv)
++                if not equal:
++                    print(
++                        f"FAIL: row={row_index} column={key} left={av!r} right={bv!r}",
++                        file=sys.stderr,
++                    )
++                    return 1
++        try:
++            next(ra)
++            print("FAIL: left has extra rows", file=sys.stderr)
++            return 1
++        except StopIteration:
++            pass
++        try:
++            next(rb)
++            print("FAIL: right has extra rows", file=sys.stderr)
++            return 1
++        except StopIteration:
++            pass
++    print("PASS: CSV values are bit-identical under built-in float parsing")
++    return 0
++
++
++if __name__ == "__main__":
++    raise SystemExit(main())
+diff -ruN a/scripts/regression_ext_bottom_mode_bounds.sh b/scripts/regression_ext_bottom_mode_bounds.sh
+--- a/scripts/regression_ext_bottom_mode_bounds.sh	2026-07-24 02:09:26.000000000 +0000
++++ b/scripts/regression_ext_bottom_mode_bounds.sh	2026-07-24 14:44:07.921993478 +0000
+@@ -9,8 +9,9 @@
+ fi
+ TMP=$(mktemp -d)
+ trap 'rm -rf "$TMP"' EXIT
++OCRT_MARCH=${OCRT_MARCH:-cascadelake}
+ mapfile -t TEST_SRC < <(find "$ROOT/src" -name '*.c' ! -name 'main.c' | LC_ALL=C sort)
+-${CC:-gcc} -std=c11 -O3 -march=native \
++${CC:-gcc} -std=c11 -O3 -march="$OCRT_MARCH" \
+   -ffp-contract=fast -fassociative-math -fno-signed-zeros -fno-trapping-math \
+   -DOCRT_FAST_KERNELS -fopenmp -I"$ROOT/src" \
+   "$ROOT/tests/test_ext_bottom_mode_bounds.c" "${TEST_SRC[@]}" \
+diff -ruN a/scripts/regression_raa_convention.sh b/scripts/regression_raa_convention.sh
+--- a/scripts/regression_raa_convention.sh	2026-07-24 02:09:26.000000000 +0000
++++ b/scripts/regression_raa_convention.sh	2026-07-24 14:50:01.402000372 +0000
+@@ -5,7 +5,7 @@
+ CC_BIN=${CC:-gcc}
+ mkdir -p build validation/raa_convention
+ 
+-"$CC_BIN" -std=c11 -O2 -Isrc tests/test_raa_convention.c -o build/test_raa_convention -lm
++"$CC_BIN" -std=c11 -O2 -Isrc tests/test_raa_convention.c src/rt_fourier.c -o build/test_raa_convention -lm
+ ./build/test_raa_convention
+ 
+ BIN=${OCRT_BIN:-./build/ocrt}
+diff -ruN a/scripts/test_release_build_reproducibility.sh b/scripts/test_release_build_reproducibility.sh
+--- a/scripts/test_release_build_reproducibility.sh	1970-01-01 00:00:00.000000000 +0000
++++ b/scripts/test_release_build_reproducibility.sh	2026-07-24 14:49:01.805999209 +0000
+@@ -0,0 +1,23 @@
++#!/usr/bin/env bash
++set -euo pipefail
++ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
++cd "$ROOT"
++CC_BIN=${CC:-gcc}
++OCRT_MARCH=${OCRT_MARCH:-cascadelake}
++TMP=$(mktemp -d)
++trap 'rm -rf "$TMP"' EXIT
++mapfile -t SOURCES < <(find src -name '*.c' -print | LC_ALL=C sort)
++export LC_ALL=C TZ=UTC SOURCE_DATE_EPOCH=${SOURCE_DATE_EPOCH:-1784332800}
++for n in 1 2; do
++  "$CC_BIN" -std=c11 -O3 -march="$OCRT_MARCH" \
++    -ffp-contract=fast -fassociative-math \
++    -fno-signed-zeros -fno-trapping-math \
++    -DOCRT_FAST_KERNELS -fopenmp -Isrc "${SOURCES[@]}" \
++    -o "$TMP/ocrt.$n" -lm
++  sha256sum "$TMP/ocrt.$n"
++done
++h1=$(sha256sum "$TMP/ocrt.1" | awk '{print $1}')
++h2=$(sha256sum "$TMP/ocrt.2" | awk '{print $1}')
++[[ "$h1" == "$h2" ]]
++"$TMP/ocrt.1" --version
++printf 'PASS: reproducible release build march=%s sha256=%s\n' "$OCRT_MARCH" "$h1"
+diff -ruN a/scripts/test_stage2_surface_pole_limit.sh b/scripts/test_stage2_surface_pole_limit.sh
+--- a/scripts/test_stage2_surface_pole_limit.sh	1970-01-01 00:00:00.000000000 +0000
++++ b/scripts/test_stage2_surface_pole_limit.sh	2026-07-24 14:47:16.457997155 +0000
+@@ -0,0 +1,19 @@
++#!/usr/bin/env bash
++set -euo pipefail
++ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
++cd "$ROOT"
++CC_BIN=${CC:-gcc}
++OUT=build/test_surface_pole_limit
++mkdir -p build
++"$CC_BIN" -std=c11 -O2 -Isrc \
++  tests/test_surface_pole_limit.c \
++  src/shared/surface.c src/shared/surface_multibounce.c \
++  -o "$OUT" -lm
++"$OUT"
++
++# Four physical rough-interface kernels must carry the explicit pole branch.
++grep -Fq '#define OCRT_SURF_POLE_EPS 1.0e-8' src/shared/surface.c
++count=$(grep -c '<= OCRT_SURF_POLE_EPS' src/shared/surface.c)
++[[ "$count" -eq 8 ]]
++
++echo 'PASS: stage-2 surface pole-limit source audit'
+diff -ruN a/src/main.c b/src/main.c
+--- a/src/main.c	2026-07-24 02:14:07.000000000 +0000
++++ b/src/main.c	2026-07-24 14:44:07.925993478 +0000
+@@ -134,7 +134,7 @@
+     return 0;
+ }
+ 
+-#define V2_VERSION "OCRT-v1.2-2026-07-24-KST-stage2-interface-fix123-dtp-uclosure"
++#define V2_VERSION "OCRT-v1.2-2026-07-24-KST-stage2-interface-fix123-dtp-uclosure-pole-limit"
+ 
+ enum {
+     WATER_OPTION_FAMILY_OCRT = 1u << 0,
+diff -ruN a/src/shared/surface.c b/src/shared/surface.c
+--- a/src/shared/surface.c	2026-07-24 02:09:26.000000000 +0000
++++ b/src/shared/surface.c	2026-07-24 14:44:07.329993466 +0000
+@@ -19,6 +19,40 @@
+ #define M_PI 3.14159265358979323846
+ #endif
+ 
++/* 자오면 회전각의 극 한계를 발동시키는 사인 문턱 (2026-07-24, 정합테스트 v4).
++ *
++ * Mishchenko 회전각 cos σ = (μ_상대 - μ_자기·cosΘ)/(sinΘ·sin θ_자기) 는
++ * sin θ_자기 -> 0 에서 분자도 같은 차수로 0 이 된다.  0/0 이다.
++ * 분모만 막으면 분자가 정확히 0 이 되는 극에서 회전이 방위각과 무관해지고,
++ * 그 결과 천저에서 Q 에 있으면 안 되는 m=0 성분이 생기며 m=2 진폭이 약 2%
++ * 낮아진다(2026-07-24 실측, 관측천정각 0 도 18조건).
++ *
++ * 전개하면 극한은 다음과 같다.  φ 는 두 방향의 방위각 차이다.
++ *     cos σ -> -sign(μ_자기) · cos φ,      sin σ -> sin φ
++ *
++ * 문턱은 sqrt(DBL_EPSILON) ≈ 1.5e-8 근방으로 잡는다.  이보다 크면 원식의
++ * 자릿수 상쇄 오차(≈ eps/sin θ)가 작고, 이보다 작으면 극한식의 절단 오차
++ * (≈ sin θ)가 작다.  두 오차가 교차하는 지점이다.  실제 격자에 나타나는
++ * sin θ 는 정확히 0 이거나 1e-2 이상이므로 문턱값에 민감하지 않다.
++ *
++ * [양쪽 방향이 동시에 극인 경우] 두 연직 방향 사이의 방위각 차는 정의되지
++ * 않으므로 극한이 접근 경로에 의존한다.  위 식은 그 중 한 경로를 고른 것이다.
++ * 이 모호성은 결과에 영향이 없음을 2026-07-24 에 실측으로 확인했다.
++ *   - 세기 행·열은 이 자리에서도 영향을 받지 않는다.  II 가 자리 하나 바뀌지
++ *     않고 IQ·IU·QI·UI 는 1e-13 이하다.  Q·U 블록의 기준면 회전만 달라진다.
++ *   - 이 배치는 μ=1 이 입사와 출사 양쪽 지표로 동시에 나타날 때만 생기는데,
++ *     μ=1 은 삽입 절점(관측 방향·특수 슬롯)으로만 링에 들어오고 삽입 절점의
++ *     구적 가중치는 0 이다(rt_solver.c 의 atm->gb[+jt] = 0.0, 수중은
++ *     rt_water_rt.h 의 "0 for zero-weight specials").  경계 조건 합에서
++ *     이 쌍은 가중치 0 과 곱해진다.
++ *   - 검증: 이 자리의 회전을 항등으로 바꾼 판(QQ 의 부호가 뒤집히고 크기가
++ *     두 배가 되며 QU·UQ 결합이 사라지는 큰 교란)과 정본이 224 조건에서
++ *     전부 비트 동일했다.  태양천정각 0~60, 관측천정각 0~40, 상대방위각
++ *     0~180, 풍속 0~10, 443·555·865 nm, black_fresnel_ocean·coxmunk·ocean,
++ *     생산급 수중 설정을 덮는다.  천저 수출광 Rrs0plus_Q 가 8.70e-04 로
++ *     0 이 아닌 상태에서 확인했으므로 시험이 헛돈 것이 아니다. */
++#define OCRT_SURF_POLE_EPS 1.0e-8
++
+ double surface_slope_variance(double wind_speed_ms, int sigma_type) {
+     if (sigma_type == 1) {
+         return 0.003 + 0.00512 * fmax(0.01, wind_speed_ms);
+@@ -509,17 +543,30 @@
+     double s2_safe = fmax(1e-12, s2);
+     double s1_safe = fmax(1e-12, s1);
+ 
+-    double ci1 = (mu_out - mu_in_actual * cT) / (denom * s2_safe);
+-    double si1 = s1 * sin_phi / denom;
+-    double n1 = sqrt(ci1*ci1 + si1*si1);
+-    if (n1 < 1e-12) { ci1 = 1.0; si1 = 0.0; }
+-    else { ci1 /= n1; si1 /= n1; }
+-
+-    double ci2 = (mu_in_actual - mu_out * cT) / (denom * s1_safe);
+-    double si2 = s2 * sin_phi / denom;
+-    double n2 = sqrt(ci2*ci2 + si2*si2);
+-    if (n2 < 1e-12) { ci2 = 1.0; si2 = 0.0; }
+-    else { ci2 /= n2; si2 /= n2; }
++    /* 극 한계 (2026-07-24, 정합테스트 v4).  OCRT_SURF_POLE_EPS 정의부의 주석을
++     * 함께 볼 것.  극이 아닌 각도의 식은 이전 판과 글자 하나 다르지 않다. */
++    double ci1, si1, ci2, si2;
++    if (s2 <= OCRT_SURF_POLE_EPS) {
++        ci1 = -copysign(1.0, mu_in_actual) * cos_phi;
++        si1 = sin_phi;
++    } else {
++        ci1 = (mu_out - mu_in_actual * cT) / (denom * s2_safe);
++        si1 = s1 * sin_phi / denom;
++        double n1 = sqrt(ci1*ci1 + si1*si1);
++        if (n1 < 1e-12) { ci1 = 1.0; si1 = 0.0; }
++        else { ci1 /= n1; si1 /= n1; }
++    }
++
++    if (s1 <= OCRT_SURF_POLE_EPS) {
++        ci2 = -copysign(1.0, mu_out) * cos_phi;
++        si2 = sin_phi;
++    } else {
++        ci2 = (mu_in_actual - mu_out * cT) / (denom * s1_safe);
++        si2 = s2 * sin_phi / denom;
++        double n2 = sqrt(ci2*ci2 + si2*si2);
++        if (n2 < 1e-12) { ci2 = 1.0; si2 = 0.0; }
++        else { ci2 /= n2; si2 /= n2; }
++    }
+ 
+     /* Fresnel Mueller at microfacet incidence angle omega
+      * (Phase B.2 refactor: use shared fresnel core helper. Bit-exact to the
+@@ -685,15 +732,28 @@
+     double s1_safe = fmax(1e-12, s1);
+     double s2_safe = fmax(1e-12, s2);
+ 
+-    double ci1 = (mu2 - mu1 * cosPsi) / (denom * s1_safe);
+-    double si1 = s2 * sin_phi / denom;
+-    double r1 = sqrt(ci1*ci1 + si1*si1);
+-    if (r1 < 1e-12) { ci1 = 1.0; si1 = 0.0; } else { ci1 /= r1; si1 /= r1; }
+-
+-    double ci2 = (mu1 - mu2 * cosPsi) / (denom * s2_safe);
+-    double si2 = s1 * sin_phi / denom;
+-    double r2 = sqrt(ci2*ci2 + si2*si2);
+-    if (r2 < 1e-12) { ci2 = 1.0; si2 = 0.0; } else { ci2 /= r2; si2 /= r2; }
++    /* 극 한계 (2026-07-24, 정합테스트 v4).  OCRT_SURF_POLE_EPS 정의부의 주석을
++     * 함께 볼 것.  극이 아닌 각도의 식은 이전 판과 글자 하나 다르지 않다. */
++    double ci1, si1, ci2, si2;
++    if (s1 <= OCRT_SURF_POLE_EPS) {
++        ci1 = -copysign(1.0, mu1) * cos_phi;
++        si1 = sin_phi;
++    } else {
++        ci1 = (mu2 - mu1 * cosPsi) / (denom * s1_safe);
++        si1 = s2 * sin_phi / denom;
++        double r1 = sqrt(ci1*ci1 + si1*si1);
++        if (r1 < 1e-12) { ci1 = 1.0; si1 = 0.0; } else { ci1 /= r1; si1 /= r1; }
++    }
++
++    if (s2 <= OCRT_SURF_POLE_EPS) {
++        ci2 = -copysign(1.0, mu2) * cos_phi;
++        si2 = sin_phi;
++    } else {
++        ci2 = (mu1 - mu2 * cosPsi) / (denom * s2_safe);
++        si2 = s1 * sin_phi / denom;
++        double r2 = sqrt(ci2*ci2 + si2*si2);
++        if (r2 < 1e-12) { ci2 = 1.0; si2 = 0.0; } else { ci2 /= r2; si2 /= r2; }
++    }
+ 
+     double L1[9], L2[9], MTL1[9], L2MTL1[9];
+     build_rotation_L(ci1, si1, L1);
+@@ -847,17 +907,30 @@
+     double s2_safe = fmax(1e-12, s2);
+     double s1_safe = fmax(1e-12, s1);
+ 
+-    double ci1 = (mu_out - mu_in_actual * cT) / (denom * s2_safe);
+-    double si1 = s1 * sin_phi / denom;
+-    double n1 = sqrt(ci1*ci1 + si1*si1);
+-    if (n1 < 1e-12) { ci1 = 1.0; si1 = 0.0; }
+-    else { ci1 /= n1; si1 /= n1; }
+-
+-    double ci2 = (mu_in_actual - mu_out * cT) / (denom * s1_safe);
+-    double si2 = s2 * sin_phi / denom;
+-    double n2 = sqrt(ci2*ci2 + si2*si2);
+-    if (n2 < 1e-12) { ci2 = 1.0; si2 = 0.0; }
+-    else { ci2 /= n2; si2 /= n2; }
++    /* 극 한계 (2026-07-24, 정합테스트 v4).  OCRT_SURF_POLE_EPS 정의부의 주석을
++     * 함께 볼 것.  극이 아닌 각도의 식은 이전 판과 글자 하나 다르지 않다. */
++    double ci1, si1, ci2, si2;
++    if (s2 <= OCRT_SURF_POLE_EPS) {
++        ci1 = -copysign(1.0, mu_in_actual) * cos_phi;
++        si1 = sin_phi;
++    } else {
++        ci1 = (mu_out - mu_in_actual * cT) / (denom * s2_safe);
++        si1 = s1 * sin_phi / denom;
++        double n1 = sqrt(ci1*ci1 + si1*si1);
++        if (n1 < 1e-12) { ci1 = 1.0; si1 = 0.0; }
++        else { ci1 /= n1; si1 /= n1; }
++    }
++
++    if (s1 <= OCRT_SURF_POLE_EPS) {
++        ci2 = -copysign(1.0, mu_out) * cos_phi;
++        si2 = sin_phi;
++    } else {
++        ci2 = (mu_in_actual - mu_out * cT) / (denom * s1_safe);
++        si2 = s2 * sin_phi / denom;
++        double n2 = sqrt(ci2*ci2 + si2*si2);
++        if (n2 < 1e-12) { ci2 = 1.0; si2 = 0.0; }
++        else { ci2 /= n2; si2 /= n2; }
++    }
+ 
+     /* Facet Fresnel Mueller at microfacet incidence omega — WATER-SIDE
+      * internal reflection: water(n_water) -> air(1.0), including TIR.
+@@ -1163,14 +1236,27 @@
+     double dnm = fmax(1e-12, sT);
+     double s1_safe = fmax(1e-12, si);
+     double s2_safe = fmax(1e-12, so);
+-    double ci1 = (mu_o_s - mu_i_s * cosPsi) / (dnm * s1_safe);
+-    double si1 = so * sphi_r / dnm;
+-    double r1 = sqrt(ci1*ci1 + si1*si1);
+-    if (r1 < 1e-12) { ci1 = 1.0; si1 = 0.0; } else { ci1 /= r1; si1 /= r1; }
+-    double ci2 = (mu_i_s - mu_o_s * cosPsi) / (dnm * s2_safe);
+-    double si2 = si * sphi_r / dnm;
+-    double r2 = sqrt(ci2*ci2 + si2*si2);
+-    if (r2 < 1e-12) { ci2 = 1.0; si2 = 0.0; } else { ci2 /= r2; si2 /= r2; }
++    /* 극 한계 (2026-07-24, 정합테스트 v4).  OCRT_SURF_POLE_EPS 정의부의 주석을
++     * 함께 볼 것.  극이 아닌 각도의 식은 이전 판과 글자 하나 다르지 않다. */
++    double ci1, si1, ci2, si2;
++    if (si <= OCRT_SURF_POLE_EPS) {
++        ci1 = -copysign(1.0, mu_i_s) * cphi_r;
++        si1 = sphi_r;
++    } else {
++        ci1 = (mu_o_s - mu_i_s * cosPsi) / (dnm * s1_safe);
++        si1 = so * sphi_r / dnm;
++        double r1 = sqrt(ci1*ci1 + si1*si1);
++        if (r1 < 1e-12) { ci1 = 1.0; si1 = 0.0; } else { ci1 /= r1; si1 /= r1; }
++    }
++    if (so <= OCRT_SURF_POLE_EPS) {
++        ci2 = -copysign(1.0, mu_o_s) * cphi_r;
++        si2 = sphi_r;
++    } else {
++        ci2 = (mu_i_s - mu_o_s * cosPsi) / (dnm * s2_safe);
++        si2 = si * sphi_r / dnm;
++        double r2 = sqrt(ci2*ci2 + si2*si2);
++        if (r2 < 1e-12) { ci2 = 1.0; si2 = 0.0; } else { ci2 /= r2; si2 /= r2; }
++    }
+     double L1[9], L2[9], MTL1[9], OUT[9];
+     build_rotation_L(ci1, si1, L1);
+     build_rotation_L(ci2, si2, L2);
+diff -ruN a/src/shared/surface.c.orig b/src/shared/surface.c.orig
+--- a/src/shared/surface.c.orig	1970-01-01 00:00:00.000000000 +0000
++++ b/src/shared/surface.c.orig	2026-07-24 02:09:26.000000000 +0000
+@@ -0,0 +1,1460 @@
++/* ============================================================================
++ * shared/surface.c — Polarized Fresnel rough-ocean surface operators
++ *
++ * The implementation is organized from the physical definitions: Snell and
++ * Fresnel amplitudes at a planar dielectric interface, an isotropic Gaussian
++ * facet-slope distribution, microfacet reflection/transmission geometry, and
++ * azimuthal Fourier projection of the resulting Mueller operators.  Scalar
++ * and vector transmission paths share one geometry evaluator so their intensity
++ * kernels cannot drift through duplicated formulas.
++ * ============================================================================ */
++#include "surface.h"
++#include <stdlib.h>
++#include "mat3.h"
++#include <math.h>
++#include <stdio.h>
++#include <string.h>
++
++#ifndef M_PI
++#define M_PI 3.14159265358979323846
++#endif
++
++double surface_slope_variance(double wind_speed_ms, int sigma_type) {
++    if (sigma_type == 1) {
++        return 0.003 + 0.00512 * fmax(0.01, wind_speed_ms);
++    }
++    double sigma = 0.0731 * sqrt(fmax(0.0, wind_speed_ms));
++    double sig2 = sigma * sigma;
++    return fmax(sig2, 1e-10);
++}
++
++typedef struct {
++    double sin_i;
++    double sin_o;
++    double incidence_cosine;
++    double exit_dot_half;
++    double facet_cosine;
++    double slope_density;
++    double half_denom_sq;
++} surface_aw_microfacet_geometry_t;
++
++/* Evaluate the air-to-water transmission half-vector and Beckmann/Cox-Munk
++ * density.  Directions point away from the interface: the incident air ray is
++ * upward and the transmitted water ray is downward.  Fresnel amplitudes and
++ * Stokes rotations are deliberately left to the scalar/vector callers. */
++static int surface_aw_microfacet_geometry_(double mu_i, double mu_o,
++                                           double cphi, double sphi,
++                                           double n_water,
++                                           double slope_variance,
++                                           surface_aw_microfacet_geometry_t *g)
++{
++    if (!g || slope_variance <= 1e-10 || mu_i <= 1e-9 || mu_o <= 1e-9)
++        return -1;
++
++    const double si = sqrt(fmax(0.0, 1.0 - mu_i * mu_i));
++    const double so = sqrt(fmax(0.0, 1.0 - mu_o * mu_o));
++    const double ix = si,        iy = 0.0,       iz =  mu_i;
++    const double ox = so*cphi,   oy = so*sphi,   oz = -mu_o;
++
++    double hx = -(ix + n_water * ox);
++    double hy = -(iy + n_water * oy);
++    double hz = -(iz + n_water * oz);
++    const double hnorm = sqrt(hx*hx + hy*hy + hz*hz);
++    if (hnorm < 1e-12) return -1;
++    hx /= hnorm; hy /= hnorm; hz /= hnorm;
++    if (hz < 0.0) { hx = -hx; hy = -hy; hz = -hz; }
++
++    const double ih = ix*hx + iy*hy + iz*hz;
++    const double oh = ox*hx + oy*hy + oz*hz;
++    if (ih <= 0.0 || hz <= 1e-9) return -1;
++
++    const double tan2 = (1.0 - hz*hz) / (hz*hz);
++    const double D = exp(-tan2 / slope_variance) /
++                     (M_PI * slope_variance * hz*hz*hz*hz);
++    double denom = ih + n_water * oh;
++    denom *= denom;
++
++    g->sin_i = si;
++    g->sin_o = so;
++    g->incidence_cosine = ih;
++    g->exit_dot_half = oh;
++    g->facet_cosine = hz;
++    g->slope_density = D;
++    g->half_denom_sq = denom;
++    return 0;
++}
++
++/* ----------------------------------------------------------------------------
++ * surface_T_aw_coxmunk_direct — direct-beam air->water IRRADIANCE transmittance
++ *   for a Cox-Munk rough surface (slope-integrated facet Fresnel transmission).
++ *
++ *   The slope integral accounts for facets whose local incidence differs from
++ *   the global solar zenith, which is essential at grazing illumination.
++ *
++ *   T_aw(theta_s) = (1/mu_s) * INT p(zx,zy) * (mu_s + zx*sin_s) * T_F(theta_loc)
++ *                              * H(mu_s + zx*sin_s > 0)  dzx dzy
++ *     p(zx,zy)        = (1/(pi*sigma2)) exp(-(zx^2+zy^2)/sigma2)  Cox-Munk NDF
++ *     cos(theta_loc)  = (mu_s + zx*sin_s)/sqrt(1+zx^2+zy^2)       local incidence
++ *     (mu_s+zx*sin_s) = cos(theta_loc)*sqrt(1+..)  = facet projection / cos(beta)
++ *     T_F             = 1 - R_unpol(theta_loc)  air->water Fresnel irrad. trans.
++ *   Shadowing is omitted in this direct transmission integral.  As sigma2->0
++ *   the expression tends to the planar value 1-R(theta_s).
++ * -------------------------------------------------------------------------- */
++double surface_T_aw_coxmunk_direct(double mu_sun_air, double n_water,
++                                   double wind_speed, int sigma_type) {
++    if (mu_sun_air <= 1e-9) return 0.0;
++    double sig2 = surface_slope_variance(wind_speed, sigma_type);
++    double sin_s = sqrt(fmax(0.0, 1.0 - mu_sun_air * mu_sun_air));
++    if (sig2 <= 1e-10) {
++        /* flat limit: 1 - R_unpol(theta_sun) */
++        double cti0 = mu_sun_air;
++        double stt0 = sin_s / n_water;
++        double ctt0 = sqrt(fmax(0.0, 1.0 - stt0 * stt0));
++        double rs0  = (cti0 - n_water * ctt0) / (cti0 + n_water * ctt0);
++        double rp0  = (n_water * cti0 - ctt0) / (n_water * cti0 + ctt0);
++        return 1.0 - 0.5 * (rs0 * rs0 + rp0 * rp0);
++    }
++    double sig = sqrt(sig2);
++    double L   = 6.0 * sig;
++    const int N = 101;
++    double dz  = 2.0 * L / (double)(N - 1);
++    double acc = 0.0;
++    for (int i = 0; i < N; ++i) {
++        double zx  = -L + i * dz;
++        double wxi = (i == 0 || i == N - 1) ? 0.5 : 1.0;   /* trapezoid weight */
++        double proj = mu_sun_air + zx * sin_s;             /* facet projection toward sun */
++        if (proj <= 0.0) continue;                         /* facet not illuminated */
++        for (int j = 0; j < N; ++j) {
++            double zy   = -L + j * dz;
++            double wyj  = (j == 0 || j == N - 1) ? 0.5 : 1.0;
++            double r2   = zx * zx + zy * zy;
++            double cti  = proj / sqrt(1.0 + r2);           /* cos(theta_local) */
++            double sti2 = fmax(0.0, 1.0 - cti * cti);
++            double stt  = sqrt(sti2) / n_water;
++            double ctt  = sqrt(fmax(0.0, 1.0 - stt * stt));
++            double rs   = (cti - n_water * ctt) / (cti + n_water * ctt);
++            double rp   = (n_water * cti - ctt) / (n_water * cti + ctt);
++            double TF   = 1.0 - 0.5 * (rs * rs + rp * rp);
++            double p    = (1.0 / (M_PI * sig2)) * exp(-r2 / sig2);
++            acc += wxi * wyj * p * proj * TF;
++        }
++    }
++    acc *= dz * dz;
++    double T_aw = acc / mu_sun_air;
++    if (T_aw < 0.0) T_aw = 0.0;
++    if (T_aw > 1.0) T_aw = 1.0;
++    return T_aw;
++}
++
++/* ----------------------------------------------------------------------------
++ * surface_T_aw_coxmunk_btdf_scalar — air->water microfacet transmission BTDF
++ *   (Walter et al. 2007, "Microfacet Models for Refraction", eq. 21), scalar
++ *   intensity, Cox-Munk (Beckmann) slope distribution, no shadowing (G=1).
++ *
++ *   Geometry (directions point AWAY from the surface point):
++ *     i = (sin θ_i, 0, μ_i)            incident air dir, toward sky (up), φ_i=0
++ *     o = (sin θ_o cos Δφ, sin θ_o sin Δφ, -μ_o)   transmitted water dir (down)
++ *     h = -(η_i i + η_o o)/|·|   transmission half-vector (η_i=1, η_o=n), up
++ *   f_t = (|i·h||o·h|)/(μ_i μ_o) · η_o²(1-F(i·h)) D(h) / (η_i(i·h)+η_o(o·h))²
++ *     D(h) = exp(-tan²θ_h/σ²)/(π σ² cos⁴θ_h)   Beckmann (α²=σ²=Cox-Munk MSS)
++ *   The η_o²=n² factor is the in-water radiance enhancement.  Validated against
++ *   surface_T_aw_coxmunk_direct: ∫ f_t cos(θ_o) dΩ_o == T_aw_direct(μ_i)
++ *   (ratio 1.00 for θ_i>=30°, agreement limited only by output-grid resolution
++ *   near θ_i->0 where the transmission lobe collapses to the Snell direction).
++ * -------------------------------------------------------------------------- */
++double surface_T_aw_coxmunk_btdf_scalar(double mu_i, double mu_o, double dphi,
++                                        double n_water, double wind_speed,
++                                        int sigma_type) {
++    double s2 = surface_slope_variance(wind_speed, sigma_type);
++    surface_aw_microfacet_geometry_t g;
++    if (surface_aw_microfacet_geometry_(mu_i, mu_o, cos(dphi), sin(dphi),
++                                        n_water, s2, &g) != 0) return 0.0;
++    double n = n_water;
++    /* Fresnel reflectance at local incidence (air->water). */
++    double cti = g.incidence_cosine;
++    double sti = sqrt(fmax(0.0, 1.0 - cti * cti));
++    double stt = sti / n, F;
++    if (stt >= 1.0) {
++        F = 1.0;
++    } else {
++        double ctt = sqrt(fmax(0.0, 1.0 - stt * stt));
++        double rs = (cti - n * ctt) / (cti + n * ctt);
++        double rp = (n * cti - ctt) / (n * cti + ctt);
++        F = 0.5 * (rs * rs + rp * rp);
++    }
++    double denom = g.half_denom_sq;
++    if (denom < 1e-12) return 0.0;
++    double ft = (fabs(g.incidence_cosine) * fabs(g.exit_dot_half)) /
++                (mu_i * mu_o)
++              * (n * n * (1.0 - F) * g.slope_density) / denom;
++    if (ft < 0.0) ft = 0.0;
++    return ft;
++}
++
++static inline double surface_water_to_air_unpolarized_reflectance_(double cti,
++                                                                      double n_water) {
++    double sti2 = fmax(0.0, 1.0 - cti * cti);
++    double sair = n_water * sqrt(sti2);
++    if (sair >= 1.0) return 1.0;
++    double cair = sqrt(fmax(0.0, 1.0 - sair * sair));
++    double rs = (n_water * cti - cair) / (n_water * cti + cair);
++    double rp = (cti - n_water * cair) / (cti + n_water * cair);
++    return 0.5 * (rs * rs + rp * rp);
++}
++
++/* ----------------------------------------------------------------------------
++ * surface_R_ww_coxmunk_direct — water->water (internal) IRRADIANCE reflectance
++ *   for an upwelling beam at μ_up_water on a Cox-Munk rough surface (slope-
++ *   integrated facet water->air Fresnel reflectance, including total internal
++ *   reflection beyond the critical angle).  No shadowing (matches the air->water
++ *   direct transmittance convention).  σ²->0 gives the flat internal reflectance
++ *   R_wa(μ_up) (=1 for μ_up < μ_crit = sqrt(1-1/n²) = TIR).  By energy
++ *   conservation surface_R_ww_coxmunk_direct + (water->air transmittance) = 1.
++ *
++ *   R_ww(μ_up) = (1/μ_up) ∫ p(zx,zy) (μ_up + zx sin_up) R_wa(θ_loc)
++ *                          H(μ_up + zx sin_up > 0) dzx dzy
++ *   cos θ_loc = (μ_up + zx sin_up)/sqrt(1+zx²+zy²)
++ *   R_wa: incidence from water (n) to air (1); sin θ_air = n sin θ_loc;
++ *         sin θ_air >= 1 -> R=1 (TIR). -------------------------------------- */
++#ifdef OCRT_FAST_KERNELS
++static double surface_R_ww_coxmunk_direct_eval_(double, double, double, int);
++#endif
++double surface_R_ww_coxmunk_direct(double mu_up_water, double n_water,
++                                   double wind_speed, int sigma_type) {
++#ifdef OCRT_FAST_KERNELS
++    /* v1.09-opt S2 (bit-safe memo): within a solve this is called ~1e3x per
++     * node with mu drawn from the fixed quadrature set and (n_water, wind,
++     * sigma_type) constant.  Caching the previously computed double returns
++     * the EXACT same bits the direct evaluation produced.  Thread-local so
++     * OMP batch threads never share entries. */
++    /* open-addressing, linear probe, NEVER evict: the key set per process is
++     * small (node mu x wind classes); a direct-mapped slot ping-pong measured
++     * a 32% miss rate, so colliding keys must coexist. Probe cap then fall
++     * through to a plain eval (correct, uncached). */
++    enum { OCRT_RWWD_N = 512, OCRT_RWWD_PROBE = 16 };
++    static _Thread_local struct {
++        double mu, nw, ws, val; int sig, used;
++    } ocrt_rwwd_cache[OCRT_RWWD_N];
++    {
++        unsigned long long h;
++        memcpy(&h, &mu_up_water, sizeof(h));
++        h ^= h >> 33; h *= 0xff51afd7ed558ccdULL; h ^= h >> 33;
++        unsigned idx = (unsigned)(h % OCRT_RWWD_N);
++        int free_slot = -1;
++        for (int pr = 0; pr < OCRT_RWWD_PROBE; pr++) {
++            unsigned i2 = (idx + (unsigned)pr) % OCRT_RWWD_N;
++            if (!ocrt_rwwd_cache[i2].used) { if (free_slot < 0) free_slot = (int)i2; break; }
++            if (ocrt_rwwd_cache[i2].mu == mu_up_water &&
++                ocrt_rwwd_cache[i2].nw == n_water &&
++                ocrt_rwwd_cache[i2].ws == wind_speed &&
++                ocrt_rwwd_cache[i2].sig == sigma_type) {
++                return ocrt_rwwd_cache[i2].val;
++            }
++        }
++        double v = surface_R_ww_coxmunk_direct_eval_(mu_up_water, n_water,
++                                                     wind_speed, sigma_type);
++        if (free_slot >= 0) {
++            ocrt_rwwd_cache[free_slot].mu = mu_up_water;
++            ocrt_rwwd_cache[free_slot].nw = n_water;
++            ocrt_rwwd_cache[free_slot].ws = wind_speed;
++            ocrt_rwwd_cache[free_slot].sig = sigma_type;
++            ocrt_rwwd_cache[free_slot].val = v;
++            ocrt_rwwd_cache[free_slot].used = 1;
++        }
++        return v;
++    }
++}
++static double surface_R_ww_coxmunk_direct_eval_(double mu_up_water, double n_water,
++                                                double wind_speed, int sigma_type) {
++#endif
++    if (mu_up_water <= 1e-9) return 1.0;          /* grazing up-beam: fully reflected */
++    double s2  = surface_slope_variance(wind_speed, sigma_type);
++    double sin_u = sqrt(fmax(0.0, 1.0 - mu_up_water * mu_up_water));
++    if (s2 <= 1e-10) {
++        return surface_water_to_air_unpolarized_reflectance_(mu_up_water, n_water);
++    }
++    /* v1.10 OPTION-2 CLOSURE (2026-07-10): this function's ledger is now the
++     * PHYSICAL water-side reflectance R_eff = 1 - T_up, where T_up is the
++     * multi-encounter upward escape from the cascade engine (re-entrant
++     * transmitted light that refracts back INTO the water is booked as
++     * reflection, exactly matching its role in the Ed(0-) bookkeeping at the
++     * single call site).  Uniform at all angles; below the critical cone the
++     * correction vanishes smoothly (cascade returns T_up = T_h there). */
++    /* SPRINT GUARD (2026-07-10): the closed-ledger cascade is OPT-IN ONLY
++     * during the SPEED sprint (OCRT_MB_CLOSURE=1).  Default off restores the
++     * pre-surgery first-encounter integral bit-exactly AND avoids a ~400k-ray
++     * cascade per call on the STRICT build (which has no S2 memo).  getenv
++     * snapshotted once per thread (commit #21: repeated getenv = lock storm).
++     * Accuracy work parked - see BUILD_SPEEDUP carry-over list. */
++    {
++        static _Thread_local int mb_on = -1;
++        if (mb_on < 0) mb_on = (getenv("OCRT_MB_CLOSURE") != NULL);
++        if (mb_on) {
++            double Th_c = 0.0, Tup_c = 0.0, Wret_c = 0.0;
++            if (surface_wa_multibounce_cascade(n_water, wind_speed, mu_up_water,
++                                               400000L, &Th_c, &Tup_c, &Wret_c,
++                                               NULL, NULL, NULL, 0) == 0)
++                return 1.0 - Tup_c;
++            /* engine failure — fall through to first-encounter form */
++        }
++    }
++    double sig = sqrt(s2);
++    double L   = 6.0 * sig;
++    const int N = 101;
++    double dz  = 2.0 * L / (double)(N - 1);
++    double acc = 0.0;
++    for (int i = 0; i < N; ++i) {
++        double zx   = -L + i * dz;
++        double wxi  = (i == 0 || i == N - 1) ? 0.5 : 1.0;
++        double proj = mu_up_water + zx * sin_u;
++        if (proj <= 0.0) continue;
++        for (int j = 0; j < N; ++j) {
++            double zy  = -L + j * dz;
++            double wyj = (j == 0 || j == N - 1) ? 0.5 : 1.0;
++            double r2  = zx * zx + zy * zy;
++            double cti = proj / sqrt(1.0 + r2);
++            double Rwa = surface_water_to_air_unpolarized_reflectance_(cti, n_water);
++            double p   = (1.0 / (M_PI * s2)) * exp(-r2 / s2);
++            acc += wxi * wyj * p * proj * Rwa;
++        }
++    }
++    acc *= dz * dz;
++    double Rww = acc / mu_up_water;
++    if (Rww < 0.0) Rww = 0.0;
++    if (Rww > 1.0) Rww = 1.0;
++    return Rww;
++}
++
++/* ----------------------------------------------------------------------------
++ * Fresnel core helper (Phase B.2)
++ *   Compute Snell-refracted angle and Fresnel s/p reflection amplitudes for a
++ *   flat interface between media of indices n1 and n2. Used by both the
++ *   reflection and transmission Mueller routines and (after refactor) by the
++ *   Cox-Munk microfacet Fresnel call.
++ *
++ *   Convention: amplitudes follow the standard form
++ *     rs = (n1*mu_i - n2*mu_t) / (n1*mu_i + n2*mu_t)
++ *     rp = (n2*mu_i - n1*mu_t) / (n2*mu_i + n1*mu_t)
++ *   With n1=1, n2=n_water this reduces exactly to the pre-Phase-B.2 inline
++ *   formulas in surface_flat_fresnel_matrix_raw (line 48-49 of pre-refactor
++ *   source) — refactor is therefore bit-exact for the air-side reflection.
++ * ---------------------------------------------------------------------------- */
++typedef struct {
++    double mu_i;     /* incidence cosine in medium 1 (>= 0) */
++    double mu_t;     /* transmission cosine in medium 2 (>= 0, 0 if TIR) */
++    double rs_amp;   /* s-pol reflection amplitude */
++    double rp_amp;   /* p-pol reflection amplitude */
++    int    is_TIR;   /* 1 if total internal reflection (n1>n2 case only) */
++} fresnel_core_t;
++
++static void fresnel_compute_core(double mu_i, double n1, double n2,
++                                  fresnel_core_t *fc) {
++    fc->mu_i = mu_i;
++    double sin_i_sq = fmax(0.0, 1.0 - mu_i * mu_i);
++    /* Snell: n1 sin_i = n2 sin_t  =>  sin_t = (n1/n2) sin_i
++     * sin_t_sq = (n1/n2)^2 * sin_i_sq */
++    double sin_t_sq = (n1 / n2) * (n1 / n2) * sin_i_sq;
++    if (sin_t_sq >= 1.0) {
++        fc->is_TIR  = 1;
++        fc->mu_t    = 0.0;
++        fc->rs_amp  = 0.0;  /* |r| = 1 in TIR but amplitudes are complex; */
++        fc->rp_amp  = 0.0;  /* caller (reflection branch) returns identity. */
++        return;
++    }
++    fc->is_TIR = 0;
++    fc->mu_t   = sqrt(1.0 - sin_t_sq);
++    /* General Fresnel amplitudes */
++    fc->rs_amp = (n1 * mu_i - n2 * fc->mu_t) / (n1 * mu_i + n2 * fc->mu_t);
++    fc->rp_amp = (n2 * mu_i - n1 * fc->mu_t) / (n2 * mu_i + n1 * fc->mu_t);
++}
++
++/* Reflection Mueller matrix 3x3 in meridian basis, built from Fresnel core. */
++static void fresnel_R_mueller_from_core(const fresnel_core_t *fc,
++                                         int q_convention, double *MR) {
++    mat3_zero(MR);
++    if (fc->is_TIR) {
++        MR[0] = MR[4] = MR[8] = 1.0;  /* identity (TIR) */
++        return;
++    }
++    double Rs = fc->rs_amp * fc->rs_amp;
++    double Rp = fc->rp_amp * fc->rp_amp;
++    double Q_kernel = (q_convention == 1) ? 0.5 * (Rp - Rs) : 0.5 * (Rs - Rp);
++    MR[0*3+0] = 0.5 * (Rs + Rp);
++    MR[0*3+1] = Q_kernel;
++    MR[1*3+0] = Q_kernel;
++    MR[1*3+1] = 0.5 * (Rs + Rp);
++    MR[2*3+2] = fc->rs_amp * fc->rp_amp;
++}
++
++/* Radiance transmission Mueller matrix 3x3, built from Fresnel core.
++ *   Fresnel transmission amplitudes derived from reflection amplitudes via
++ *   identities:  ts_amp = 1 + rs_amp,  tp_amp = (n1/n2)(1 + rp_amp).
++ *   Flux transmittance: T_X_flux = (n2*mu_t)/(n1*mu_i) * t_X^2
++ *   Radiance n^2 law:   T_X_rad  = (n2/n1)^2 * T_X_flux
++ *   Energy conservation: R_X + T_X_flux = 1 per polarization (verified).
++ */
++static void fresnel_T_mueller_radiance_from_core(const fresnel_core_t *fc,
++                                                  double n1, double n2,
++                                                  int q_convention,
++                                                  double *MT) {
++    mat3_zero(MT);
++    if (fc->is_TIR) {
++        return;  /* zero matrix - no transmission */
++    }
++    double ts_amp = 1.0 + fc->rs_amp;
++    double tp_amp = (n1 / n2) * (1.0 + fc->rp_amp);
++
++    double flux_factor = (n2 * fc->mu_t) / (n1 * fc->mu_i);
++    double n_ratio_sq  = (n2 * n2) / (n1 * n1);
++    double radiance_factor = n_ratio_sq * flux_factor;
++
++    double Ts = radiance_factor * ts_amp * ts_amp;
++    double Tp = radiance_factor * tp_amp * tp_amp;
++
++    double Q_kernel = (q_convention == 1) ? 0.5 * (Tp - Ts) : 0.5 * (Ts - Tp);
++    MT[0*3+0] = 0.5 * (Ts + Tp);
++    MT[0*3+1] = Q_kernel;
++    MT[1*3+0] = Q_kernel;
++    MT[1*3+1] = 0.5 * (Ts + Tp);
++    MT[2*3+2] = radiance_factor * ts_amp * tp_amp;
++}
++
++/* ----------------------------------------------------------------------------
++ * Flat-water Fresnel Mueller (3x3, meridian basis) — refactored
++ *   Backward-compatible wrapper. Calls Fresnel core with (n1, n2) = (1, n_water)
++ *   to reproduce the pre-Phase-B.2 air-side reflection Mueller bit-exactly.
++ * ---------------------------------------------------------------------------- */
++void surface_flat_fresnel_matrix_raw(double mu, double n_water,
++                                      int q_convention, double *MF) {
++    fresnel_core_t fc;
++    fresnel_compute_core(mu, 1.0, n_water, &fc);
++    fresnel_R_mueller_from_core(&fc, q_convention, MF);
++}
++
++/* ----------------------------------------------------------------------------
++ * Generalized R / T Mueller matrices (Phase B.2 public API)
++ * ---------------------------------------------------------------------------- */
++void surface_flat_fresnel_R_matrix_general(double mu_i, double n1, double n2,
++                                            int q_convention, double *MR) {
++    fresnel_core_t fc;
++    fresnel_compute_core(mu_i, n1, n2, &fc);
++    fresnel_R_mueller_from_core(&fc, q_convention, MR);
++}
++
++void surface_flat_fresnel_T_matrix(double mu_i, double n1, double n2,
++                                    int q_convention, double *MT) {
++    fresnel_core_t fc;
++    fresnel_compute_core(mu_i, n1, n2, &fc);
++    fresnel_T_mueller_radiance_from_core(&fc, n1, n2, q_convention, MT);
++}
++
++double surface_flat_fresnel_check_energy(double mu_i, double n1, double n2) {
++    fresnel_core_t fc;
++    fresnel_compute_core(mu_i, n1, n2, &fc);
++    if (fc.is_TIR) return 0.0;
++    double Rs = fc.rs_amp * fc.rs_amp;
++    double Rp = fc.rp_amp * fc.rp_amp;
++    double ts_amp = 1.0 + fc.rs_amp;
++    double tp_amp = (n1 / n2) * (1.0 + fc.rp_amp);
++    double flux_factor = (n2 * fc.mu_t) / (n1 * fc.mu_i);
++    double Ts_flux = flux_factor * ts_amp * ts_amp;
++    double Tp_flux = flux_factor * tp_amp * tp_amp;
++    double res_s = fabs(1.0 - (Rs + Ts_flux));
++    double res_p = fabs(1.0 - (Rp + Tp_flux));
++    return res_s + res_p;
++}
++
++/* ----------------------------------------------------------------------------
++ * Cox-Munk + Fresnel BRDF kernel (3x3 Mueller R, full per-direction)
++ *   V1 R_sfc_coxmunk_trig (vrt_solver.c L2983)
++ *
++ * Returns R such that I_up = R · I_dn at one (μ_o, μ_i, φ) direction triple.
++ * Includes:
++ *   - isotropic Gaussian wave-slope distribution (isotropic, selectable slope-variance law (sigma_type 0/1))
++ *   - Sancer bistatic shadowing factor S_bi
++ *   - Fresnel Mueller at microfacet incidence angle (omega = half-angle)
++ *   - Hovenier-style basis rotation (incoming meridian → microfacet
++ *     scatter plane → outgoing meridian) via L1, L2 matrices
++ * ---------------------------------------------------------------------------- */
++void surface_R_coxmunk_trig(double mu_out, double mu_in_dn,
++                             double cos_phi, double sin_phi,
++                             double ws, int sigma_type_int, double n_water,
++                             int q_convention, double *R) {
++    mat3_zero(R);
++
++    double sigma_sq = surface_slope_variance(ws, sigma_type_int);
++
++    double mu_in_actual = -mu_in_dn;
++    double s1 = sqrt(fmax(0.0, 1.0 - mu_out * mu_out));
++    double s2 = sqrt(fmax(0.0, 1.0 - mu_in_actual * mu_in_actual));
++
++    double cT = mu_out * mu_in_actual + s1 * s2 * cos_phi;
++    if      (cT > +1.0) cT = +1.0;
++    else if (cT < -1.0) cT = -1.0;
++    double cos_omega = sqrt(fmax(0.0, 0.5 * (1.0 - cT)));
++    if (cos_omega <= 1e-6) return;
++    double cos_beta = (mu_out + mu_in_dn) / (2.0 * cos_omega);
++    if (cos_beta <= 1e-6) return;
++
++    double sT = sqrt(fmax(0.0, 1.0 - cT * cT));
++    double denom = fmax(1e-12, sT);
++
++    /* Stokes rotation angles (Refactoring Tasks Task 2 fix, 2026-05-10):
++     *   표준 (Mishchenko 2002 Appendix B):
++     *     cos σ_1 = (μ_out - μ_in·cos Θ) / (sin Θ · sin θ_in)
++     *     cos σ_2 = (μ_in - μ_out·cos Θ) / (sin Θ · sin θ_out)
++     *   기존 V3 식 가 분모 에 sin θ 누락 — typical case s ≈ 1 에서 small,
++     *   asymmetric geometry (sza ≠ vza) 에서 큰 deviation 발생 가능.
++     *   Fix: ci1 분모 에 s2 (= sin θ_in), ci2 분모 에 s1 (= sin θ_out) 추가. */
++    double s2_safe = fmax(1e-12, s2);
++    double s1_safe = fmax(1e-12, s1);
++
++    double ci1 = (mu_out - mu_in_actual * cT) / (denom * s2_safe);
++    double si1 = s1 * sin_phi / denom;
++    double n1 = sqrt(ci1*ci1 + si1*si1);
++    if (n1 < 1e-12) { ci1 = 1.0; si1 = 0.0; }
++    else { ci1 /= n1; si1 /= n1; }
++
++    double ci2 = (mu_in_actual - mu_out * cT) / (denom * s1_safe);
++    double si2 = s2 * sin_phi / denom;
++    double n2 = sqrt(ci2*ci2 + si2*si2);
++    if (n2 < 1e-12) { ci2 = 1.0; si2 = 0.0; }
++    else { ci2 /= n2; si2 /= n2; }
++
++    /* Fresnel Mueller at microfacet incidence angle omega
++     * (Phase B.2 refactor: use shared fresnel core helper. Bit-exact to the
++     *  pre-refactor inline computation for n1=1, n2=n_water.) */
++    double MF[9];
++    {
++        fresnel_core_t fc;
++        fresnel_compute_core(cos_omega, 1.0, n_water, &fc);
++        fresnel_R_mueller_from_core(&fc, q_convention, MF);
++    }
++
++    /* Cox-Munk isotropic Gaussian slope */
++    double cos_beta_sq = cos_beta * cos_beta;
++    double tan_beta_sq = (1.0 - cos_beta_sq) / fmax(cos_beta_sq, 1e-8);
++    double P_slope = (1.0 / (M_PI * sigma_sq)) * exp(-tan_beta_sq / sigma_sq);
++
++    /* Sancer (1969) bistatic shadowing for an isotropic Gaussian slope
++     * distribution.  OCRT uses the additive two-direction combination
++     * S = 1/(1 + lambda_i + lambda_v). */
++    double sigma_len = sqrt(sigma_sq);
++    double lam_i = 0.0, lam_v = 0.0;
++
++    if (mu_in_dn < 1.0 - 1e-10) {
++        double sin_i = sqrt(fmax(1e-20, 1.0 - mu_in_dn * mu_in_dn));
++        double nu_i = (mu_in_dn / sin_i) / sigma_len;
++        if (nu_i <= 20.0) {
++            lam_i = 0.5 * (exp(-nu_i * nu_i) / (nu_i * sqrt(M_PI)) - erfc(nu_i));
++        }
++    }
++    if (mu_out < 1.0 - 1e-10) {
++        double sin_v = sqrt(fmax(1e-20, 1.0 - mu_out * mu_out));
++        double nu_v = (mu_out / sin_v) / sigma_len;
++        if (nu_v <= 20.0) {
++            lam_v = 0.5 * (exp(-nu_v * nu_v) / (nu_v * sqrt(M_PI)) - erfc(nu_v));
++        }
++    }
++    double S_bi = 1.0 / (1.0 + lam_i + lam_v);
++
++    /* Cox-Munk/Wang-Gordon radiance BRDF. */
++    double brdf = (P_slope * S_bi) / (4.0 * mu_in_dn * mu_out * cos_beta_sq * cos_beta_sq);
++
++    /* Assemble: R = L2 · MF · L1 · brdf */
++    double L1[9], L2[9], MFL1[9], L2MFL1[9];
++    build_rotation_L(ci1, si1, L1);
++    build_rotation_L(ci2, si2, L2);
++    mat3_mul(MF, L1, MFL1);
++    mat3_mul(L2, MFL1, L2MFL1);
++    for (int i = 0; i < 9; ++i) R[i] = L2MFL1[i] * brdf;
++}
++
++/* ----------------------------------------------------------------------------
++ * Cox-Munk + Fresnel BTDF kernel for water -> air TRANSMISSION (3x3 Mueller T)
++ *
++ * Transmission analog of surface_R_coxmunk_trig. Returns T such that
++ *   I_air(mu_out_air) = T . I_water(mu_in_water)   at one (mu2, mu1, phi) triple.
++ *
++ * Geometry (refraction facet, not the reflection half-vector):
++ *   p1 = in-water upwelling propagation dir (cosine mu1 > 0)
++ *   p2 = air outgoing  propagation dir (cosine mu2 > 0)
++ *   Snell tangential-momentum continuity => facet normal along
++ *       N = n_w * p1 - n_a * p2      (n_a = 1)
++ *   |N|^2 = n^2 + 1 - 2 n cosPsi,   cosPsi = p1.p2 = mu1 mu2 + s1 s2 cos_phi
++ *   cos_beta = (n mu1 - mu2)/|N|              (facet tilt from vertical)
++ *   cos_omega_w = (n - cosPsi)/|N|            (in-water incidence on facet)
++ *   Snell at facet: sin_omega_a = n sin_omega_w ; TIR (>crit) => zero transmit.
++ *
++ * BTDF (Walter et al. 2007, radiance form), same NDF/shadowing framework as the
++ * reflection kernel (D = P_slope / cos^4 beta, Sancer S_bi, Hovenier rotations):
++ *   f_t,X = T_flux,X(omega_w) * (mu_wf mu_af)/(mu1 mu2)
++ *               * eta_o^2 / (eta_i mu_wf + eta_o mu_af)^2 * D * G
++ *         = t_X^2 * mu_af^2 / (n mu1 mu2 (n mu_wf + mu_af)^2) * (P/cos^4beta) * G
++ *   with eta_i=n_w, eta_o=1, mu_wf=cos_omega_w, mu_af=cos_omega_a,
++ *   t_s = 1+rs, t_p = n_w(1+rp)  (Fresnel transmission amplitudes from core).
++ * Reuses fresnel_compute_core for the per-facet Fresnel; reuses
++ * surface_slope_variance, the Sancer shadowing, and build_rotation_L exactly as
++ * the reflection branch, so R and T share one consistent surface model.
++ * ---------------------------------------------------------------------------- */
++void surface_T_coxmunk_trig(double mu_out_air, double mu_in_water,
++                            double cos_phi, double sin_phi,
++                            double ws, int sigma_type_int, double n_water,
++                            int q_convention, double *T) {
++    mat3_zero(T);
++
++    double mu1 = mu_in_water;   /* in-water upwelling cosine (>0) */
++    double mu2 = mu_out_air;    /* air outgoing cosine        (>0) */
++    if (mu1 <= 1e-9 || mu2 <= 1e-9) return;
++
++    double sigma_sq = surface_slope_variance(ws, sigma_type_int);
++    double n = n_water;
++
++    double s1 = sqrt(fmax(0.0, 1.0 - mu1 * mu1));
++    double s2 = sqrt(fmax(0.0, 1.0 - mu2 * mu2));
++
++    double cosPsi = mu1 * mu2 + s1 * s2 * cos_phi;
++    if      (cosPsi > +1.0) cosPsi = +1.0;
++    else if (cosPsi < -1.0) cosPsi = -1.0;
++
++    double Nsq = n * n + 1.0 - 2.0 * n * cosPsi;
++    if (Nsq <= 1e-12) return;
++    double Nmag = sqrt(Nsq);
++
++    double cos_beta    = (n * mu1 - mu2) / Nmag;     /* facet tilt cosine */
++    double cos_omega_w = (n - cosPsi)    / Nmag;     /* in-water facet incidence */
++    if (cos_beta <= 1e-6 || cos_omega_w <= 1e-6) return;
++
++    /* Per-facet Fresnel (reuse core): water(n) -> air(1) at incidence omega_w */
++    fresnel_core_t fc;
++    fresnel_compute_core(cos_omega_w, n, 1.0, &fc);
++    if (fc.is_TIR) return;                 /* beyond critical angle: no transmit */
++    double mu_af = fc.mu_t;                /* = cos_omega_a (Snell) */
++
++    double ts = 1.0 + fc.rs_amp;           /* s transmission amplitude */
++    double tp = n * (1.0 + fc.rp_amp);     /* p transmission amplitude (n1/n2=n) */
++
++    /* Cox-Munk isotropic Gaussian slope NDF: D = P_slope / cos^4 beta */
++    double cos_beta_sq  = cos_beta * cos_beta;
++    double tan_beta_sq  = (1.0 - cos_beta_sq) / fmax(cos_beta_sq, 1e-8);
++    double P_slope = (1.0 / (M_PI * sigma_sq)) * exp(-tan_beta_sq / sigma_sq);
++
++    /* Sancer (1969) bistatic shadowing, identical to the reflection branch. */
++    double sigma_len = sqrt(sigma_sq);
++    double lam_i = 0.0, lam_v = 0.0;
++    if (mu1 < 1.0 - 1e-10) {
++        double sin_i = sqrt(fmax(1e-20, 1.0 - mu1 * mu1));
++        double nu_i = (mu1 / sin_i) / sigma_len;
++        if (nu_i <= 20.0)
++            lam_i = 0.5 * (exp(-nu_i * nu_i) / (nu_i * sqrt(M_PI)) - erfc(nu_i));
++    }
++    if (mu2 < 1.0 - 1e-10) {
++        double sin_v = sqrt(fmax(1e-20, 1.0 - mu2 * mu2));
++        double nu_v = (mu2 / sin_v) / sigma_len;
++        if (nu_v <= 20.0)
++            lam_v = 0.5 * (exp(-nu_v * nu_v) / (nu_v * sqrt(M_PI)) - erfc(nu_v));
++    }
++    double S_bi = 1.0 / (1.0 + lam_i + lam_v);
++
++    /* Walter radiance BTDF common factor (per-polarization scaled by t_X^2).
++     * Denominator (eta_i(i.h)+eta_o(o.h))^2 reduces, with signed dot products,
++     * to |N|^2 = Nsq exactly:  eta_i(i.h)+eta_o(o.h) = -(n^2+1-2n cosPsi)/|N| = -|N|.
++     * (Using +n*mu_wf+mu_af here would be a sign error, ~30x too small.) */
++    double common = (mu_af * mu_af) /
++                    (n * mu1 * mu2 * Nsq) *
++                    (P_slope / (cos_beta_sq * cos_beta_sq)) * S_bi;
++
++    double ft_s  = common * ts * ts;
++    double ft_p  = common * tp * tp;
++    double ft_sp = common * ts * tp;
++
++    double MT[9];
++    mat3_zero(MT);
++    double Q_kernel = (q_convention == 1) ? 0.5 * (ft_p - ft_s)
++                                          : 0.5 * (ft_s - ft_p);
++    MT[0*3+0] = 0.5 * (ft_s + ft_p);
++    MT[0*3+1] = Q_kernel;
++    MT[1*3+0] = Q_kernel;
++    MT[1*3+1] = 0.5 * (ft_s + ft_p);
++    MT[2*3+2] = ft_sp;
++
++    /* Stokes basis rotations (same Mishchenko form as reflection branch),
++     * scattering cosine cT = cosPsi between p1 (in) and p2 (out). */
++    double sT = sqrt(fmax(0.0, 1.0 - cosPsi * cosPsi));
++    double denom = fmax(1e-12, sT);
++    double s1_safe = fmax(1e-12, s1);
++    double s2_safe = fmax(1e-12, s2);
++
++    double ci1 = (mu2 - mu1 * cosPsi) / (denom * s1_safe);
++    double si1 = s2 * sin_phi / denom;
++    double r1 = sqrt(ci1*ci1 + si1*si1);
++    if (r1 < 1e-12) { ci1 = 1.0; si1 = 0.0; } else { ci1 /= r1; si1 /= r1; }
++
++    double ci2 = (mu1 - mu2 * cosPsi) / (denom * s2_safe);
++    double si2 = s1 * sin_phi / denom;
++    double r2 = sqrt(ci2*ci2 + si2*si2);
++    if (r2 < 1e-12) { ci2 = 1.0; si2 = 0.0; } else { ci2 /= r2; si2 /= r2; }
++
++    double L1[9], L2[9], MTL1[9], L2MTL1[9];
++    build_rotation_L(ci1, si1, L1);
++    build_rotation_L(ci2, si2, L2);
++    mat3_mul(MT, L1, MTL1);
++    mat3_mul(L2, MTL1, L2MTL1);
++    for (int i = 0; i < 9; ++i) T[i] = L2MTL1[i];
++}
++
++/* ----------------------------------------------------------------------------
++ * Direct sunglint single-bounce TOA reflectance contribution
++ *   ρ_glint = R(mu_v, mu_0, Δφ) · F_solar · exp(-tau/μ_0) · exp(-tau/μ_v) / μ_0
++ *
++ * In the V3 ρ convention (F_sun = π normalized), the contribution to TOA ρ
++ * from direct surface reflection of the solar beam is:
++ *   ρ_glint[k] = R[k][0] · μ_0 · exp(-tau/μ_0) · exp(-tau/μ_v)
++ *
++ * (R has units sr^-1 absorbed into BRDF; μ_0 cancellation per V1 vrt_solver
++ *  reflectance_from_field.)
++ *
++ * Used post-hoc when decouple_sunglint=1.
++ * ---------------------------------------------------------------------------- */
++/* ----------------------------------------------------------------------------
++ * Phase B: Cox-Munk Fourier-mode surface kernel
++ *
++ * Compute m-mode coefficients R^m_kl(μ_o, μ_i) by numerical φ-quadrature.
++ * For Stokes basis I,Q ~ cos(mφ), U ~ sin(mφ):
++ *
++ *   - cos integration for entries: R_II, R_IQ, R_QI, R_QQ, R_UU
++ *   - sin integration for entries: R_IU, R_QU, R_UI, R_UQ
++ *
++ * Normalization (consistent with (2-δ_{m,0}) reconstruction):
++ *   m = 0:  R^0_kl = (1/2π) ∫ R_kl(φ) dφ
++ *   m > 0:  R^m_kl = (1/π)  ∫ R_kl(φ) · cos(mφ) dφ      (cos entries)
++ *           R^m_kl = (1/π)  ∫ R_kl(φ) · sin(mφ) dφ      (sin entries)
++ *
++ * Uniform φ-quadrature on [0, 2π): φ_p = (p + 0.5) · 2π/N, w_p = 2π/N
++ * (midpoint rule — exactly integrates trig polynomials up to order N-1).
++ * ---------------------------------------------------------------------------- */
++int surface_coxmunk_fourier_kernel(const double *mu_o, int n_o,
++                                    const double *mu_i, int n_i,
++                                    int m, int n_phi_quad,
++                                    double ws, int sigma_type,
++                                    double n_water, int q_convention,
++                                    double *R_m) {
++    if (!mu_o || !mu_i || !R_m) return -1;
++    if (n_o < 1 || n_i < 1 || m < 0 || n_phi_quad < 4) return -1;
++
++    /* Fourier normalization: m=0 → 1/(2π); m>0 → 1/π */
++    const double norm = (m == 0) ? (1.0 / (2.0 * M_PI)) : (1.0 / M_PI);
++
++    /* Which Mueller entries use cos vs sin Fourier?
++     *   cos entries: indices (k*3 + l) where (k,l) ∈
++     *     (II=0, IQ=1, QI=3, QQ=4, UU=8)
++     *   sin entries: (IU=2, QU=5, UI=6, UQ=7)
++     *
++     * For m = 0:  sin(0)=0 → all sin-entry m=0 coeffs are zero.
++     * cos integration with cos(0)=1 → just average.  */
++    static const int cos_entry[9] = {1,1,0, 1,1,0, 0,0,1};
++
++    /* Uniform midpoint φ-quadrature on [0, 2π) */
++    const double dphi = 2.0 * M_PI / (double)n_phi_quad;
++
++    /* Initialize output to zero */
++    memset(R_m, 0, (size_t)n_o * (size_t)n_i * 9 * sizeof(double));
++
++    for (int j_o = 0; j_o < n_o; j_o++) {
++        const double mo = mu_o[j_o];
++        for (int j_i = 0; j_i < n_i; j_i++) {
++            const double mi = mu_i[j_i];
++            double *R_pair = R_m + ((size_t)j_o * (size_t)n_i + (size_t)j_i) * 9;
++
++            /* Numerical φ-integration */
++            for (int p = 0; p < n_phi_quad; p++) {
++                const double phi = (p + 0.5) * dphi;
++                const double cphi = cos(phi);
++                const double sphi = sin(phi);
++                const double cmphi = cos(m * phi);
++                const double smphi = sin(m * phi);
++
++                double R_local[9];
++                surface_R_coxmunk_trig(mo, mi, cphi, sphi,
++                                        ws, sigma_type, n_water,
++                                        q_convention, R_local);
++
++                /* Accumulate cos- or sin-weighted entries */
++                for (int kl = 0; kl < 9; kl++) {
++                    double weight = cos_entry[kl] ? cmphi : smphi;
++                    R_pair[kl] += R_local[kl] * weight;
++                }
++            }
++            /* Apply quadrature weight (dphi) and Fourier normalization */
++            for (int kl = 0; kl < 9; kl++) {
++                R_pair[kl] *= dphi * norm;
++            }
++
++            /* OSOAA surface RAA files use the opposite azimuthal sine basis
++             * for the incoming-U column entries of the air-side Cox-Munk
++             * reflection Fourier matrix.  Keep the reflected-U row entries
++             * (UI,UQ) unchanged: direct RAA matrix parity tests show only
++             * R13/R23 (IU/QU; indices 2/5) require this sign conversion for
++             * m>0. */
++            if (m > 0) {
++                R_pair[2] = -R_pair[2];
++                R_pair[5] = -R_pair[5];
++            }
++        }
++    }
++    return 0;
++}
++
++/* ----------------------------------------------------------------------------
++ * surface_R_ww_coxmunk_trig — WATER-SIDE internal reflection Mueller (3x3) at
++ * one (mu_out, mu_in_dn, phi) triple. z-flip analogue of surface_R_coxmunk_trig
++ * (the external/air-side kernel): identical Cox-Munk slope geometry, Hovenier
++ * rotations, Sancer shadowing, and Wang-Gordon BRDF, with ONLY the facet
++ * Fresnel changed to the water->air (internal, TIR) reflection used by A2.
++ * Semantics here: mu_out = |mu| of the reflected DOWNWARD ray (into water),
++ * mu_in_dn = |mu| of the incident UPWARD ray (the in-water upwelling).
++ * ---------------------------------------------------------------------------- */
++void surface_R_ww_coxmunk_trig(double mu_out, double mu_in_dn,
++                             double cos_phi, double sin_phi,
++                             double ws, int sigma_type_int, double n_water,
++                             int q_convention, double *R) {
++    mat3_zero(R);
++
++    double sigma_sq = surface_slope_variance(ws, sigma_type_int);
++
++    double mu_in_actual = -mu_in_dn;
++    double s1 = sqrt(fmax(0.0, 1.0 - mu_out * mu_out));
++    double s2 = sqrt(fmax(0.0, 1.0 - mu_in_actual * mu_in_actual));
++
++    double cT = mu_out * mu_in_actual + s1 * s2 * cos_phi;
++    if      (cT > +1.0) cT = +1.0;
++    else if (cT < -1.0) cT = -1.0;
++    double cos_omega = sqrt(fmax(0.0, 0.5 * (1.0 - cT)));
++    if (cos_omega <= 1e-6) return;
++    double cos_beta = (mu_out + mu_in_dn) / (2.0 * cos_omega);
++    if (cos_beta <= 1e-6) return;
++
++    double sT = sqrt(fmax(0.0, 1.0 - cT * cT));
++    double denom = fmax(1e-12, sT);
++
++    /* Stokes rotation angles (Refactoring Tasks Task 2 fix, 2026-05-10):
++     *   표준 (Mishchenko 2002 Appendix B):
++     *     cos σ_1 = (μ_out - μ_in·cos Θ) / (sin Θ · sin θ_in)
++     *     cos σ_2 = (μ_in - μ_out·cos Θ) / (sin Θ · sin θ_out)
++     *   기존 V3 식 가 분모 에 sin θ 누락 — typical case s ≈ 1 에서 small,
++     *   asymmetric geometry (sza ≠ vza) 에서 큰 deviation 발생 가능.
++     *   Fix: ci1 분모 에 s2 (= sin θ_in), ci2 분모 에 s1 (= sin θ_out) 추가. */
++    double s2_safe = fmax(1e-12, s2);
++    double s1_safe = fmax(1e-12, s1);
++
++    double ci1 = (mu_out - mu_in_actual * cT) / (denom * s2_safe);
++    double si1 = s1 * sin_phi / denom;
++    double n1 = sqrt(ci1*ci1 + si1*si1);
++    if (n1 < 1e-12) { ci1 = 1.0; si1 = 0.0; }
++    else { ci1 /= n1; si1 /= n1; }
++
++    double ci2 = (mu_in_actual - mu_out * cT) / (denom * s1_safe);
++    double si2 = s2 * sin_phi / denom;
++    double n2 = sqrt(ci2*ci2 + si2*si2);
++    if (n2 < 1e-12) { ci2 = 1.0; si2 = 0.0; }
++    else { ci2 /= n2; si2 /= n2; }
++
++    /* Facet Fresnel Mueller at microfacet incidence omega — WATER-SIDE
++     * internal reflection: water(n_water) -> air(1.0), including TIR.
++     * Reuses surface_flat_fresnel_R_matrix_general, the *same* routine the
++     * flat M_Rww (rt_air_water_R_ww, A2) uses, so the slope-integrated rough
++     * kernel reduces to the validated flat per-node limit as wind -> 0. */
++    double MF[9];
++    surface_flat_fresnel_R_matrix_general(cos_omega, n_water, 1.0, q_convention, MF);
++
++    /* Cox-Munk isotropic Gaussian slope */
++    double cos_beta_sq = cos_beta * cos_beta;
++    double tan_beta_sq = (1.0 - cos_beta_sq) / fmax(cos_beta_sq, 1e-8);
++    double P_slope = (1.0 / (M_PI * sigma_sq)) * exp(-tan_beta_sq / sigma_sq);
++
++    /* Sancer (1969) bistatic shadowing for an isotropic Gaussian slope
++     * distribution.  OCRT uses the additive two-direction combination
++     * S = 1/(1 + lambda_i + lambda_v). */
++    double sigma_len = sqrt(sigma_sq);
++    double lam_i = 0.0, lam_v = 0.0;
++
++    if (mu_in_dn < 1.0 - 1e-10) {
++        double sin_i = sqrt(fmax(1e-20, 1.0 - mu_in_dn * mu_in_dn));
++        double nu_i = (mu_in_dn / sin_i) / sigma_len;
++        if (nu_i <= 20.0) {
++            lam_i = 0.5 * (exp(-nu_i * nu_i) / (nu_i * sqrt(M_PI)) - erfc(nu_i));
++        }
++    }
++    if (mu_out < 1.0 - 1e-10) {
++        double sin_v = sqrt(fmax(1e-20, 1.0 - mu_out * mu_out));
++        double nu_v = (mu_out / sin_v) / sigma_len;
++        if (nu_v <= 20.0) {
++            lam_v = 0.5 * (exp(-nu_v * nu_v) / (nu_v * sqrt(M_PI)) - erfc(nu_v));
++        }
++    }
++    double S_bi = 1.0 / (1.0 + lam_i + lam_v);
++
++    /* Cox-Munk/Wang-Gordon radiance BRDF. */
++    double brdf = (P_slope * S_bi) / (4.0 * mu_in_dn * mu_out * cos_beta_sq * cos_beta_sq);
++
++    /* Assemble: R = L2 · MF · L1 · brdf */
++    double L1[9], L2[9], MFL1[9], L2MFL1[9];
++    build_rotation_L(ci1, si1, L1);
++    build_rotation_L(ci2, si2, L2);
++    mat3_mul(MF, L1, MFL1);
++    mat3_mul(L2, MFL1, L2MFL1);
++    for (int i = 0; i < 9; ++i) R[i] = L2MFL1[i] * brdf;
++}
++
++
++/* ----------------------------------------------------------------------------
++ * surface_R_ww_coxmunk_fourier_kernel — m-mode Fourier coefficients of the
++ * WATER-SIDE internal-reflection Mueller (surface_R_ww_coxmunk_trig). Identical
++ * Fourier convention to surface_coxmunk_fourier_kernel (norm 1/2pi for m=0,
++ * 1/pi for m>0; cos/sin entry split). Output R_m[n_o*n_i*9], packed
++ * R_m[(j_o*n_i + j_i)*9 + (k*3+l)]. mu_o = downward (reflected) |mu|,
++ * mu_i = upward (incident) |mu|.
++ * ---------------------------------------------------------------------------- */
++#ifdef OCRT_FAST_KERNELS
++/* ---- v1.09-opt S3: all-m Fourier-kernel cache (OSOAA SURF_MATR analog) ----
++ * The per-azimuth Mueller M(mu_o,mu_i,phi) is m-INDEPENDENT; the original
++ * kernels recompute it for every Fourier mode (34x per solve -> 19M trig
++ * calls, the measured layer-independent floor).  First call for a geometry
++ * does ONE phi pass projecting onto ALL modes 0..OCRT_FKC_MMAX; later m
++ * calls memcpy their slab.  BIT-SAFETY: weights use the same cos(m*phi)/
++ * sin(m*phi) libm expressions and the p-accumulation order per (m,pair,kl)
++ * matches the original loop exactly, so served coefficients are the exact
++ * bits the direct evaluation produces.  m > MMAX or alloc failure falls
++ * through to the original body (always correct).  Thread-local. */
++#define OCRT_FKC_MMAX 64
++typedef void (*ocrt_fkc_trig_fn)(double, double, double, double,
++                                 double, int, double, int, double *);
++typedef struct {
++    int valid, n_o, n_i, n_phi, sigma_type, q_conv;
++    double ws, nw;
++    double *mu_o, *mu_i;
++    double *coef;                 /* (MMAX+1) slabs of n_o*n_i*9, m-major */
++} ocrt_fkc_t;
++
++static int ocrt_fkc_serve(ocrt_fkc_t *C, ocrt_fkc_trig_fn trig,
++                          const double *mu_o, int n_o,
++                          const double *mu_i, int n_i,
++                          int m, int n_phi_quad,
++                          double ws, int sigma_type,
++                          double n_water, int q_convention,
++                          double *out_m)
++{
++    if (m > OCRT_FKC_MMAX) return 0;
++    const size_t pair9 = (size_t)n_o * (size_t)n_i * 9;
++    int hit = C->valid && C->n_o == n_o && C->n_i == n_i &&
++              C->n_phi == n_phi_quad && C->sigma_type == sigma_type &&
++              C->q_conv == q_convention && C->ws == ws && C->nw == n_water &&
++              memcmp(C->mu_o, mu_o, (size_t)n_o * sizeof(double)) == 0 &&
++              memcmp(C->mu_i, mu_i, (size_t)n_i * sizeof(double)) == 0;
++    if (!hit) {
++        free(C->mu_o); free(C->mu_i); free(C->coef);
++        C->mu_o = (double*)malloc((size_t)n_o * sizeof(double));
++        C->mu_i = (double*)malloc((size_t)n_i * sizeof(double));
++        C->coef = (double*)malloc((size_t)(OCRT_FKC_MMAX + 1) * pair9 * sizeof(double));
++        double *W = (double*)malloc((size_t)2 * (OCRT_FKC_MMAX + 1)
++                                    * (size_t)n_phi_quad * sizeof(double));
++        if (!C->mu_o || !C->mu_i || !C->coef || !W) {
++            free(C->mu_o); free(C->mu_i); free(C->coef); free(W);
++            C->mu_o = C->mu_i = NULL; C->coef = NULL; C->valid = 0;
++            return 0;
++        }
++        memcpy(C->mu_o, mu_o, (size_t)n_o * sizeof(double));
++        memcpy(C->mu_i, mu_i, (size_t)n_i * sizeof(double));
++        const double dphi = 2.0 * M_PI / (double)n_phi_quad;
++        for (int mm = 0; mm <= OCRT_FKC_MMAX; mm++)
++            for (int p = 0; p < n_phi_quad; p++) {
++                const double phi = (p + 0.5) * dphi;
++                W[((size_t)2*mm    ) * (size_t)n_phi_quad + p] = cos(mm * phi);
++                W[((size_t)2*mm + 1) * (size_t)n_phi_quad + p] = sin(mm * phi);
++            }
++        static const int cos_entry[9] = {1,1,0, 1,1,0, 0,0,1};
++        for (int j_o = 0; j_o < n_o; j_o++) {
++            const double mo = mu_o[j_o];
++            for (int j_i = 0; j_i < n_i; j_i++) {
++                const double mi = mu_i[j_i];
++                const size_t pair = (size_t)j_o * (size_t)n_i + (size_t)j_i;
++                double acc[OCRT_FKC_MMAX + 1][9];
++                memset(acc, 0, sizeof(acc));
++                for (int p = 0; p < n_phi_quad; p++) {
++                    const double phi = (p + 0.5) * dphi;
++                    const double cphi = cos(phi);
++                    const double sphi = sin(phi);
++                    double R_local[9];
++                    trig(mo, mi, cphi, sphi, ws, sigma_type,
++                         n_water, q_convention, R_local);
++                    for (int mm = 0; mm <= OCRT_FKC_MMAX; mm++) {
++                        const double cm = W[((size_t)2*mm    ) * (size_t)n_phi_quad + p];
++                        const double sm = W[((size_t)2*mm + 1) * (size_t)n_phi_quad + p];
++                        for (int kl = 0; kl < 9; kl++)
++                            acc[mm][kl] += R_local[kl] * (cos_entry[kl] ? cm : sm);
++                    }
++                }
++                for (int mm = 0; mm <= OCRT_FKC_MMAX; mm++) {
++                    const double norm_mm = (mm == 0) ? (1.0/(2.0*M_PI)) : (1.0/M_PI);
++                    double *dst = C->coef + (size_t)mm * pair9 + pair * 9;
++                    for (int kl = 0; kl < 9; kl++)
++                        dst[kl] = acc[mm][kl] * (dphi * norm_mm);
++                }
++            }
++        }
++        free(W);
++        C->n_o = n_o; C->n_i = n_i; C->n_phi = n_phi_quad;
++        C->sigma_type = sigma_type; C->q_conv = q_convention;
++        C->ws = ws; C->nw = n_water; C->valid = 1;
++    }
++    memcpy(out_m, C->coef + (size_t)m * pair9, pair9 * sizeof(double));
++    return 1;
++}
++static _Thread_local ocrt_fkc_t g_fkc_rww;
++static _Thread_local ocrt_fkc_t g_fkc_twa;
++static _Thread_local ocrt_fkc_t g_fkc_taw;   /* v1.10 B-0c.2a: air->water */
++#endif
++
++int surface_R_ww_coxmunk_fourier_kernel(const double *mu_o, int n_o,
++                                    const double *mu_i, int n_i,
++                                    int m, int n_phi_quad,
++                                    double ws, int sigma_type,
++                                    double n_water, int q_convention,
++                                    double *R_m) {
++    if (!mu_o || !mu_i || !R_m) return -1;
++    if (n_o < 1 || n_i < 1 || m < 0 || n_phi_quad < 4) return -1;
++#ifdef OCRT_FAST_KERNELS
++    if (ocrt_fkc_serve(&g_fkc_rww, surface_R_ww_coxmunk_trig,
++                       mu_o, n_o, mu_i, n_i, m, n_phi_quad,
++                       ws, sigma_type, n_water, q_convention, R_m))
++        return 0;
++#endif
++
++    /* Fourier normalization: m=0 → 1/(2π); m>0 → 1/π */
++    const double norm = (m == 0) ? (1.0 / (2.0 * M_PI)) : (1.0 / M_PI);
++
++    /* Which Mueller entries use cos vs sin Fourier?
++     *   cos entries: indices (k*3 + l) where (k,l) ∈
++     *     (II=0, IQ=1, QI=3, QQ=4, UU=8)
++     *   sin entries: (IU=2, QU=5, UI=6, UQ=7)
++     *
++     * For m = 0:  sin(0)=0 → all sin-entry m=0 coeffs are zero.
++     * cos integration with cos(0)=1 → just average.  */
++    static const int cos_entry[9] = {1,1,0, 1,1,0, 0,0,1};
++
++    /* Uniform midpoint φ-quadrature on [0, 2π) */
++    const double dphi = 2.0 * M_PI / (double)n_phi_quad;
++
++    /* Initialize output to zero */
++    memset(R_m, 0, (size_t)n_o * (size_t)n_i * 9 * sizeof(double));
++
++    for (int j_o = 0; j_o < n_o; j_o++) {
++        const double mo = mu_o[j_o];
++        for (int j_i = 0; j_i < n_i; j_i++) {
++            const double mi = mu_i[j_i];
++            double *R_pair = R_m + ((size_t)j_o * (size_t)n_i + (size_t)j_i) * 9;
++
++            /* Numerical φ-integration */
++            for (int p = 0; p < n_phi_quad; p++) {
++                const double phi = (p + 0.5) * dphi;
++                const double cphi = cos(phi);
++                const double sphi = sin(phi);
++                const double cmphi = cos(m * phi);
++                const double smphi = sin(m * phi);
++
++                double R_local[9];
++                surface_R_ww_coxmunk_trig(mo, mi, cphi, sphi,
++                                        ws, sigma_type, n_water,
++                                        q_convention, R_local);
++
++                /* Accumulate cos- or sin-weighted entries */
++                for (int kl = 0; kl < 9; kl++) {
++                    double weight = cos_entry[kl] ? cmphi : smphi;
++                    R_pair[kl] += R_local[kl] * weight;
++                }
++            }
++            /* Apply quadrature weight (dphi) and Fourier normalization */
++            for (int kl = 0; kl < 9; kl++) {
++                R_pair[kl] *= dphi * norm;
++            }
++        }
++    }
++    return 0;
++}
++
++/* WATER->AIR TRANSMISSION Fourier-mode Mueller kernel (Milestone 2b, 2026-06-04).
++ * Azimuth-mode (m) coefficients T^m_kl(mu_o_air, mu_i_water) of the Cox-Munk
++ * water->air BTDF, obtained by phi-quadrature integration of the per-azimuth
++ * transmission Mueller surface_T_coxmunk_trig. This is the exact transmission
++ * analog of surface_R_ww_coxmunk_fourier_kernel: identical Fourier normalization
++ * (m=0 -> 1/2pi, m>0 -> 1/pi) and identical cos/sin Mueller-entry layout; the
++ * ONLY change is the per-azimuth kernel (reflection surface_R_ww_coxmunk_trig ->
++ * transmission surface_T_coxmunk_trig, which already carries the n^2 radiance
++ * factor and returns the zero matrix on TIR).
++ *   mu_o[n_o] : AIR-side outgoing |mu| (>0)
++ *   mu_i[n_i] : in-water upwelling |mu| (>0)
++ *   T_m[n_o*n_i*9] : packed row-major  T_m[(j_o*n_i + j_i)*9 + (k*3+l)]
++ * Used by the rough (wind>0) reverse coupling rt_air_water_couple_water_to_atm.
++ * Returns 0 on success. */
++/* Polarized air-to-water facet transmission, without shadowing.  The shared
++ * microfacet geometry above supplies the same half vector and slope density as
++ * the scalar BTDF.  Fresnel transmission is then split into s/p components and
++ * rotated between the incident/outgoing meridian bases. */
++static void surface_T_aw_coxmunk_trig(double mu_i_air, double mu_o_water,
++                                      double cphi, double sphi,
++                                      double ws, int sigma_type,
++                                      double n_water, int q_convention,
++                                      double *T) {
++    mat3_zero(T);
++    double s2v = surface_slope_variance(ws, sigma_type);
++    double mu_i = mu_i_air, mu_o = mu_o_water;
++    double n = n_water;
++    surface_aw_microfacet_geometry_t g;
++    if (surface_aw_microfacet_geometry_(mu_i, mu_o, cphi, sphi,
++                                        n, s2v, &g) != 0) return;
++    double si = g.sin_i, so = g.sin_o;
++    /* air(1)->water(n) Fresnel at local incidence */
++    double cti = g.incidence_cosine;
++    double sti = sqrt(fmax(0.0, 1.0 - cti*cti));
++    double stt = sti / n;
++    double Ts, Tp;
++    if (stt >= 1.0) { Ts = 0.0; Tp = 0.0; }
++    else {
++        double ctt = sqrt(fmax(0.0, 1.0 - stt*stt));
++        double rs = (cti - n*ctt) / (cti + n*ctt);
++        double rp = (n*cti - ctt) / (n*cti + ctt);
++        Ts = 1.0 - rs*rs;
++        Tp = 1.0 - rp*rp;
++    }
++    double denom_h = g.half_denom_sq;
++    if (denom_h < 1e-12) return;
++    double common = (fabs(g.incidence_cosine) * fabs(g.exit_dot_half)) /
++                    (mu_i * mu_o)
++                  * (n * n * g.slope_density) / denom_h;
++    double ft_s  = common * Ts;
++    double ft_p  = common * Tp;
++    double ft_sp = common * sqrt(fmax(0.0, Ts * Tp));
++
++    double MT[9];
++    mat3_zero(MT);
++    double Q_kernel = (q_convention == 1) ? 0.5 * (ft_p - ft_s)
++                                          : 0.5 * (ft_s - ft_p);
++    MT[0*3+0] = 0.5 * (ft_s + ft_p);
++    MT[0*3+1] = Q_kernel;
++    MT[1*3+0] = Q_kernel;
++    MT[1*3+1] = 0.5 * (ft_s + ft_p);
++    MT[2*3+2] = ft_sp;
++
++    /* Mishchenko meridian rotations, roles: incoming = air, outgoing = water.
++     * surface_aw_microfacet_geometry_ uses directions pointing away from the
++     * interface.  Stokes rotations, however, must use photon propagation
++     * directions: the incident air ray is the negative of that geometry
++     * vector, while the transmitted water ray is already downward.  Hence
++     * both signed direction cosines are negative and the relative azimuth is
++     * shifted by pi. */
++    const double cphi_r = -cphi;
++    const double sphi_r = -sphi;
++    const double mu_i_s = -mu_i;
++    const double mu_o_s = -mu_o;
++    double cosPsi = mu_i_s * mu_o_s + si * so * cphi_r;
++    if      (cosPsi > +1.0) cosPsi = +1.0;
++    else if (cosPsi < -1.0) cosPsi = -1.0;
++    double sT = sqrt(fmax(0.0, 1.0 - cosPsi * cosPsi));
++    double dnm = fmax(1e-12, sT);
++    double s1_safe = fmax(1e-12, si);
++    double s2_safe = fmax(1e-12, so);
++    double ci1 = (mu_o_s - mu_i_s * cosPsi) / (dnm * s1_safe);
++    double si1 = so * sphi_r / dnm;
++    double r1 = sqrt(ci1*ci1 + si1*si1);
++    if (r1 < 1e-12) { ci1 = 1.0; si1 = 0.0; } else { ci1 /= r1; si1 /= r1; }
++    double ci2 = (mu_i_s - mu_o_s * cosPsi) / (dnm * s2_safe);
++    double si2 = si * sphi_r / dnm;
++    double r2 = sqrt(ci2*ci2 + si2*si2);
++    if (r2 < 1e-12) { ci2 = 1.0; si2 = 0.0; } else { ci2 /= r2; si2 /= r2; }
++    double L1[9], L2[9], MTL1[9], OUT[9];
++    build_rotation_L(ci1, si1, L1);
++    build_rotation_L(ci2, si2, L2);
++    mat3_mul(MT, L1, MTL1);
++    mat3_mul(L2, MTL1, OUT);
++    for (int i = 0; i < 9; ++i) T[i] = OUT[i];
++}
++
++/* test export */
++void surface_T_aw_coxmunk_trig_test(double a,double b,double c,double d,double e,int f,double g,int h,double*T){
++    surface_T_aw_coxmunk_trig(a,b,c,d,e,f,g,h,T);
++}
++#ifdef OCRT_FAST_KERNELS
++static unsigned long long taw_fnv64(const double *v, int n) {
++    const unsigned char *p = (const unsigned char*)v;
++    unsigned long long h = 1469598103934665603ULL;
++    for (size_t i = 0; i < (size_t)n * sizeof(double); ++i) {
++        h ^= p[i]; h *= 1099511628211ULL;
++    }
++    return h;
++}
++#endif
++
++int surface_T_aw_coxmunk_fourier_kernel(const double *mu_o, int n_o,
++                                        const double *mu_i, int n_i,
++                                        int m, int n_phi_quad,
++                                        double ws, int sigma_type,
++                                        double n_water, int q_convention,
++                                        double *T_m) {
++    if (!mu_o || !mu_i || !T_m) return -1;
++    if (n_o < 1 || n_i < 1 || m < 0 || n_phi_quad < 4) return -1;
++    if (surface_slope_variance(ws, sigma_type) <= 1e-10) return -2; /* flat */
++#ifdef OCRT_FAST_KERNELS
++    /* v1.10 B-0c.2a: SELF-memoization - caches this function's OWN output,
++     * hence bit-transparent by construction.  ocrt_fkc_serve was tried and
++     * REJECTED here: its internal fourier machinery is specific to the
++     * R_ww/T_wa kernels and produced a materially wrong T_aw table
++     * (II element errors up to ~48 vs lobe peak ~12). */
++    static _Thread_local struct {
++        int    valid, n_o, n_i, m, nphi, st, qc;
++        double ws, nw; unsigned long long ho, hi;
++        double *tab; size_t cap;
++    } taw_memo[8];
++    {
++        int sl = m % 8;
++        size_t need = (size_t)n_o * (size_t)n_i * 9;
++        if (taw_memo[sl].valid &&
++            taw_memo[sl].n_o == n_o && taw_memo[sl].n_i == n_i &&
++            taw_memo[sl].m == m && taw_memo[sl].nphi == n_phi_quad &&
++            taw_memo[sl].st == sigma_type && taw_memo[sl].qc == q_convention &&
++            taw_memo[sl].ws == ws && taw_memo[sl].nw == n_water &&
++            taw_memo[sl].ho == taw_fnv64(mu_o, n_o) &&
++            taw_memo[sl].hi == taw_fnv64(mu_i, n_i) &&
++            taw_memo[sl].cap >= need) {
++            memcpy(T_m, taw_memo[sl].tab, need * sizeof(double));
++            return 0;
++        }
++    }
++#endif
++
++    const double norm = (m == 0) ? (1.0 / (2.0 * M_PI)) : (1.0 / M_PI);
++    static const int cos_entry[9] = {1,1,0, 1,1,0, 0,0,1};
++    const double dphi = 2.0 * M_PI / (double)n_phi_quad;
++    memset(T_m, 0, (size_t)n_o * (size_t)n_i * 9 * sizeof(double));
++
++    for (int j_o = 0; j_o < n_o; j_o++) {           /* in-water outgoing */
++        const double mw = mu_o[j_o];
++        for (int j_i = 0; j_i < n_i; j_i++) {       /* air incident */
++            const double ma = mu_i[j_i];
++            double *T_pair = T_m + ((size_t)j_o * (size_t)n_i + (size_t)j_i) * 9;
++            for (int p = 0; p < n_phi_quad; p++) {
++                const double phi  = (p + 0.5) * dphi;
++                const double cm   = cos(m * phi);
++                const double sm   = sin(m * phi);
++                double Tl[9];
++                surface_T_aw_coxmunk_trig(ma, mw, cos(phi), sin(phi),
++                                          ws, sigma_type, n_water,
++                                          q_convention, Tl);
++                for (int kl = 0; kl < 9; kl++) {
++                    double weight = cos_entry[kl] ? cm : sm;
++                    T_pair[kl] += Tl[kl] * weight;
++                }
++            }
++            for (int kl = 0; kl < 9; kl++) T_pair[kl] *= norm * dphi;
++            /* The OCRT Fourier field stores U as a sine coefficient.  In the
++             * relative-azimuth convolution, the incoming-U column acquires one
++             * minus sign for m>0.  Fold it into the stored operator once so the
++             * downstream 3x3 contraction remains an ordinary matrix-vector
++             * product, matching OSOAA Step-7 TAW storage/contraction. */
++            if (m > 0) {
++                T_pair[0*3 + 2] = -T_pair[0*3 + 2];
++                T_pair[1*3 + 2] = -T_pair[1*3 + 2];
++            }
++        }
++    }
++#ifdef OCRT_FAST_KERNELS
++    {
++        int sl = m % 8;
++        size_t need = (size_t)n_o * (size_t)n_i * 9;
++        if (taw_memo[sl].cap < need) {
++            free(taw_memo[sl].tab);
++            taw_memo[sl].tab = (double*)malloc(need * sizeof(double));
++            taw_memo[sl].cap = taw_memo[sl].tab ? need : 0;
++        }
++        if (taw_memo[sl].tab) {
++            memcpy(taw_memo[sl].tab, T_m, need * sizeof(double));
++            taw_memo[sl].valid = 1;
++            taw_memo[sl].n_o = n_o;  taw_memo[sl].n_i = n_i;
++            taw_memo[sl].m = m;      taw_memo[sl].nphi = n_phi_quad;
++            taw_memo[sl].st = sigma_type; taw_memo[sl].qc = q_convention;
++            taw_memo[sl].ws = ws;    taw_memo[sl].nw = n_water;
++            taw_memo[sl].ho = taw_fnv64(mu_o, n_o);
++            taw_memo[sl].hi = taw_fnv64(mu_i, n_i);
++        }
++    }
++#endif
++    return 0;
++}
++
++int surface_T_wa_coxmunk_fourier_kernel(const double *mu_o, int n_o,
++                                        const double *mu_i, int n_i,
++                                        int m, int n_phi_quad,
++                                        double ws, int sigma_type,
++                                        double n_water, int q_convention,
++                                        double *T_m) {
++    if (!mu_o || !mu_i || !T_m) return -1;
++    if (n_o < 1 || n_i < 1 || m < 0 || n_phi_quad < 4) return -1;
++#ifdef OCRT_FAST_KERNELS
++    if (ocrt_fkc_serve(&g_fkc_twa, surface_T_coxmunk_trig,
++                       mu_o, n_o, mu_i, n_i, m, n_phi_quad,
++                       ws, sigma_type, n_water, q_convention, T_m))
++        return 0;
++#endif
++
++    /* Fourier normalization: m=0 -> 1/(2pi); m>0 -> 1/pi (same as R_ww kernel) */
++    const double norm = (m == 0) ? (1.0 / (2.0 * M_PI)) : (1.0 / M_PI);
++
++    /* cos entries: II,IQ,QI,QQ,UU ; sin entries: IU,QU,UI,UQ (same as R_ww) */
++    static const int cos_entry[9] = {1,1,0, 1,1,0, 0,0,1};
++
++    const double dphi = 2.0 * M_PI / (double)n_phi_quad;
++    memset(T_m, 0, (size_t)n_o * (size_t)n_i * 9 * sizeof(double));
++
++    for (int j_o = 0; j_o < n_o; j_o++) {
++        const double mo = mu_o[j_o];   /* air-side outgoing */
++        for (int j_i = 0; j_i < n_i; j_i++) {
++            const double mi = mu_i[j_i];   /* in-water upwelling */
++            double *T_pair = T_m + ((size_t)j_o * (size_t)n_i + (size_t)j_i) * 9;
++
++            for (int p = 0; p < n_phi_quad; p++) {
++                const double phi = (p + 0.5) * dphi;
++                const double cphi = cos(phi);
++                const double sphi = sin(phi);
++                const double cmphi = cos(m * phi);
++                const double smphi = sin(m * phi);
++
++                double T_local[9];
++                surface_T_coxmunk_trig(mo, mi, cphi, sphi,
++                                       ws, sigma_type, n_water,
++                                       q_convention, T_local);
++
++                for (int kl = 0; kl < 9; kl++) {
++                    double weight = cos_entry[kl] ? cmphi : smphi;
++                    T_pair[kl] += T_local[kl] * weight;
++                }
++            }
++            for (int kl = 0; kl < 9; kl++) {
++                T_pair[kl] *= dphi * norm;
++            }
++        }
++    }
++    return 0;
++}
++
++/* ----------------------------------------------------------------------------
++ * Direct sunglint single-bounce TOA reflectance contribution.
++ * 
++ * Two regimes:
++ *   ws = 0:  TRUE flat Fresnel — specular delta function at μ_v=μ_0, Δφ=π.
++ *            Outside exact specular: zero. Otherwise diverges. Implementation
++ *            checks proximity (|μ_v-μ_0| < tol AND |cos(Δφ)+1| < tol) and
++ *            applies F_Fresnel(μ_0) · μ_0 · trans / (small geometric factor).
++ *            Strictly speaking the integral over the delta gives:
++ *              ρ_glint = R_F(μ_0) · trans
++ *            where R_F is the Fresnel intensity reflectance at angle of
++ *            incidence θ_0. Magnitude depends on detector field-of-view.
++ *            AF1982 reference appears to use an effective specular kernel
++ *            (large but finite at exact specular) — match by extrapolating
++ *            limit ws→0 of Cox-Munk.
++ *
++ *   ws > 0:  Cox-Munk slope-weighted Fresnel (use existing R_coxmunk_trig).
++ * ---------------------------------------------------------------------------- */
++void surface_direct_sunglint_rho(double mu_v, double phi_v,
++                                  double mu_0, double phi_0,
++                                  double ws, int sigma_type, double n_water,
++                                  double tau_total, int q_convention,
++                                  double *rho_glint) {
++    double dphi = phi_v - phi_0;
++    double cos_dphi = cos(dphi), sin_dphi = sin(dphi);
++
++    double T_dn = exp(-tau_total / mu_0);
++    double T_up = exp(-tau_total / mu_v);
++    double trans = T_dn * T_up;
++
++    if (ws < 1e-6) {
++        /* Refactoring Tasks Task 5 path C fix (2026-05-10):
++         * Peak-preserving Gaussian smoothing for wind=0 specular delta.
++         *
++         * 이전 식: tol_mu/tol_phi step 함수 — grid 가 specular 에서 미세히 mismatch 시
++         * energy 통째로 유실 (vza=30 → 30.1 사이 50× drop 확인됨).
++         *
++         * Path C: 2D Gaussian smoothing for *finite instrument FOV equivalent*
++         *   ρ_glint(μ_v, φ_v) = ρ_total × exp(-0.5·((Δμ/σ_μ)² + (Δφ/σ_φ)²))
++         *   ρ_total = 4π · F_F · trans / (μ_0 · μ_v · sin(2θ_0))
++         *   Peak (exact specular): G=1, ρ=ρ_total (이전 식 보존)
++         *   Off-specular: smooth Gaussian decay, *step discontinuity 제거*
++         *
++         * σ_FOV: instrument FOV equivalent (default 0.5° = 0.0087 rad).
++         * env V3_GLINT_FOV_DEG 으로 override (e.g. GOCI-III ≈ 0.18°).
++         *
++         * Physical 의미: *Real instrument 의 finite FOV* 가 *delta function* 을
++         * *Gaussian-shaped peak 으로 sample*. *peak 단위 보존* 로 이전 식 결과 의
++         * *exact specular case* 그대로 reproduce, *near-specular 의 step
++         * discontinuity* 사라짐.
++         *
++         * Energy 분석: *peak-preserving form* 은 *normalized Gaussian* 보다
++         * *integrated total energy 가 다름* (Gaussian spread 만큼 추가 energy).
++         * 그러나 *real instrument 의 *single direction sampling* 가 *peak value*
++         * 측정 — *user expectation 정합* (single grid 의 ρ_glint = peak ρ at
++         * that direction). */
++        double sigma_fov_deg = 0.5;     /* default FOV: 0.5° */
++        const char *fov_env = getenv("V3_GLINT_FOV_DEG");
++        if (fov_env) {
++            double tmp = atof(fov_env);
++            if (tmp > 0.0) sigma_fov_deg = tmp;
++        }
++        const double sigma_fov_rad = sigma_fov_deg * M_PI / 180.0;
++        /* σ in μ-space: differential of cos(θ) at specular = sin(θ_0)·dθ */
++        const double sin_theta_0 = sqrt(fmax(0.0, 1.0 - mu_0*mu_0));
++        const double sigma_mu = sigma_fov_rad * fmax(sin_theta_0, 1e-3);
++        const double sigma_phi = sigma_fov_rad;
++
++        /* dphi wrap to [-π, π] */
++        double dphi_eff = dphi;
++        while (dphi_eff >  M_PI) dphi_eff -= 2.0 * M_PI;
++        while (dphi_eff < -M_PI) dphi_eff += 2.0 * M_PI;
++        const double dmu = mu_v - mu_0;
++
++        /* 2D peak-preserving Gaussian (peak = 1 at specular) */
++        const double exponent = -0.5 * ((dmu*dmu) / (sigma_mu*sigma_mu) +
++                                         (dphi_eff*dphi_eff) / (sigma_phi*sigma_phi));
++        if (exponent < -50.0) {
++            rho_glint[0] = 0.0;
++            rho_glint[1] = 0.0;
++            rho_glint[2] = 0.0;
++            return;
++        }
++        const double gauss_weight = exp(exponent);
++
++        double MF[9];
++        surface_flat_fresnel_matrix_raw(mu_0, n_water, q_convention, MF);
++
++        const double sin2_theta_0 = 2.0 * mu_0 * sin_theta_0;
++        const double denom = fmax(sin2_theta_0 * mu_0 * mu_v, 1e-12);
++        const double rho_total = 4.0 * M_PI * trans / denom;
++        const double rho_local = rho_total * gauss_weight;
++
++        rho_glint[0] = MF[0*3+0] * rho_local;
++        rho_glint[1] = MF[1*3+0] * rho_local;
++        rho_glint[2] = MF[2*3+0] * rho_local;
++        return;
++    }
++
++    /* ws > 0: Cox-Munk slope-weighted */
++    double R[9];
++    surface_R_coxmunk_trig(mu_v, mu_0, cos_dphi, sin_dphi,
++                            ws, sigma_type, n_water, q_convention, R);
++
++    /* TOA reflectance from solar specular bounce:
++     *   L_v = R(μ_v,μ_0,Δφ) · μ_0 · F_solar · trans          [radiance]
++     *   ρ_TOA = π · L_v / (μ_0 · F_solar)
++     *         = π · R · trans
++     * (μ_0 cancels.) Note: R here has units of sr^-1 (BRDF). */
++    rho_glint[0] = M_PI * R[0*3+0] * trans;
++    rho_glint[1] = M_PI * R[1*3+0] * trans;
++    rho_glint[2] = M_PI * R[2*3+0] * trans;
++}
+diff -ruN a/tests/test_surface_pole_limit.c b/tests/test_surface_pole_limit.c
+--- a/tests/test_surface_pole_limit.c	1970-01-01 00:00:00.000000000 +0000
++++ b/tests/test_surface_pole_limit.c	2026-07-24 14:47:16.453997155 +0000
+@@ -0,0 +1,137 @@
++#include <math.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++
++#ifndef M_PI
++#define M_PI 3.14159265358979323846
++#endif
++
++void surface_R_coxmunk_trig(double,double,double,double,double,int,double,int,double*);
++void surface_T_coxmunk_trig(double,double,double,double,double,int,double,int,double*);
++void surface_R_ww_coxmunk_trig(double,double,double,double,double,int,double,int,double*);
++void surface_T_aw_coxmunk_trig_test(double,double,double,double,double,int,double,int,double*);
++
++typedef void (*kernel_fn)(double,double,double,double,double,int,double,int,double*);
++
++typedef struct {
++    const char *name;
++    kernel_fn fn;
++    double mu1;
++    double mu2;
++    int pole_arg; /* 1 or 2 */
++} pole_case_t;
++
++static void eval(kernel_fn fn, double mu1, double mu2, double phi, double out[9]) {
++    fn(mu1, mu2, cos(phi), sin(phi), 3.0, 1, 1.34, 1, out);
++}
++
++static double max_abs9(const double x[9]) {
++    double m = 0.0;
++    for (int i=0; i<9; ++i) if (fabs(x[i]) > m) m = fabs(x[i]);
++    return m;
++}
++
++static int test_exact_pole_continuity(void) {
++    const double mu_near = cos(5.0e-7); /* sin(theta) > 1e-8: original formula */
++    const double phi = 30.0 * M_PI / 180.0;
++    const pole_case_t cases[] = {
++        {"R_air_out_pole", surface_R_coxmunk_trig,
++         1.0, cos(40.0*M_PI/180.0), 1},
++        {"R_air_in_pole", surface_R_coxmunk_trig,
++         cos(40.0*M_PI/180.0), 1.0, 2},
++        {"T_wa_out_pole", surface_T_coxmunk_trig,
++         1.0, cos(5.0*M_PI/180.0), 1},
++        {"T_wa_in_pole", surface_T_coxmunk_trig,
++         cos(5.0*M_PI/180.0), 1.0, 2},
++        {"R_ww_out_pole", surface_R_ww_coxmunk_trig,
++         1.0, cos(25.0*M_PI/180.0), 1},
++        {"R_ww_in_pole", surface_R_ww_coxmunk_trig,
++         cos(25.0*M_PI/180.0), 1.0, 2},
++        {"T_aw_in_pole", surface_T_aw_coxmunk_trig_test,
++         1.0, cos(5.0*M_PI/180.0), 1},
++        {"T_aw_out_pole", surface_T_aw_coxmunk_trig_test,
++         cos(5.0*M_PI/180.0), 1.0, 2},
++    };
++    int failed = 0;
++    for (size_t c=0; c<sizeof(cases)/sizeof(cases[0]); ++c) {
++        double exact[9], near[9], d[9];
++        double a = cases[c].mu1, b = cases[c].mu2;
++        eval(cases[c].fn, a, b, phi, exact);
++        if (cases[c].pole_arg == 1) a = mu_near; else b = mu_near;
++        eval(cases[c].fn, a, b, phi, near);
++        for (int k=0; k<9; ++k) d[k] = exact[k] - near[k];
++        const double scale = fmax(max_abs9(near), 1.0e-300);
++        const double rel = max_abs9(d) / scale;
++        printf("pole-continuity %-16s rel=%.6e M11=%.9e\n",
++               cases[c].name, rel, exact[0]);
++        if (!(rel < 1.0e-4)) {
++            fprintf(stderr, "FAIL pole continuity %s rel=%.17g\n",
++                    cases[c].name, rel);
++            failed = 1;
++        }
++    }
++    return failed;
++}
++
++typedef struct {
++    const char *name;
++    kernel_fn fn;
++    double mu1;
++    double mu2;
++} spin_case_t;
++
++static int test_vertical_spin2_covariance(void) {
++    const spin_case_t cases[] = {
++        {"R_air", surface_R_coxmunk_trig,
++         1.0, cos(40.0*M_PI/180.0)},
++        {"T_wa", surface_T_coxmunk_trig,
++         1.0, cos(5.0*M_PI/180.0)},
++        {"R_ww", surface_R_ww_coxmunk_trig,
++         1.0, cos(25.0*M_PI/180.0)},
++        /* For T_aw the outgoing water direction is the second argument. */
++        {"T_aw", surface_T_aw_coxmunk_trig_test,
++         cos(5.0*M_PI/180.0), 1.0},
++    };
++    enum { NPHI = 4096 };
++    const double dphi = 2.0*M_PI/(double)NPHI;
++    int failed = 0;
++    for (size_t c=0; c<sizeof(cases)/sizeof(cases[0]); ++c) {
++        double q0=0.0,u0=0.0,qc2=0.0,qs2=0.0,uc2=0.0,us2=0.0;
++        for (int p=0; p<NPHI; ++p) {
++            const double phi = (p+0.5)*dphi;
++            double M[9];
++            eval(cases[c].fn, cases[c].mu1, cases[c].mu2, phi, M);
++            const double q = M[3]; /* unpolarized input -> Q output */
++            const double u = M[6]; /* unpolarized input -> U output */
++            q0 += q; u0 += u;
++            qc2 += q*cos(2.0*phi); qs2 += q*sin(2.0*phi);
++            uc2 += u*cos(2.0*phi); us2 += u*sin(2.0*phi);
++        }
++        q0 /= NPHI; u0 /= NPHI;
++        qc2 *= 2.0/NPHI; qs2 *= 2.0/NPHI;
++        uc2 *= 2.0/NPHI; us2 *= 2.0/NPHI;
++        const double amp = fmax(fabs(qc2), fabs(us2));
++        const double leakage = fmax(fmax(fabs(q0),fabs(u0)),
++                                    fmax(fabs(qs2),fabs(uc2)));
++        const double pair_err = fabs(fabs(qc2)-fabs(us2));
++        printf("spin2 %-5s amp=%.9e leakage/amp=%.3e pair/amp=%.3e\n",
++               cases[c].name, amp, leakage/fmax(amp,1e-300),
++               pair_err/fmax(amp,1e-300));
++        if (!(amp > 1.0e-12 && leakage/amp < 1.0e-10 &&
++              pair_err/amp < 1.0e-10)) {
++            fprintf(stderr, "FAIL spin-2 pole covariance %s\n", cases[c].name);
++            failed = 1;
++        }
++    }
++    return failed;
++}
++
++int main(void) {
++    int failed = 0;
++    failed |= test_exact_pole_continuity();
++    failed |= test_vertical_spin2_covariance();
++    if (failed) return EXIT_FAILURE;
++    puts("PASS: exact-pole meridian rotation limits and vertical spin-2 covariance");
++    return EXIT_SUCCESS;
++}

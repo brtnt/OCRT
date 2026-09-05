@@ -1,0 +1,59 @@
+path,category,role,package_use,axis_range,structure,phase_components,bytes,sha256
+C50.mie,Aerosol/legacy phase,OPAC-format bulk and vector phase table,runtime or diagnostic,350-3750 nm,20 wavelengths; 361 angles,P11/P12/P33,294022,22fb33fbc21a282ba0d0adad04e91dc018c738a7960e68644f01178b80d49959
+Calcareous_sand_from_OSOAA_phase_443_550.mie,Aerosol/legacy phase,OPAC-format bulk and vector phase table,runtime or diagnostic,443-550 nm,2 wavelengths; 361 angles,P11/P12/P33,40555,ac483f389a0418ae6f6d9bb05986c7a18f0e33ebc887f5ac1337ae5e44455254
+M80C.mie,Aerosol/legacy phase,OPAC-format bulk and vector phase table,runtime or diagnostic,350-3750 nm,20 wavelengths; 361 angles,P11/P12/P33,294022,ab170000a5a8a21297aace48dea7047010b5f9714bf4823f2216773279b6feca
+M95C.mie,Aerosol/legacy phase,OPAC-format bulk and vector phase table,runtime or diagnostic,350-3750 nm,20 wavelengths; 83 angles,,59466,c5936c1dfc5914432be5782c005a87e9795b43d2e6c836a0f94a34b8bd4e4746
+M98C.mie,Aerosol/legacy phase,OPAC-format bulk and vector phase table,runtime or diagnostic,350-3750 nm,20 wavelengths; 83 angles,,59466,1baae5a16c2f655fdb81997ad41885ec6b62a3dfee2295c42cc9c83412ae951d
+O99.mie,Aerosol/legacy phase,OPAC-format bulk and vector phase table,runtime or diagnostic,350-3750 nm,20 wavelengths; 361 angles,P11/P12/P33,294022,b6e2b3e1e0fbf9a47e7f5b83e714ca979277dfeaf2a02767adeb52141952c362
+Phytoplankton.mie,Aerosol/legacy phase,OPAC-format bulk and vector phase table,runtime or diagnostic,443-670 nm,4 wavelengths; 83 angles,P11/P12/P33,15697,917025f59594474569da5dbe2cb58de9cef486fbc8bc8b25af293477742ae57f
+README.md,Other,,,,,,484,beb55429dbac6e180935c36487ff13ab545f9379c4d0c2a230b0c6bff3b6bbc9
+T50.mie,Aerosol/legacy phase,OPAC-format bulk and vector phase table,runtime or diagnostic,350-3750 nm,20 wavelengths; 361 angles,P11/P12/P33,294022,314d5cbf3828de56a4344afe1762a96a59d6869e9c486627873786561c2c2015
+TSM_mineral.mie,Aerosol/legacy phase,OPAC-format bulk and vector phase table,runtime or diagnostic,443-670 nm,4 wavelengths; 83 angles,P11/P12/P33,15697,df553f727490c0d42c7df8d727fa979c18d34e5f3c046fbeb926816dfa9977a2
+afgl_atm/README.md,Atmosphere profile,AFGL/RFM atmospheric profile,runtime,,,,259,092c00e23103db00f0806efde3777ab979a6f05e556408c2075e6bfab74e0301
+afgl_atm/_pre_RFM_backup/afgl_mlsumm.dat,Atmosphere profile backup,pre-RFM profile retained for audit,audit,0-100 km altitude,46 numeric rows,,5870,98fa5b2c9450f20c4ef2b66234744048dc6e1c648379502b47b491e35ea6d98a
+afgl_atm/_pre_RFM_backup/afgl_mlwint.dat,Atmosphere profile backup,pre-RFM profile retained for audit,audit,0-100 km altitude,46 numeric rows,,5869,78f03dda78dddd2f68969f7efba32ef5110b0ba8af53a461d2234c99239b6c5d
+afgl_atm/_pre_RFM_backup/afgl_sasumm.dat,Atmosphere profile backup,pre-RFM profile retained for audit,audit,0-100 km altitude,46 numeric rows,,5867,d6a60ea33146ff846e87e05f88af9e14a74111fa1f3594bf5b332f8a5c2bdb50
+afgl_atm/_pre_RFM_backup/afgl_sawint.dat,Atmosphere profile backup,pre-RFM profile retained for audit,audit,0-100 km altitude,46 numeric rows,,5866,24b91b2272425ad78282df38dd45c44d382bbb6f5f4e74d8b26ce9f09d9f5d03
+afgl_atm/_pre_RFM_backup/afgl_tropical.dat,Atmosphere profile backup,pre-RFM profile retained for audit,audit,0-100 km altitude,46 numeric rows,,5870,4a2204c64b6b2dd0311a03b631e69c597e6f28767a8007e44a3671c07bdb363e
+afgl_atm/_pre_RFM_backup/afgl_usstd76.dat,Atmosphere profile backup,pre-RFM profile retained for audit,audit,0-100 km altitude,40 numeric rows,,5153,ed2099a1f71f2d12ed7b80f10bde4c3ed876d35dd2d1e81d60c8b1afc8ef7ce2
+afgl_atm/_pre_RFM_backup/afgl_usstd76_46layers_backup.dat,Atmosphere profile backup,pre-RFM profile retained for audit,audit,0-100 km altitude,46 numeric rows,,5856,c77590ddb8d492d0f93f3e569d61492e2507b7576e33483f1d708561f0cce00c
+afgl_atm/afgl_mlsumm.dat,Atmosphere profile,AFGL/RFM atmospheric profile,runtime,0-100 km altitude,46 numeric rows,,6199,94ad007d2f20ac85a3c01ec296911e2c23d3a497ddf4d18601870e334c2c8493
+afgl_atm/afgl_mlwint.dat,Atmosphere profile,AFGL/RFM atmospheric profile,runtime,0-100 km altitude,46 numeric rows,,6198,965d15e2293bff38cfc5b90d95bb0e10b8a80d26dae0a15278fab723d7cd1ba7
+afgl_atm/afgl_sasumm.dat,Atmosphere profile,AFGL/RFM atmospheric profile,runtime,0-100 km altitude,46 numeric rows,,6197,c0442d6b12e3fdbfbd13d5f46b22be17d730c7a801a79cec11e420a9c529ffea
+afgl_atm/afgl_sawint.dat,Atmosphere profile,AFGL/RFM atmospheric profile,runtime,0-100 km altitude,46 numeric rows,,6196,bc05d3aafb74ed03c00cbcb4b3891afc2cd7958de9463d30388ddac94ab2e015
+afgl_atm/afgl_tropical.dat,Atmosphere profile,AFGL/RFM atmospheric profile,runtime,0-100 km altitude,46 numeric rows,,6177,5d557f775b489a0640df6c1b93dfb60671c3e07607ff55103a0ecd113d4aa06d
+afgl_atm/afgl_userdef.dat,Atmosphere profile,AFGL/RFM atmospheric profile,runtime,0-100 km altitude,2 numeric rows,,2886,e18d8d549a85198ddeae0babe405a6ebd8128e93a1ed5865d0418808aed4b039
+afgl_atm/afgl_usstd76.dat,Atmosphere profile,AFGL/RFM atmospheric profile,runtime,0-100 km altitude,40 numeric rows,,5465,76f6199edc7d8c5c1e37de5e420a5961ddfdb6bf818cb27a5cc92da9462bee0a
+afgl_atm/afgl_usstd76_46layers_backup.dat,Atmosphere profile,AFGL/RFM atmospheric profile,runtime,0-100 km altitude,46 numeric rows,,5856,c77590ddb8d492d0f93f3e569d61492e2507b7576e33483f1d708561f0cce00c
+deprecated/DEPRECATED_M50C.md,Deprecated aerosol,diagnostic-only data; not production,deprecated,,,,1737,62130e37cbb5b07a02da4755837d09726cf6fef0f4c041c4b6a22b3e51070401
+deprecated/M50C.mie,Deprecated aerosol,diagnostic-only data; not production,deprecated,350-3750 nm,20 wavelengths; 83 angles,,59466,81d7a5d1e6e25f3caa22956bd0824c508a782104f85dcdbceb5da484ae0ab168
+tsm_ahn/Brown_earth_AHN.mie,TSM phase,Ahn four-species mineral P11/P12/P33,runtime,350-3750 nm,757 wavelengths; 361 angles,P11/P12/P33,361027,d265b2e543cd5e790742710b3ac9a3465a1081467cf77c5efcdb131f4491a515
+tsm_ahn/Calcareous_sand_AHN.mie,TSM phase,Ahn four-species mineral P11/P12/P33,runtime,350-3750 nm,757 wavelengths; 361 angles,P11/P12/P33,361027,ba177fff24517d39cb1381b7d2bdbcfba694c5139c32efbbddce5f808344a15d
+tsm_ahn/README.md,TSM documentation,dataset README,documentation,,,,763,d61040f3b58e1178a28888d8d2a2827f561d9b302f0efa2044505ffb5b960476
+tsm_ahn/Red_clay_AHN.mie,TSM phase,Ahn four-species mineral P11/P12/P33,runtime,350-3750 nm,757 wavelengths; 361 angles,P11/P12/P33,361027,1a2c6c9aef42d30958b24e661b326fc5ce9ad435895a390af1fc512330de4967
+tsm_ahn/Yellow_clay_AHN.mie,TSM phase,Ahn four-species mineral P11/P12/P33,runtime,350-3750 nm,757 wavelengths; 361 angles,P11/P12/P33,361027,ef53c4ce71ea382f3ddea094b087e2e9adb0255b23325c805991ef72453c833f
+tsm_ahn/astarmin_brownearth.txt,TSM absorption,mass-specific a* [m2 g-1] derived from matching .mie bulk table,runtime/audit,350-3750 nm,757 numeric rows,,22952,a996f703391a7aa52d89b65a0f8c6e31d445ca4b6df52e4c4d0240e8408afd37
+tsm_ahn/astarmin_calcareoussand.txt,TSM absorption,mass-specific a* [m2 g-1] derived from matching .mie bulk table,runtime/audit,350-3750 nm,757 numeric rows,,22956,904cbf84c19ffe892177b57dee1c1f83af3db7c1d023026811c333ca7dcf391a
+tsm_ahn/astarmin_redclay.txt,TSM absorption,mass-specific a* [m2 g-1] derived from matching .mie bulk table,runtime/audit,350-3750 nm,757 numeric rows,,22949,49e136e8e14cb24580c538d09e235357110bd273c4275dad6838e1d01bd20ee4
+tsm_ahn/astarmin_yellowclay.txt,TSM absorption,mass-specific a* [m2 g-1] derived from matching .mie bulk table,runtime/audit,350-3750 nm,757 numeric rows,,22952,7637ed3b5de0eaa8550649b0f8baaa2bda433dc95c712e97ec1dd427152d2258
+tsm_ahn/bstarmin_brownearth.txt,TSM scattering,mass-specific b* [m2 g-1] derived from matching .mie bulk table,runtime/audit,350-3750 nm,757 numeric rows,,22952,cee6fdae7d05090e231c56eba95555feb35ffedde828845ab64133d6beb66db9
+tsm_ahn/bstarmin_calcareoussand.txt,TSM scattering,mass-specific b* [m2 g-1] derived from matching .mie bulk table,runtime/audit,350-3750 nm,757 numeric rows,,22956,e59db38c392c29266934480e36d59d2056bd7831fef2900936a4e88ba06198ec
+tsm_ahn/bstarmin_redclay.txt,TSM scattering,mass-specific b* [m2 g-1] derived from matching .mie bulk table,runtime/audit,350-3750 nm,757 numeric rows,,22949,fa0ad82c97ea26ab2d2ddc53419d80dbe265b837d80b42e428264d14301fc432
+tsm_ahn/bstarmin_yellowclay.txt,TSM scattering,mass-specific b* [m2 g-1] derived from matching .mie bulk table,runtime/audit,350-3750 nm,757 numeric rows,,22952,65387e5a2cc0659f31f06bc8f74d54d4e6469aeb329511e4b9da012005426055
+water_iop/Detritus_Stramski2001.mie,OCRT detritus phase,organic detritus vector phase P11/P12/P33,runtime,350-850 nm,21 wavelengths; 361 angles,P11/P12/P33,138979,0202c29d7a3f050d88715766a37ef7080cbf709ef5a6e69c1ab645171e61f516
+water_iop/Diatoms_centric_EAP.mie,OCRT phytoplankton phase,EAP group vector phase P11/P12/P33,runtime,350-850 nm,101 wavelengths; 361 angles,P11/P12/P33,188459,cc37dac66e7d31bcf4699873ad178beb1613e79ee596b8daa99e2f46b67d515a
+water_iop/README.md,Water IOP,water optical input,runtime,,,,682,0b2000ebbd5f52086508ba48379dfe4ff28f8f47ae1031045117f2ecd1ca5789
+water_iop/aph_bricaud_1998.txt,CCRR Chl compatibility,byte-identical legacy filename; not a Bricaud provenance claim,compatibility,300-1000 nm,141 numeric rows,,9440,b7a51b5ebeab083e395abdd548a97cc1f4dd88cf874f8e0d368547ca5355af7d
+water_iop/aph_ccrr_morel1988_mm01.txt,CCRR Chl absorption,canonical five-column CCRR adapter table,runtime,300-1000 nm,141 numeric rows,,9440,b7a51b5ebeab083e395abdd548a97cc1f4dd88cf874f8e0d368547ca5355af7d
+water_iop/nano_Haptophytes_EAP.mie,OCRT phytoplankton phase,EAP group vector phase P11/P12/P33,runtime,350-850 nm,101 wavelengths; 361 angles,P11/P12/P33,188479,f187b35a68239486d5f0f86cea794df49728a602bfe55ebe1127cbf0adae3963
+water_iop/pico_Synechococcus_EAP.mie,OCRT phytoplankton phase,EAP group vector phase P11/P12/P33,runtime,350-850 nm,101 wavelengths; 361 angles,P11/P12/P33,188481,5853b7c671a46e34a847ee93de340f1978d53d696c55733592a963afdb0d16b0
+water_iop/psi_T_rottgers2014_OCRT.txt,Pure-water temperature,temperature correction lookup; package header marks approximation,runtime,400-900 nm,501 numeric rows,,9707,8e3762c290f135374dbeb527aced2eca1cf780fa49dc876fbc19a84b91bf0143
+water_iop/source/apstarchl_morel1988_normalized_user_supplied.txt,CCRR Chl source,user-supplied normalized Morel spectrum retained for provenance,source/audit,300-1000 nm,141 numeric rows,,2870,1e7acfaa3739616051343b00a9cb3bf8ad7791d6a657b6722469c2d7b95b9a6f
+water_iop/water_coef_z09_1nm.txt,Pure-water IOP,a_w and b_w lookup table,runtime,200-2449 nm,2250 numeric rows,,73857,f173e1a4514b653973def109a5415678afbe4f39564a7b19f94a71ef55ea0e46
+xsec/README.md,Gas cross section,layer-resolved 1-nm cross-section LUT,runtime,,,,394,20ffec5b501d8646fb1f1d15c21950db11786da0408cb64f86e510e7847b58a0
+xsec/xsec_ch4.dat,Gas cross section,layer-resolved 1-nm cross-section LUT,runtime,350-1100 nm,40 layers x 751 wavelengths,,431025,b076d1386d88ad239a902535bdb781e678bb6ca06ef7ae95158e705272345cdb
+xsec/xsec_co2.dat,Gas cross section,layer-resolved 1-nm cross-section LUT,runtime,350-1100 nm,40 layers x 751 wavelengths,,431057,99157da8a10c11f532a8ffc645ea8446e3c278b4f7b78503540eef02f83ed387
+xsec/xsec_h2o.dat,Gas cross section,layer-resolved 1-nm cross-section LUT,runtime,350-1100 nm,40 layers x 751 wavelengths,,431032,8191d832eaef58081368521d7fc1c78bcf1ccea052a7de3b6490e2cc0b57d897
+xsec/xsec_no2.dat,Gas cross section,layer-resolved 1-nm cross-section LUT,runtime,350-1100 nm,40 layers x 751 wavelengths,,431682,66d3f6483e47bb4d8bbff1e96062fa51652e6f5c12ed22bc06fa848f1109ba94
+xsec/xsec_o2.dat,Gas cross section,layer-resolved 1-nm cross-section LUT,runtime,350-1100 nm,40 layers x 751 wavelengths,,431020,d2396c32b1bfe4b5c570db0e24b914bb101eee3ff060235b2b396c58eab98586
+xsec/xsec_o3.dat,Gas cross section,layer-resolved 1-nm cross-section LUT,runtime,350-1100 nm,40 layers x 751 wavelengths,,431332,5509e6e46b628a69ded04ed6131df6b0b9143e2bb7226bfef9c48a080a613827

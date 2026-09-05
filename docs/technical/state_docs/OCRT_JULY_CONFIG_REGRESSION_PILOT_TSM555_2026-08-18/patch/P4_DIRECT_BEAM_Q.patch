@@ -1,0 +1,399 @@
+--- a/src/rt_kernel.h
++++ b/src/rt_kernel.h
+@@ -32,6 +32,15 @@
+     double  *att_storage;
+     double **att_pol;
+ 
++    /* Exact particle response to the Fresnel-transmitted direct-beam Q
++     * component for the current Fourier mode.  The six standard direct
++     * kernels contain the incoming-I and diffuse-vector couplings, but not
++     * the complete incoming-Q solar column (I<-Q and U<-Q). */
++    double *beam_q_to_i_direct;
++    double *beam_q_to_q_direct;
++    double *beam_q_to_u_direct;
++    int     beam_q_direct_valid;
++
+     /* Reusable storage for the SOS source operator.  These buffers are built
+      * outside the scattering-order loop and then treated as immutable. */
+     double *sos_source_arena;
+--- a/src/rt_kernel.c
++++ b/src/rt_kernel.c
+@@ -40,11 +40,18 @@
+     ws->att_storage = (double *)calloc(kernel_count, sizeof(double));
+     ws->att_pol = (double **)calloc((size_t)(n_mu + 1), sizeof(double *));
+ 
++    ws->beam_q_to_i_direct = (double *)calloc((size_t)directions, sizeof(double));
++    ws->beam_q_to_q_direct = (double *)calloc((size_t)directions, sizeof(double));
++    ws->beam_q_to_u_direct = (double *)calloc((size_t)directions, sizeof(double));
++    ws->beam_q_direct_valid = 0;
++
+     if (!ws->plm_storage || !ws->plm || !ws->rrl_storage || !ws->rrl ||
+         !ws->rtl_storage || !ws->rtl || !ws->pfm_storage ||
+         !ws->phase_fourier_m || !ws->gr_storage || !ws->gr_pol ||
+         !ws->gt_storage || !ws->gt_pol || !ws->arr_storage || !ws->arr_pol ||
+-        !ws->art_storage || !ws->art_pol || !ws->att_storage || !ws->att_pol) {
++        !ws->art_storage || !ws->art_pol || !ws->att_storage || !ws->att_pol ||
++        !ws->beam_q_to_i_direct || !ws->beam_q_to_q_direct ||
++        !ws->beam_q_to_u_direct) {
+         rt_legendre_workspace_free(ws);
+         return -1;
+     }
+@@ -88,6 +95,9 @@
+     free(ws->art_pol);
+     free(ws->att_storage);
+     free(ws->att_pol);
++    free(ws->beam_q_to_i_direct);
++    free(ws->beam_q_to_q_direct);
++    free(ws->beam_q_to_u_direct);
+     free(ws->sos_source_arena);
+     free(ws->sos_kernel_pack);
+     memset(ws, 0, sizeof(*ws));
+--- a/src/rt_value_phase.h
++++ b/src/rt_value_phase.h
+@@ -126,6 +126,19 @@
+     double *art,
+     double *att);
+ 
++/* Exact response of the direct particle phase matrix to an incoming Stokes-Q
++ * solar component.  Output layout is [m][k+n_mu] for I<-Q, Q<-Q and U<-Q.
++ * This column is not completely represented by the standard six diffuse
++ * kernel tables. */
++int rt_aerosol_value_phase_fourier_pol_beamq_allm(
++    const rt_atm_t *atm,
++    int m_count,
++    const rt_value_phase_interp_t *phase,
++    int nphi,
++    double *i_from_q,
++    double *q_from_q,
++    double *u_from_q);
++
+ /* Convenience copy of one mode into an allocated Legendre workspace. */
+ int rt_aerosol_value_phase_fourier_pol(
+     rt_legendre_workspace_t *ws,
+--- a/src/rt_value_phase.c
++++ b/src/rt_value_phase.c
+@@ -857,6 +857,80 @@
+     return 0;
+ }
+ 
++int rt_aerosol_value_phase_fourier_pol_beamq_allm(
++    const rt_atm_t *atm, int m_count, const rt_value_phase_interp_t *phase,
++    int nphi, double *i_from_q, double *q_from_q, double *u_from_q)
++{
++    if (!atm || !phase || phase->n < 2 || m_count < 1 ||
++        !i_from_q || !q_from_q || !u_from_q) return -1;
++    if (nphi < 16) nphi = 16;
++    if (nphi > 20000) nphi = 20000;
++
++    const int n_mu = atm->n_mu;
++    const int directions = 2 * n_mu + 1;
++    double *c_iq = (double *)calloc((size_t)m_count, sizeof(double));
++    double *c_qq = (double *)calloc((size_t)m_count, sizeof(double));
++    double *s_uq = (double *)calloc((size_t)m_count, sizeof(double));
++    const double *phis = NULL, *cm = NULL, *sm = NULL;
++    if (!c_iq || !c_qq || !s_uq ||
++        get_fourier_trig(m_count, nphi, &phis, &cm, &sm) != 0) {
++        free(c_iq); free(c_qq); free(s_uq);
++        return -2;
++    }
++
++    const double mui = atm->rm[0];
++    const double si = sqrt(fmax(0.0, 1.0 - mui * mui));
++    for (int kout = -n_mu; kout <= n_mu; ++kout) {
++        const int ko = kout + n_mu;
++        if (kout == 0) {
++            for (int m = 0; m < m_count; ++m) {
++                const size_t z = (size_t)m * (size_t)directions + (size_t)ko;
++                i_from_q[z] = q_from_q[z] = u_from_q[z] = 0.0;
++            }
++            continue;
++        }
++        const double muo = atm->rm[kout];
++        const double so = sqrt(fmax(0.0, 1.0 - muo * muo));
++        memset(c_iq, 0, (size_t)m_count * sizeof(double));
++        memset(c_qq, 0, (size_t)m_count * sizeof(double));
++        memset(s_uq, 0, (size_t)m_count * sizeof(double));
++        for (int q = 0; q < nphi; ++q) {
++            const double phi = phis[q];
++            const double cp = cos(phi), sp = sin(phi);
++            double cT = mui * muo + si * so * cp;
++            if (cT > 1.0) cT = 1.0;
++            else if (cT < -1.0) cT = -1.0;
++            const double sT = sqrt(fmax(0.0, 1.0 - cT * cT));
++            double p11, p12, p33;
++            rt_value_phase_interp_eval(phase, cT, &p11, &p12, &p33);
++            const double P[9] = {p11,p12,0.0,p12,p11,0.0,0.0,0.0,p33};
++            double ci1,si1,ci2,si2,L1[9],L2[9],tmp[9],Z[9];
++            compute_hovenier_rotation(muo,mui,so,si,cT,sT,sp,
++                                       &ci1,&si1,&ci2,&si2);
++            build_rotation_L(ci1,si1,L1);
++            build_rotation_L(ci2,si2,L2);
++            mat3_mul(P,L1,tmp);
++            mat3_mul(L2,tmp,Z);
++            for (int m = 0; m < m_count; ++m) {
++                const double c = cm[(size_t)m * (size_t)nphi + (size_t)q];
++                const double ss = sm[(size_t)m * (size_t)nphi + (size_t)q];
++                c_iq[m] += Z[1] * c;
++                c_qq[m] += Z[4] * c;
++                /* Existing OCRT primary-U convention carries a minus sign. */
++                s_uq[m] += (-Z[7]) * ss;
++            }
++        }
++        for (int m = 0; m < m_count; ++m) {
++            const size_t z = (size_t)m * (size_t)directions + (size_t)ko;
++            i_from_q[z] = c_iq[m] / (double)nphi;
++            q_from_q[z] = c_qq[m] / (double)nphi;
++            u_from_q[z] = s_uq[m] / (double)nphi;
++        }
++    }
++    free(c_iq); free(c_qq); free(s_uq);
++    return 0;
++}
++
+ int rt_aerosol_value_phase_fourier_pol(rt_legendre_workspace_t *ws,
+     const rt_atm_t *atm, int m, const rt_value_phase_interp_t *phase, int nphi)
+ {
+--- a/src/rt_primary_source.c
++++ b/src/rt_primary_source.c
+@@ -10,6 +10,7 @@
+ #include <math.h>
+ #include <stddef.h>
+ #include <stdlib.h>
++#include <string.h>
+ 
+ #include "rt_solver.h"
+ 
+@@ -38,7 +39,10 @@
+             (double *)calloc((size_t)directions, sizeof(double));
+         if (!beam_q_to_i_particle) return -1;
+ 
+-        if (atm->gammal_aer && ws->plm && ws->rrl) {
++        if (ws->beam_q_direct_valid && ws->beam_q_to_i_direct) {
++            memcpy(beam_q_to_i_particle, ws->beam_q_to_i_direct,
++                   (size_t)directions * sizeof(double));
++        } else if (atm->gammal_aer && ws->plm && ws->rrl) {
+             for (int direction = -n_mu; direction <= n_mu; ++direction) {
+                 double value = 0.0;
+                 for (int l = m; l <= ws->l_max; ++l) {
+@@ -116,7 +120,13 @@
+             return -1;
+         }
+ 
+-        if (atm->alphal_aer && atm->zetal_aer && ws->rrl && ws->rtl) {
++        if (ws->beam_q_direct_valid && ws->beam_q_to_q_direct &&
++            ws->beam_q_to_u_direct) {
++            memcpy(beam_q_to_q_particle, ws->beam_q_to_q_direct,
++                   (size_t)directions * sizeof(double));
++            memcpy(beam_q_to_u_particle, ws->beam_q_to_u_direct,
++                   (size_t)directions * sizeof(double));
++        } else if (atm->alphal_aer && atm->zetal_aer && ws->rrl && ws->rtl) {
+             for (int direction = -n_mu; direction <= n_mu; ++direction) {
+                 double q_value = 0.0;
+                 double u_value = 0.0;
+--- a/src/rt_water_rt.c
++++ b/src/rt_water_rt.c
+@@ -4790,6 +4790,7 @@
+      * P11/P12/P33 at the view scattering angle. */
+     aerosol_phase_interp_t aip; int have_aip = 0; memset(&aip, 0, sizeof aip);
+     double *mie_value_kernel_allm = NULL;
++    double *mie_value_beamq_allm = NULL;
+     int mie_value_kernel_owned = 0;
+     int mie_value_kernel_mcount = 0;
+     /* v1.09 #24: key for the per-(wavelength,.mie) phase-decomposition cache. */
+@@ -5479,6 +5480,23 @@
+                 mie_value_kernel_allm = work;
+             }
+         }
++        /* Build the incoming-Q solar column unconditionally.  atm.beam_q is
++         * assigned later, after the air-water Fresnel transmission matrix is
++         * evaluated; the column itself depends only on the phase and solar
++         * direction rm[0], which are already available here. */
++        {
++            const size_t beam_count = (size_t)mie_value_kernel_mcount *
++                                      (size_t)(2 * n_mu + 1);
++            mie_value_beamq_allm = (double *)malloc(3u * beam_count * sizeof(double));
++            if (!mie_value_beamq_allm) { rc = -4; goto cleanup; }
++            if (rt_aerosol_value_phase_fourier_pol_beamq_allm(
++                    &atm, mie_value_kernel_mcount, particle_value_phase, nphi,
++                    mie_value_beamq_allm,
++                    mie_value_beamq_allm + beam_count,
++                    mie_value_beamq_allm + 2u * beam_count) != 0) {
++                rc = -4; goto cleanup;
++            }
++        }
+         const char *vtrace = getenv("OCRT_VALUE_KERNEL_CACHE_TRACE");
+         if (vtrace && vtrace[0] && strcmp(vtrace, "0") != 0) {
+             const unsigned long long full_builds=kc?kc->full_build_count:0ULL;
+@@ -5733,6 +5751,7 @@
+         }
+         const int direct_particle_for_m =
+             (mie_value_kernel_allm && m < mie_value_kernel_mcount);
++        ws.beam_q_direct_valid = 0;
+         if (!direct_particle_for_m) {
+         /* CCRR scalar particle phase: the intensity kernel used by both
+          * rt_solver_primary_source() and rt_sos_operator_apply_vector() lives in
+@@ -5830,6 +5849,21 @@
+             memcpy(ws.arr_storage,mie_value_kernel_allm+3u*all+off,plane*sizeof(double));
+             memcpy(ws.art_storage,mie_value_kernel_allm+4u*all+off,plane*sizeof(double));
+             memcpy(ws.att_storage,mie_value_kernel_allm+5u*all+off,plane*sizeof(double));
++            if (mie_value_beamq_allm) {
++                const size_t beam_plane = (size_t)dirs;
++                const size_t beam_all = (size_t)mie_value_kernel_mcount * beam_plane;
++                const size_t beam_off = (size_t)m * beam_plane;
++                memcpy(ws.beam_q_to_i_direct,
++                       mie_value_beamq_allm + beam_off,
++                       beam_plane * sizeof(double));
++                memcpy(ws.beam_q_to_q_direct,
++                       mie_value_beamq_allm + beam_all + beam_off,
++                       beam_plane * sizeof(double));
++                memcpy(ws.beam_q_to_u_direct,
++                       mie_value_beamq_allm + 2u * beam_all + beam_off,
++                       beam_plane * sizeof(double));
++                ws.beam_q_direct_valid = 1;
++            }
+             ws.sos_kernel_pack_valid=0; ws.sos_kernel_pack_m=-1;
+         }
+         if (rt_sos_operator_prepare(&atm, m, &ws) != 0) {
+@@ -7493,6 +7527,7 @@
+     result->z_level1_used    = z_lvl1;
+ 
+ cleanup:
++    free(mie_value_beamq_allm);
+     if (mie_value_kernel_owned) free(mie_value_kernel_allm);
+     if (have_fixed_phase_spline) rt_value_phase_interp_free(&fixed_phase_spline);
+     if (have_ccrr_phase_spline) rt_value_phase_interp_free(&ccrr_phase_spline);
+--- a/ocrt_py/kernel.py
++++ b/ocrt_py/kernel.py
+@@ -65,6 +65,13 @@
+         self.arr = np.zeros((n_mu + 1, dirs))
+         self.art = np.zeros((n_mu + 1, dirs))
+         self.att = np.zeros((n_mu + 1, dirs))
++        # Exact direct-particle response to the incoming-Q solar component for
++        # the current Fourier mode.  The standard six tables omit I<-Q and
++        # U<-Q for the direct beam.
++        self.beam_q_to_i_direct = np.zeros(dirs)
++        self.beam_q_to_q_direct = np.zeros(dirs)
++        self.beam_q_to_u_direct = np.zeros(dirs)
++        self.beam_q_direct_valid = False
+ 
+ 
+ def legendre_compute(ws, rm, m, xpl_out=None):
+--- a/ocrt_py/value_phase.py
++++ b/ocrt_py/value_phase.py
+@@ -528,6 +528,52 @@
+             out[5][:, j, ko] = ca[3] / nphi
+     return tuple(out)
+ 
++def vector_beamq_fourier_allm(rm, n_mu, m_count, phase, nphi):
++    """Exact incoming-Q solar column, returned as I<-Q, Q<-Q, U<-Q.
++
++    Each array has shape ``[m, k+n_mu]``.  The U column follows the existing
++    OCRT primary-source sign convention and therefore accumulates ``-Z[7]``.
++    """
++    nphi = max(16, min(20000, int(nphi)))
++    kw = 2 * n_mu + 1
++    out_i = np.zeros((m_count, kw))
++    out_q = np.zeros((m_count, kw))
++    out_u = np.zeros((m_count, kw))
++    phis = 2 * pi * (np.arange(nphi) + 0.5) / nphi
++    cp = np.cos(phis)
++    sp = np.sin(phis)
++    ms = np.arange(m_count)
++    cosm = np.cos(ms[:, None] * phis[None, :])
++    sinm = np.sin(ms[:, None] * phis[None, :])
++    mui = rm[n_mu]
++    si = sqrt(max(0.0, 1.0 - mui * mui))
++    for ko, k in enumerate(range(-n_mu, n_mu + 1)):
++        if k == 0:
++            continue
++        muo = rm[k + n_mu]
++        so = sqrt(max(0.0, 1.0 - muo * muo))
++        cth = np.clip(mui * muo + si * so * cp, -1.0, 1.0)
++        sth = np.sqrt(np.maximum(0.0, 1.0 - cth * cth))
++        p11v, p12v, p33v = phase.eval(cth)
++        ciq = np.zeros(m_count)
++        cqq = np.zeros(m_count)
++        suq = np.zeros(m_count)
++        for iq in range(nphi):
++            p11 = float(p11v[iq]); p12 = float(p12v[iq]); p33 = float(p33v[iq])
++            P = np.array([p11, p12, 0.0, p12, p11, 0.0, 0.0, 0.0, p33])
++            ci1, si1, ci2, si2 = _hovenier(
++                muo, mui, so, si, float(cth[iq]), float(sth[iq]), float(sp[iq]))
++            Z = mat3_mul(build_rotation_L(ci2, si2),
++                         mat3_mul(P, build_rotation_L(ci1, si1)))
++            ciq += Z[1] * cosm[:, iq]
++            cqq += Z[4] * cosm[:, iq]
++            suq += (-Z[7]) * sinm[:, iq]
++        out_i[:, ko] = ciq / nphi
++        out_q[:, ko] = cqq / nphi
++        out_u[:, ko] = suq / nphi
++    return out_i, out_q, out_u
++
++
+ # Geometry-independent Mie -> theta-linear table cache.  The cache key follows
+ # the immutable MieData provenance where available and includes the exact
+ # wavelength, matching the C per-worker component value cache.  Keep it
+--- a/ocrt_py/sos.py
++++ b/ocrt_py/sos.py
+@@ -145,7 +145,9 @@
+     xrl0 = atm.xrl[n_mu]
+ 
+     bq_i_aer = np.zeros(dirs)
+-    if beam_q != 0.0 and atm.gammal is not None:
++    if beam_q != 0.0 and getattr(ws, 'beam_q_direct_valid', False):
++        bq_i_aer[:] = ws.beam_q_to_i_direct
++    elif beam_q != 0.0 and atm.gammal is not None:
+         l_max = ws.l_max
+         for j in range(-n_mu, n_mu + 1):
+             s = 0.0
+@@ -182,7 +184,10 @@
+ 
+     bq_q = np.zeros(dirs)
+     bq_u = np.zeros(dirs)
+-    if beam_q != 0.0 and atm.alphal is not None and atm.zetal is not None:
++    if beam_q != 0.0 and getattr(ws, 'beam_q_direct_valid', False):
++        bq_q[:] = ws.beam_q_to_q_direct
++        bq_u[:] = ws.beam_q_to_u_direct
++    elif beam_q != 0.0 and atm.alphal is not None and atm.zetal is not None:
+         l_max = min(ws.l_max, atm.L_max)
+         for j in range(-n_mu, n_mu + 1):
+             sq = su = 0.0
+--- a/ocrt_py/water.py
++++ b/ocrt_py/water.py
+@@ -374,6 +374,7 @@
+     norm_nmu = int(os.environ.get('OCRT_WATER_MIE_MOMENT_N_MU', '400'))
+     value_nphi = int(os.environ.get('OCRT_WATER_VALUE_NPHI', str(phase_nphi)))
+     pol_allm = None
++    beamq_allm = None
+     if use_constituent:
+         fb_allm = None
+         if value_pol:
+@@ -389,6 +390,8 @@
+             pol_allm = vp.vector_fourier_allm_cached(
+                 atm.rm, n_mu, m_loop_max + 1, interp, value_nphi,
+                 cache=direct_kernel_cache)
++            beamq_allm = vp.vector_beamq_fourier_allm(
++                atm.rm, n_mu, m_loop_max + 1, interp, value_nphi)
+     else:
+         if value_spline:
+             interp = vp.ValuePhaseInterp(tab.theta, tab.p11, norm_n_mu=norm_nmu)
+@@ -432,6 +435,7 @@
+         atm.xpl = xpl
+         atm.xrl = xrl
+         atm.xtl = xtl
++        ws.beam_q_direct_valid = False
+         if pol_allm is not None:
+             # Expansion-free Stage-3B particle path: molecular associated
+             # functions above are still required, but the dummy finite-moment
+@@ -442,6 +446,11 @@
+             ws.arr[:, :] = pol_allm[3][m]
+             ws.art[:, :] = pol_allm[4][m]
+             ws.att[:, :] = pol_allm[5][m]
++            if beamq_allm is not None:
++                ws.beam_q_to_i_direct[:] = beamq_allm[0][m]
++                ws.beam_q_to_q_direct[:] = beamq_allm[1][m]
++                ws.beam_q_to_u_direct[:] = beamq_allm[2][m]
++                ws.beam_q_direct_valid = True
+         else:
+             kn.kernel_phase_fourier(ws, m, atm.betal)
+             # The fixed-bulk scalar path overwrites P11 with its value kernel;

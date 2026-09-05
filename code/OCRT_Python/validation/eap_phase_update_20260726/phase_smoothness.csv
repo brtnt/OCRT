@@ -1,0 +1,3 @@
+dataset,file,max_improvement_factor,max_normalized_second_difference,mean_normalized_second_difference,median_improvement_factor,median_normalized_second_difference
+obsolete_Diatoms_centric_EAP,/mnt/data/ocrt_eap_update_20260726_work/base/c/OCRT_v1.2_RRS_IQU_OUTPUT_2026-07-25/inputs/water_iop/Diatoms_centric_EAP.mie,,1.04806148775931,0.046114823337932855,,0.021087474266338464
+new_EAP_02_Diatoms_centric_D6,/mnt/data/ocrt_eap_update_20260726_work/modified/OCRT_v1.2_EAP_PHASE_UPDATE_2026-07-26/inputs/water_iop/eap/EAP_02_Diatoms_centric_D6.mie,160.5440569445001,0.006528186142210319,0.0005991623107118462,146.49292643854227,0.0001439487542436749

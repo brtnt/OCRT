@@ -1,0 +1,37 @@
+=== CCRR CHL ===
+PASS canonical_legacy_byte_identity
+PASS table_reproducible
+PASS table_values
+PASS canonical_only_load
+PASS legacy_fallback_load
+PASS canonical_legacy_runtime_identity
+PASS run_440_1.0
+PASS run_443_0.3
+PASS run_555_0.3
+PASS run_670_0.3
+PASS runtime_absorption_values
+CCRR_CHL_V119_SMOKE pass=11 fail=0
+=== ORGANIC CHL ===
+PASS organic module strict build and model anchors
+PASS canonical required-field gate
+PASS explicit-zero constituent input
+PASS pico/nano/micro group selection
+PASS detritus slope default bit identity
+PASS organic wavelength range gate
+PASS three-component vector phase and exact bb/b identity
+PASS phase preparation count independent of SOS orders
+PASS cache enabled/disabled stdout byte identity
+PASS P12/P33 affect IQU with invariant P11-derived IOP
+ORGANIC_CHL_SMOKE pass=10 fail=0
+=== TSM AHN ===
+PASS four-species 443-nm optical coefficients
+PASS Mie-only a*/b* fallback
+PASS CLI automatic red-clay vector-phase routing
+PASS default species equals explicit red_clay
+PASS species without positive TSM is rejected
+PASS explicit phase override conflict is rejected
+TSM_AHN_SMOKE pass=6 fail=0
+=== TSM CACHE ===
+PASS direct-cache-equivalence modes=7 seeds=4 array_compares=168 values_per_array=238
+TSM_PHASE_CACHE PASS builds=9 trace_sha256=89146542445cd110649942f6b09ce559f1a95225ed0fbc9ca9b5e13d1994b833
+NON_PSSA_FULL_REGRESSIONS PASS

@@ -1,0 +1,3 @@
+variant,count,mean,median,std,min,max,mean_change_vs_baseline_pct,median_change_vs_baseline_pct,case
+baseline,5,4.848506605,4.827955225,0.028584240,4.827477134,4.882283455,,,"purewater, 443 nm, SZA 40, full-grid VZA 0/30/60, RAA step 45, n_mu 48, m_max 2"
+updated,5,4.848083745,4.828571501,0.027631482,4.827445983,4.878792853,-0.008721452,0.012764741,"purewater, 443 nm, SZA 40, full-grid VZA 0/30/60, RAA step 45, n_mu 48, m_max 2"

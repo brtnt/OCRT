@@ -1,0 +1,100 @@
+=== SnF inputs/T50.mie wl=412 ===
+rt_absorption (SOS-integrated): λ=412.0nm τ_abs_col=0.0000e+00
+  h2o: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  o3: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  o2: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  co2: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  no2: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  ch4: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+1.1201741945e-02 -1.2803470404e-03 2.3368118865e-03  TOA_rho_I=1.1201741945e-02 TOA_rho_Q=-1.2803470404e-03 TOA_rho_U=2.3368118865e-03 TOA_rho_glint_direct_I=0.0000000000e+00 TOA_rho_glint_direct_Q=0.0000000000e+00 TOA_rho_glint_direct_U=0.0000000000e+00 T_dir_dn=8.0886685367e-01 T_diff_dn_hemi=1.5822681045e-01 T_diff_dn_dir=2.4099385020e-01 T_dir_up_view=8.2243014399e-01 T_diff_up_hemi=1.5822681045e-01 T_total_up_view=9.8065695443e-01 T_sg_up_dir=0.0000000000e+00 T_total_up_dir=9.7009930910e-03 AOD_ref=1.5000000000e-01 AOD_ref_nm=555.000 AOD_band=1.8370213730e-01 AOD_ext_ratio=1.2246809153e+00 tau_R=0.0000000000e+00 sza=30.000 vza=20.000 raa=90.000 wl=412.000 orders=14 conv=1
+=== SnF inputs/C95.mie wl=550 ===
+rt_absorption (SOS-integrated): λ=550.0nm τ_abs_col=0.0000e+00
+  h2o: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  o3: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  o2: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  co2: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  no2: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  ch4: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+7.9639868742e-03 7.7622112308e-04 -1.3995732549e-03  TOA_rho_I=7.9639868742e-03 TOA_rho_Q=7.7622112308e-04 TOA_rho_U=-1.3995732549e-03 TOA_rho_glint_direct_I=0.0000000000e+00 TOA_rho_glint_direct_Q=0.0000000000e+00 TOA_rho_glint_direct_U=0.0000000000e+00 T_dir_dn=8.6285956598e-01 T_diff_dn_hemi=1.2132581124e-01 T_diff_dn_dir=1.7756189429e-01 T_dir_up_view=8.7289517641e-01 T_diff_up_hemi=1.2132581124e-01 T_total_up_view=9.9422098765e-01 T_sg_up_dir=0.0000000000e+00 T_total_up_dir=6.8970149485e-03 AOD_ref=1.5000000000e-01 AOD_ref_nm=555.000 AOD_band=1.5056650648e-01 AOD_ext_ratio=1.0037767099e+00 tau_R=0.0000000000e+00 sza=30.000 vza=20.000 raa=90.000 wl=550.000 orders=13 conv=1
+=== SnF inputs/M50C.mie wl=443 ===
+# WARNING: M50C is diagnostic-only (lineage contamination) — results are NOT valid for official validation or production
+rt_absorption (SOS-integrated): λ=443.0nm τ_abs_col=0.0000e+00
+  h2o: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  o3: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  o2: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  co2: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  no2: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  ch4: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+9.3737359368e-03 3.8207507930e-04 -7.6507878093e-04  TOA_rho_I=9.3737359368e-03 TOA_rho_Q=3.8207507930e-04 TOA_rho_U=-7.6507878093e-04 TOA_rho_glint_direct_I=0.0000000000e+00 TOA_rho_glint_direct_Q=0.0000000000e+00 TOA_rho_glint_direct_U=0.0000000000e+00 T_dir_dn=8.6704144874e-01 T_diff_dn_hemi=1.1671409235e-01 T_diff_dn_dir=1.7612154035e-01 T_dir_up_view=8.7679330602e-01 T_diff_up_hemi=1.1671409235e-01 T_total_up_view=9.9350739837e-01 T_sg_up_dir=0.0000000000e+00 T_total_up_dir=8.1178934497e-03 AOD_ref=1.5000000000e-01 AOD_ref_nm=555.000 AOD_band=1.5583284314e-01 AOD_ext_ratio=1.0388856210e+00 tau_R=0.0000000000e+00 sza=30.000 vza=20.000 raa=90.000 wl=443.000 orders=13 conv=1
+=== SnF inputs/M98C.mie wl=860 ===
+rt_absorption (SOS-integrated): λ=860.0nm τ_abs_col=0.0000e+00
+  h2o: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  o3: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  o2: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  co2: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  no2: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  ch4: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+8.8653987754e-03 1.5965220260e-03 -2.9006467371e-03  TOA_rho_I=8.8653987754e-03 TOA_rho_Q=1.5965220260e-03 TOA_rho_U=-2.9006467371e-03 TOA_rho_glint_direct_I=0.0000000000e+00 TOA_rho_glint_direct_Q=0.0000000000e+00 TOA_rho_glint_direct_U=0.0000000000e+00 T_dir_dn=8.8665428241e-01 T_diff_dn_hemi=1.0144889795e-01 T_diff_dn_dir=1.4768154441e-01 T_dir_up_view=8.9505581239e-01 T_diff_up_hemi=1.0144889795e-01 T_total_up_view=9.9650471034e-01 T_sg_up_dir=0.0000000000e+00 T_total_up_dir=7.6776605542e-03 AOD_ref=1.5000000000e-01 AOD_ref_nm=555.000 AOD_band=1.4396275531e-01 AOD_ext_ratio=9.5975170204e-01 tau_R=0.0000000000e+00 sza=30.000 vza=20.000 raa=90.000 wl=860.000 orders=12 conv=1
+=== SnF inputs/O99.mie wl=443 ===
+rt_absorption (SOS-integrated): λ=443.0nm τ_abs_col=0.0000e+00
+  h2o: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  o3: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  o2: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  co2: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  no2: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  ch4: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+1.0884586429e-02 3.1218262158e-03 -5.6830087034e-03  TOA_rho_I=1.0884586429e-02 TOA_rho_Q=3.1218262158e-03 TOA_rho_U=-5.6830087034e-03 TOA_rho_glint_direct_I=0.0000000000e+00 TOA_rho_glint_direct_Q=0.0000000000e+00 TOA_rho_glint_direct_U=0.0000000000e+00 T_dir_dn=9.0602081292e-01 T_diff_dn_hemi=8.4358429816e-02 T_diff_dn_dir=1.3145143467e-01 T_dir_up_view=9.1305791961e-01 T_diff_up_hemi=8.4358429816e-02 T_total_up_view=9.9741634943e-01 T_sg_up_dir=0.0000000000e+00 T_total_up_dir=9.4263283568e-03 AOD_ref=1.5000000000e-01 AOD_ref_nm=555.000 AOD_band=1.4638459425e-01 AOD_ext_ratio=9.7589729500e-01 tau_R=0.0000000000e+00 sza=30.000 vza=20.000 raa=90.000 wl=443.000 orders=11 conv=1
+=== AccuRT inputs/aerosol_ahmad2010_accurt_mie/r30f95v01.mie wl=412 ===
+rt_absorption (SOS-integrated): λ=412.0nm τ_abs_col=0.0000e+00
+  h2o: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  o3: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  o2: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  co2: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  no2: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  ch4: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+1.3174205442e-02 -9.5745432774e-04 1.7318180034e-03  TOA_rho_I=1.3174205442e-02 TOA_rho_Q=-9.5745432774e-04 TOA_rho_U=1.7318180034e-03 TOA_rho_glint_direct_I=0.0000000000e+00 TOA_rho_glint_direct_Q=0.0000000000e+00 TOA_rho_glint_direct_U=0.0000000000e+00 T_dir_dn=7.5167409650e-01 T_diff_dn_hemi=2.0228439438e-01 T_diff_dn_dir=3.7033972788e-01 T_dir_up_view=7.6868471758e-01 T_diff_up_hemi=2.0228439438e-01 T_total_up_view=9.7096911196e-01 T_sg_up_dir=0.0000000000e+00 T_total_up_dir=1.1409196587e-02 AOD_ref=1.5000000000e-01 AOD_ref_nm=555.000 AOD_band=2.4720905706e-01 AOD_ext_ratio=1.6480603804e+00 tau_R=0.0000000000e+00 sza=30.000 vza=20.000 raa=90.000 wl=412.000 orders=15 conv=1
+=== AccuRT inputs/aerosol_ahmad2010_accurt_mie/r80f20v01.mie wl=550 ===
+rt_absorption (SOS-integrated): λ=550.0nm τ_abs_col=0.0000e+00
+  h2o: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  o3: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  o2: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  co2: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  no2: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  ch4: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+7.8568824396e-03 4.9909840410e-04 -9.4842540721e-04  TOA_rho_I=7.8568824396e-03 TOA_rho_Q=4.9909840410e-04 TOA_rho_U=-9.4842540721e-04 TOA_rho_glint_direct_I=0.0000000000e+00 TOA_rho_glint_direct_Q=0.0000000000e+00 TOA_rho_glint_direct_U=0.0000000000e+00 T_dir_dn=8.5454779739e-01 T_diff_dn_hemi=1.2556322210e-01 T_diff_dn_dir=2.1770225780e-01 T_dir_up_view=8.6514298021e-01 T_diff_up_hemi=1.2556322210e-01 T_total_up_view=9.9070620231e-01 T_sg_up_dir=0.0000000000e+00 T_total_up_dir=6.8042597872e-03 AOD_ref=1.5000000000e-01 AOD_ref_nm=555.000 AOD_band=1.5155533664e-01 AOD_ext_ratio=1.0103689109e+00 tau_R=0.0000000000e+00 sza=30.000 vza=20.000 raa=90.000 wl=550.000 orders=13 conv=1
+=== AccuRT inputs/aerosol_ahmad2010_accurt_mie/r95f00v01.mie wl=860 ===
+rt_absorption (SOS-integrated): λ=860.0nm τ_abs_col=0.0000e+00
+  h2o: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  o3: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  o2: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  co2: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  no2: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  ch4: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+1.1895225155e-02 2.5966571995e-03 -4.6363498003e-03  TOA_rho_I=1.1895225155e-02 TOA_rho_Q=2.5966571995e-03 TOA_rho_U=-4.6363498003e-03 TOA_rho_glint_direct_I=0.0000000000e+00 TOA_rho_glint_direct_Q=0.0000000000e+00 TOA_rho_glint_direct_U=0.0000000000e+00 T_dir_dn=8.9359718285e-01 T_diff_dn_hemi=9.3917350083e-02 T_diff_dn_dir=1.4328309567e-01 T_dir_up_view=9.0151307735e-01 T_diff_up_hemi=9.3917350083e-02 T_total_up_view=9.9543042743e-01 T_sg_up_dir=0.0000000000e+00 T_total_up_dir=1.0301567168e-02 AOD_ref=1.5000000000e-01 AOD_ref_nm=555.000 AOD_band=1.5736968244e-01 AOD_ext_ratio=1.0491312163e+00 tau_R=0.0000000000e+00 sza=30.000 vza=20.000 raa=90.000 wl=860.000 orders=12 conv=1
+=== A2010ver inputs/aerosol_ahmad2010_paper_mie/A2010ver_r30f95v01.mie wl=412 ===
+rt_absorption (SOS-integrated): λ=412.0nm τ_abs_col=0.0000e+00
+  h2o: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  o3: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  o2: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  co2: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  no2: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  ch4: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+1.3269110525e-02 -9.4287861010e-04 1.7028772544e-03  TOA_rho_I=1.3269110525e-02 TOA_rho_Q=-9.4287861010e-04 TOA_rho_U=1.7028772544e-03 TOA_rho_glint_direct_I=0.0000000000e+00 TOA_rho_glint_direct_Q=0.0000000000e+00 TOA_rho_glint_direct_U=0.0000000000e+00 T_dir_dn=7.5081072309e-01 T_diff_dn_hemi=2.0286383494e-01 T_diff_dn_dir=3.7197878569e-01 T_dir_up_view=7.6787098500e-01 T_diff_up_hemi=2.0286383494e-01 T_total_up_view=9.7073481994e-01 T_sg_up_dir=0.0000000000e+00 T_total_up_dir=1.1491386800e-02 AOD_ref=1.5000000000e-01 AOD_ref_nm=555.000 AOD_band=2.4820434617e-01 AOD_ext_ratio=1.6546956411e+00 tau_R=0.0000000000e+00 sza=30.000 vza=20.000 raa=90.000 wl=412.000 orders=15 conv=1
+=== A2010ver inputs/aerosol_ahmad2010_paper_mie/A2010ver_r80f20v01.mie wl=550 ===
+rt_absorption (SOS-integrated): λ=550.0nm τ_abs_col=0.0000e+00
+  h2o: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  o3: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  o2: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  co2: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  no2: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  ch4: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+7.9881322210e-03 5.3823547585e-04 -9.5366418281e-04  TOA_rho_I=7.9881322210e-03 TOA_rho_Q=5.3823547585e-04 TOA_rho_U=-9.5366418281e-04 TOA_rho_glint_direct_I=0.0000000000e+00 TOA_rho_glint_direct_Q=0.0000000000e+00 TOA_rho_glint_direct_U=0.0000000000e+00 T_dir_dn=8.5343112293e-01 T_diff_dn_hemi=1.2635004122e-01 T_diff_dn_dir=2.2040443227e-01 T_dir_up_view=8.6410103428e-01 T_diff_up_hemi=1.2635004122e-01 T_total_up_view=9.9045107550e-01 T_sg_up_dir=0.0000000000e+00 T_total_up_dir=6.9179254321e-03 AOD_ref=1.5000000000e-01 AOD_ref_nm=555.000 AOD_band=1.5167602002e-01 AOD_ext_ratio=1.0111734668e+00 tau_R=0.0000000000e+00 sza=30.000 vza=20.000 raa=90.000 wl=550.000 orders=13 conv=1
+=== A2010ver inputs/aerosol_ahmad2010_paper_mie/A2010ver_r95f00v01.mie wl=860 ===
+rt_absorption (SOS-integrated): λ=860.0nm τ_abs_col=0.0000e+00
+  h2o: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  o3: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  o2: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  co2: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  no2: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  ch4: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+1.1277719491e-02 2.5960193366e-03 -4.7248934233e-03  TOA_rho_I=1.1277719491e-02 TOA_rho_Q=2.5960193366e-03 TOA_rho_U=-4.7248934233e-03 TOA_rho_glint_direct_I=0.0000000000e+00 TOA_rho_glint_direct_Q=0.0000000000e+00 TOA_rho_glint_direct_U=0.0000000000e+00 T_dir_dn=8.9554324577e-01 T_diff_dn_hemi=9.2699298132e-02 T_diff_dn_dir=1.4166594219e-01 T_dir_up_view=9.0332231196e-01 T_diff_up_hemi=9.2699298132e-02 T_total_up_view=9.9602161009e-01 T_sg_up_dir=0.0000000000e+00 T_total_up_dir=9.7667915756e-03 AOD_ref=1.5000000000e-01 AOD_ref_nm=555.000 AOD_band=1.5555611097e-01 AOD_ext_ratio=1.0370407398e+00 tau_R=0.0000000000e+00 sza=30.000 vza=20.000 raa=90.000 wl=860.000 orders=12 conv=1

@@ -1,0 +1,68 @@
+# OCRT organic: Chl=0.3 mg m^-3 group=micro detritus_a440=0 m^-1 S_d=0.0109 nm^-1 data=inputs/water_iop
+rt_absorption (SOS-integrated): λ=443.0nm τ_abs_col=0.0000e+00
+  h2o: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  o3: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  o2: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  co2: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  no2: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  ch4: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+rt_water_iop_lut: loaded 501 rows from 'inputs/water_iop/water_coef_z09_1nm.txt' (λ 400.00..900.00 nm)
+rt_water_iop_psi_T: loaded 501 rows from 'inputs/water_iop/psi_T_rottgers2014_OCRT.txt' (λ 400.0..900.0 nm)
+[ocean+aer] AOD_ref=0.1500@555.0nm AOD_band=0.1564 τ_eff=0.1190 ω_a=0.9955 L_max=80
+warning: --debug-water-max-orders 7 is below the auto-selected in-water SOS cap 10000 for this mode; high-omega0 in-water RT may not converge (Lu/Rrs under-estimated). Intended only for single-scatter / diagnostic isolation.
+rt_water_rt: *** S-009 WARNING *** mixed OCRT organic phase: L=200 Legendre reconstruction is negative at sampled back angles (min=-3.446e-02).
+  P11/P12/P33 are all included and b-weighted, but a validated multi-component forward-truncation policy is still required for this phase.
+=================================================================
+==6045==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x51a000002918 at pc 0x558ab4a81d6b bp 0x7ebd775db660 sp 0x7ebd775db658
+READ of size 8 at 0x51a000002918 thread T0
+    #0 0x558ab4a81d6a in add_external_bottom_source src/rt_surface_boundary.c:741
+    #1 0x558ab4a81d6a in rt_surface_build_initial_sources src/rt_surface_boundary.c:798
+    #2 0x558ab4a3da3f in rt_solver_sos_pol_with_surface src/rt_solver.c:2673
+    #3 0x558ab4a436f3 in rt_solve_case_pol_impl src/rt_solver.c:747
+    #4 0x558ab4a49fdd in rt_solve_case_pol_for_ocean src/rt_solver.c:1159
+    #5 0x558ab4a5b176 in rt_solve_case_ocean src/rt_solver.c:4720
+    #6 0x558ab49e4e96 in main src/main.c:3448
+    #7 0x7eb98a835ca7  (/lib/x86_64-linux-gnu/libc.so.6+0x29ca7) (BuildId: 58749c528985eab03e6700ebc1469fa50aa41219)
+    #8 0x7eb98a835d64 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x29d64) (BuildId: 58749c528985eab03e6700ebc1469fa50aa41219)
+    #9 0x558ab49c87a0 in _start (/mnt/data/ocrt_water_mmax_hotfix_validation/ocrt_baseline_asan+0x16f7a0) (BuildId: 848e92368a881f95e9d14ddc5bcc8c2103720f70)
+
+0x51a000002918 is located 0 bytes after 1176-byte region [0x51a000002480,0x51a000002918)
+allocated by thread T0 here:
+    #0 0x7eb98b2f4610 in calloc ../../../../src/libsanitizer/asan/asan_malloc_linux.cpp:77
+    #1 0x558ab4a5a1c8 in rt_solve_case_ocean src/rt_solver.c:4546
+    #2 0x558ab49e4e96 in main src/main.c:3448
+    #3 0x7eb98a835ca7  (/lib/x86_64-linux-gnu/libc.so.6+0x29ca7) (BuildId: 58749c528985eab03e6700ebc1469fa50aa41219)
+
+SUMMARY: AddressSanitizer: heap-buffer-overflow src/rt_surface_boundary.c:741 in add_external_bottom_source
+Shadow bytes around the buggy address:
+  0x51a000002680: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x51a000002700: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x51a000002780: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x51a000002800: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x51a000002880: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+=>0x51a000002900: 00 00 00[fa]fa fa fa fa fa fa fa fa fa fa fa fa
+  0x51a000002980: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x51a000002a00: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x51a000002a80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x51a000002b00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x51a000002b80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+==6045==ABORTING

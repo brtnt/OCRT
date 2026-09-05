@@ -1,0 +1,46 @@
+[  2%] Building C object CMakeFiles/test_fr631_mie_reader.dir/tests/test_fr631_mie_reader.c.o
+[  4%] Building C object CMakeFiles/ocrt.dir/src/internal/rt_eap_coated_mie.c.o
+[  6%] Building C object CMakeFiles/test_fr631_mie_reader.dir/src/shared/mie_io.c.o
+[  9%] Building C object CMakeFiles/test_fr631_mie_reader.dir/src/shared/io_utils.c.o
+[ 11%] Building C object CMakeFiles/ocrt.dir/src/internal/rt_eap_species_catalog.c.o
+[ 13%] Building C object CMakeFiles/test_fr631_mie_reader.dir/src/shared/numerics.c.o
+[ 15%] Building C object CMakeFiles/ocrt.dir/src/main.c.o
+[ 18%] Linking C executable test_fr631_mie_reader
+[ 18%] Built target test_fr631_mie_reader
+[ 20%] Building C object CMakeFiles/ocrt.dir/src/rt_absorption.c.o
+[ 22%] Building C object CMakeFiles/ocrt.dir/src/rt_aerosol.c.o
+[ 25%] Building C object CMakeFiles/ocrt.dir/src/rt_aerosol_runtime.c.o
+[ 27%] Building C object CMakeFiles/ocrt.dir/src/rt_air_water.c.o
+[ 29%] Building C object CMakeFiles/ocrt.dir/src/rt_air_water_coupling.c.o
+[ 31%] Building C object CMakeFiles/ocrt.dir/src/rt_angle_grid.c.o
+[ 34%] Building C object CMakeFiles/ocrt.dir/src/rt_angular_basis.c.o
+[ 36%] Building C object CMakeFiles/ocrt.dir/src/rt_atm.c.o
+[ 38%] Building C object CMakeFiles/ocrt.dir/src/rt_eap_mie_phase.c.o
+[ 40%] Building C object CMakeFiles/ocrt.dir/src/rt_fourier.c.o
+[ 43%] Building C object CMakeFiles/ocrt.dir/src/rt_io.c.o
+[ 45%] Building C object CMakeFiles/ocrt.dir/src/rt_iop_ahn_mineral.c.o
+[ 47%] Building C object CMakeFiles/ocrt.dir/src/rt_iop_organic.c.o
+[ 50%] Building C object CMakeFiles/ocrt.dir/src/rt_kernel.c.o
+[ 52%] Building C object CMakeFiles/ocrt.dir/src/rt_layer_transport.c.o
+[ 54%] Building C object CMakeFiles/ocrt.dir/src/rt_molecular_phase.c.o
+[ 56%] Building C object CMakeFiles/ocrt.dir/src/rt_molecular_profile.c.o
+[ 59%] Building C object CMakeFiles/ocrt.dir/src/rt_phase_fr631.c.o
+[ 61%] Building C object CMakeFiles/ocrt.dir/src/rt_phase_moments.c.o
+[ 63%] Building C object CMakeFiles/ocrt.dir/src/rt_primary_source.c.o
+[ 65%] Building C object CMakeFiles/ocrt.dir/src/rt_pssa.c.o
+[ 68%] Building C object CMakeFiles/ocrt.dir/src/rt_quadrature.c.o
+[ 70%] Building C object CMakeFiles/ocrt.dir/src/rt_rayleigh.c.o
+[ 72%] Building C object CMakeFiles/ocrt.dir/src/rt_solver.c.o
+[ 75%] Building C object CMakeFiles/ocrt.dir/src/rt_sos_operator.c.o
+[ 77%] Building C object CMakeFiles/ocrt.dir/src/rt_surface_boundary.c.o
+[ 79%] Building C object CMakeFiles/ocrt.dir/src/rt_value_phase.c.o
+[ 81%] Building C object CMakeFiles/ocrt.dir/src/rt_water_iop.c.o
+[ 84%] Building C object CMakeFiles/ocrt.dir/src/rt_water_rt.c.o
+[ 86%] Building C object CMakeFiles/ocrt.dir/src/shared/io_utils.c.o
+[ 88%] Building C object CMakeFiles/ocrt.dir/src/shared/mie_io.c.o
+[ 90%] Building C object CMakeFiles/ocrt.dir/src/shared/numerics.c.o
+[ 93%] Building C object CMakeFiles/ocrt.dir/src/shared/surface.c.o
+[ 95%] Building C object CMakeFiles/ocrt.dir/src/shared/surface_multibounce.c.o
+[ 97%] Building C object CMakeFiles/ocrt.dir/src/shared/surface_persistent_cache.c.o
+[100%] Linking C executable ocrt
+[100%] Built target ocrt

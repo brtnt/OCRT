@@ -1,0 +1,2 @@
+PASS diffuse-top/source-operator closure tau_a=0 max_abs=2.776e-17
+PASS diffuse-top/source-operator closure tau_a=0.17 max_abs=5.551e-17

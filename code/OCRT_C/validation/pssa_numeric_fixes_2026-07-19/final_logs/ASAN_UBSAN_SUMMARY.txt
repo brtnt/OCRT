@@ -1,0 +1,14 @@
+OCRT PSSA numerical-fix final sanitizer summary
+Date: 2026-07-19
+Build: GCC C11 -O1 -g -fno-omit-frame-pointer -fsanitize=address,undefined -fopenmp
+OMP_NUM_THREADS=1
+ASAN_OPTIONS=detect_leaks=1:halt_on_error=1:abort_on_error=1
+UBSAN_OPTIONS=halt_on_error=1:print_stacktrace=1
+
+Representative cases:
+1. Rayleigh + flat Fresnel + PSSA, SZA 85 deg, 412 nm, 400 layers
+2. Rayleigh + M80C aerosol + flat Fresnel + PSSA, SZA 85 deg, 443 nm, 400 layers
+3. Gas-only ocean-coupled PSSA, SZA 85 deg, 555 nm, 400 layers
+4. OCRT organic Chl + Ahn TSM + aDOM ocean-coupled PSSA, reduced water SOS configuration
+
+Result: AddressSanitizer findings = 0; UndefinedBehaviorSanitizer findings = 0.

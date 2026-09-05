@@ -1,0 +1,132 @@
+{
+  "python_version": "pyOCRT-v1.2-2026-07-21-fullgrid-aerosol-object-fix",
+  "c_reference_version": "OCRT-v1.2-2026-07-21-KST-fullgrid-aerosol-object-fix",
+  "representative_case": {
+    "wavelength_nm": 490,
+    "aerosol": "C50",
+    "AOD865": 0.2,
+    "SZA_deg": 30,
+    "VZA_deg": [
+      0,
+      30
+    ],
+    "RAA_deg": [
+      0,
+      90,
+      180,
+      270
+    ],
+    "Chl_mg_m3": 1.2,
+    "TSM_g_m3": 3.5,
+    "aDOM440_m-1": 0.04,
+    "wind_ms": 3
+  },
+  "tests": {
+    "python_unit_tests": {
+      "status": "PASS",
+      "count": 3
+    },
+    "python_single_vs_fullgrid": {
+      "status": "PASS",
+      "max_abs_diff": 0.0,
+      "all_exact": true
+    },
+    "python_aod0_pre_vs_post": {
+      "status": "PASS",
+      "max_abs_diff": 0.0
+    },
+    "python_order_independence": {
+      "status": "PASS",
+      "max_abs_diff": 0.0
+    },
+    "python_aerosol_model_sensitivity": {
+      "status": "PASS",
+      "models": [
+        "C50",
+        "M50C",
+        "r80f20v01"
+      ],
+      "unique_TOA_I": 3
+    },
+    "python_aod_scaling": {
+      "status": "PASS",
+      "AOD865": [
+        0.0,
+        0.05,
+        0.2,
+        0.5
+      ],
+      "unique_TOA_I": 4
+    },
+    "python_lifecycle_100_cells": {
+      "status": "PASS",
+      "mie_read_count": 1,
+      "aerosol_prepare_count": 1,
+      "cell_solver_count": 100,
+      "same_runtime_object": true
+    },
+    "c_regression_tests": {
+      "status": "PASS",
+      "tests": [
+        "phase-wavelength PCHIP",
+        "external-bottom mode bounds"
+      ]
+    },
+    "c_fullgrid_aerosol_effect": {
+      "status": "PASS",
+      "note": "AOD=0.2 differs materially from AOD=0"
+    },
+    "c_python_aerosol_runtime": {
+      "status": "PASS",
+      "max_abs_diff": 2.220446049250313e-16,
+      "max_rel_diff": 1.0338959350851453e-15
+    },
+    "c_python_aod_response": {
+      "status": "PASS_WITH_RESIDUAL",
+      "rows": [
+        {
+          "quantity": "TOA_rho_I",
+          "C_AOD0": "1.107740046430e-01",
+          "C_AOD0p2": "1.332829286968e-01",
+          "C_change_pct": "20.31968071059746",
+          "Python_AOD0": "0.10529993639943772",
+          "Python_AOD0p2": "0.128562583050977",
+          "Python_change_pct": "22.091795538504723",
+          "change_difference_pp": "1.772114827907263"
+        },
+        {
+          "quantity": "Rrs_I",
+          "C_AOD0": "1.674054908662e-02",
+          "C_AOD0p2": "1.564766490406e-02",
+          "C_change_pct": "-6.528365210156076",
+          "Python_AOD0": "0.014840256415526774",
+          "Python_AOD0p2": "0.01383153892453414",
+          "Python_change_pct": "-6.797170229061901",
+          "change_difference_pp": "-0.26880501890582575"
+        },
+        {
+          "quantity": "rrs_I",
+          "C_AOD0": "3.023010168761e-02",
+          "C_AOD0p2": "2.843798018746e-02",
+          "C_change_pct": "-5.9282681833799815",
+          "Python_AOD0": "0.026373539050769113",
+          "Python_AOD0p2": "0.024765134881413936",
+          "Python_change_pct": "-6.098552667728799",
+          "change_difference_pp": "-0.1702844843488176"
+        }
+      ]
+    },
+    "c_python_full_rt_absolute": {
+      "status": "FAIL_PREEXISTING_BASELINE_MISMATCH",
+      "reason": "AOD=0 control already differs, so residual is outside the aerosol-object change",
+      "AOD0_intensity_rel_diff_pct": {
+        "TOA_rho_I": 4.941654191526239,
+        "Rrs_I": 11.351435734040814,
+        "rrs_I": 12.757359127314889
+      },
+      "quick_grid_note": "water_orders=8 and converged=0; diagnostic path test only"
+    }
+  },
+  "performance_note": "Full production-resolution Python coupled solve exceeded the 10-minute execution limit in this CPU environment; no production-converged C-Python full-RT claim is made.",
+  "conclusion": "The requested aerosol runtime/object lifecycle fix is implemented and validated. Aerosol preprocessing is C-Python identical and Python single/full-grid is exact and order-independent. Whole coupled RT absolute C-Python parity remains a separate pre-existing issue."
+}

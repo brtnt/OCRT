@@ -1,0 +1,226 @@
+{
+  "sequential_stage1_endpoint_vs_baseline": {
+    "TOA_rho_I": {
+      "max_abs": 0.0,
+      "max_abs_pct": 0.0,
+      "mean_signed_pct": 0.0,
+      "median_signed_pct": 0.0
+    },
+    "TOA_rho_Q": {
+      "max_abs": 0.0,
+      "max_abs_pct": 0.0,
+      "mean_signed_pct": 0.0,
+      "median_signed_pct": -0.0
+    },
+    "TOA_rho_U": {
+      "max_abs": 0.0,
+      "max_abs_pct": 0.0,
+      "mean_signed_pct": 0.0,
+      "median_signed_pct": -0.0
+    },
+    "T_diff_dn_hemi": {
+      "max_abs": 0.0,
+      "max_abs_pct": 0.0,
+      "mean_signed_pct": 0.0,
+      "median_signed_pct": 0.0
+    },
+    "T_total_up_dir": {
+      "max_abs": 0.0,
+      "max_abs_pct": 0.0,
+      "mean_signed_pct": 0.0,
+      "median_signed_pct": 0.0
+    }
+  },
+  "sequential_stage2_gasonly_vs_stage1": {
+    "TOA_rho_I": {
+      "max_abs": 0.0,
+      "max_abs_pct": 0.0,
+      "mean_signed_pct": 0.0,
+      "median_signed_pct": 0.0
+    },
+    "TOA_rho_Q": {
+      "max_abs": 0.0,
+      "max_abs_pct": 0.0,
+      "mean_signed_pct": 0.0,
+      "median_signed_pct": -0.0
+    },
+    "TOA_rho_U": {
+      "max_abs": 0.0,
+      "max_abs_pct": 0.0,
+      "mean_signed_pct": 0.0,
+      "median_signed_pct": -0.0
+    },
+    "T_diff_dn_hemi": {
+      "max_abs": 0.0,
+      "max_abs_pct": 0.0,
+      "mean_signed_pct": 0.0,
+      "median_signed_pct": 0.0
+    },
+    "T_total_up_dir": {
+      "max_abs": 0.0,
+      "max_abs_pct": 0.0,
+      "mean_signed_pct": 0.0,
+      "median_signed_pct": 0.0
+    }
+  },
+  "sequential_stage3_down_vs_stage2": {
+    "TOA_rho_I": {
+      "max_abs": 0.009728814180000045,
+      "max_abs_pct": 1.7189357773244531,
+      "mean_signed_pct": 1.0916132713737519,
+      "median_signed_pct": 1.1262160921509827
+    },
+    "TOA_rho_Q": {
+      "max_abs": 0.003325709964000001,
+      "max_abs_pct": 272.7147014482321,
+      "mean_signed_pct": 6.0489130444417984,
+      "median_signed_pct": 0.9029630426257611
+    },
+    "TOA_rho_U": {
+      "max_abs": 0.0005784764749999921,
+      "max_abs_pct": 0.7074614592061789,
+      "mean_signed_pct": -0.3717304531712133,
+      "median_signed_pct": -0.3904789731706442
+    },
+    "T_diff_dn_hemi": {
+      "max_abs": 0.03346235365,
+      "max_abs_pct": 8.883753395940394,
+      "mean_signed_pct": 5.9931310886618245,
+      "median_signed_pct": 5.842282720431271
+    },
+    "T_total_up_dir": {
+      "max_abs": 0.0018919729900000043,
+      "max_abs_pct": 1.7189357731664152,
+      "mean_signed_pct": 1.0916132710543056,
+      "median_signed_pct": 1.126216090910606
+    }
+  },
+  "sequential_stage4_beta_vs_stage3": {
+    "TOA_rho_I": {
+      "max_abs": 0.000244828650000084,
+      "max_abs_pct": 0.039924796535771946,
+      "mean_signed_pct": 0.0038495059002776897,
+      "median_signed_pct": 0.004622712584104004
+    },
+    "TOA_rho_Q": {
+      "max_abs": 0.0002472540979999993,
+      "max_abs_pct": 0.6514333914606676,
+      "mean_signed_pct": 0.0336051806657403,
+      "median_signed_pct": -0.010886056674757921
+    },
+    "TOA_rho_U": {
+      "max_abs": 0.00043613623799999834,
+      "max_abs_pct": 0.7605987273450765,
+      "mean_signed_pct": -0.21950418767565985,
+      "median_signed_pct": -0.14228887784984393
+    },
+    "T_diff_dn_hemi": {
+      "max_abs": 9.114399999732292e-07,
+      "max_abs_pct": 0.0002222311894599472,
+      "mean_signed_pct": 0.00012875720287879136,
+      "median_signed_pct": 0.000130354241424064
+    },
+    "T_total_up_dir": {
+      "max_abs": 2.847925000000473e-05,
+      "max_abs_pct": 0.039924798516853814,
+      "mean_signed_pct": 0.0038495061712790816,
+      "median_signed_pct": 0.0046227112386770675
+    }
+  },
+  "final_vs_baseline": {
+    "TOA_rho_I": {
+      "max_abs": 0.009825331339999965,
+      "max_abs_pct": 1.7384290955162756,
+      "mean_signed_pct": 1.095517250533412,
+      "median_signed_pct": 1.131780248586546
+    },
+    "TOA_rho_Q": {
+      "max_abs": 0.0034766004669999975,
+      "max_abs_pct": 275.1426894683488,
+      "mean_signed_pct": 6.1126957444260785,
+      "median_signed_pct": 0.8873187196491583
+    },
+    "TOA_rho_U": {
+      "max_abs": 0.0008427467349999967,
+      "max_abs_pct": 1.2396695762440433,
+      "mean_signed_pct": -0.5902859863699469,
+      "median_signed_pct": -0.49345842199768436
+    },
+    "T_diff_dn_hemi": {
+      "max_abs": 0.03346326508999997,
+      "max_abs_pct": 8.883995369600694,
+      "mean_signed_pct": 5.993268379541209,
+      "median_signed_pct": 5.842425605455169
+    },
+    "T_total_up_dir": {
+      "max_abs": 0.0018996806100000097,
+      "max_abs_pct": 1.7384290941996174,
+      "mean_signed_pct": 1.0955172504896098,
+      "median_signed_pct": 1.131780248940568
+    }
+  },
+  "endpoint_ablation_bad_vs_final": {
+    "TOA_rho_I": {
+      "max_abs": 0.00661698214999995,
+      "max_abs_pct": 1.1071737162728341,
+      "mean_signed_pct": -0.6868780807610163,
+      "median_signed_pct": -0.698346405739011
+    },
+    "TOA_rho_Q": {
+      "max_abs": 0.0023796865539999976,
+      "max_abs_pct": 41.34480381253723,
+      "mean_signed_pct": -1.8427209494933146,
+      "median_signed_pct": -0.5340403881647289
+    },
+    "TOA_rho_U": {
+      "max_abs": 0.00040145470199999533,
+      "max_abs_pct": 0.4960814013164442,
+      "mean_signed_pct": 0.26361428278345117,
+      "median_signed_pct": 0.23087582836429776
+    },
+    "T_diff_dn_hemi": {
+      "max_abs": 0.02547073082000001,
+      "max_abs_pct": 6.141877493785795,
+      "mean_signed_pct": -4.08719424313495,
+      "median_signed_pct": -4.283540309897138
+    },
+    "T_total_up_dir": {
+      "max_abs": 0.0011490268900000017,
+      "max_abs_pct": 1.1071737159718953,
+      "mean_signed_pct": -0.686878080700326,
+      "median_signed_pct": -0.6983464063580072
+    }
+  },
+  "down_ablation_no_down_vs_final": {
+    "TOA_rho_I": {
+      "max_abs": 0.009738415710000004,
+      "max_abs_pct": 1.6917970934334832,
+      "mean_signed_pct": -1.0789976351362172,
+      "median_signed_pct": -1.11425467099615
+    },
+    "TOA_rho_Q": {
+      "max_abs": 0.003336484419000002,
+      "max_abs_pct": 72.81111123648803,
+      "mean_signed_pct": -3.0063421325118074,
+      "median_signed_pct": -0.8913808217788408
+    },
+    "TOA_rho_U": {
+      "max_abs": 0.0006137892299999947,
+      "max_abs_pct": 0.758465201215509,
+      "mean_signed_pct": 0.4027016412416258,
+      "median_signed_pct": 0.4098583295266577
+    },
+    "T_diff_dn_hemi": {
+      "max_abs": 0.0334644603,
+      "max_abs_pct": 8.159429353952213,
+      "mean_signed_pct": -5.628645208310046,
+      "median_signed_pct": -5.520110917886405
+    },
+    "T_total_up_dir": {
+      "max_abs": 0.0018925806099999998,
+      "max_abs_pct": 1.6917970959457234,
+      "mean_signed_pct": -1.0789976356917705,
+      "median_signed_pct": -1.1142546710943355
+    }
+  }
+}

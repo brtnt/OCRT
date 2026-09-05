@@ -1,0 +1,124 @@
+{
+  "schema_version": 3,
+  "target_range_nm": [
+    330.0,
+    1100.0
+  ],
+  "pure_water_aw_bw": {
+    "file": "water_coef_z09_1nm.txt",
+    "source_range_nm": [
+      200.0,
+      2449.0
+    ],
+    "policy": "linear interpolation within source range",
+    "status": "complete"
+  },
+  "pure_water_temperature_correction": {
+    "file": "psi_T_rottgers2014_OCRT.txt",
+    "source_range_nm": [
+      400.0,
+      900.0
+    ],
+    "policy": "endpoint hold outside source range in current code",
+    "status": "incomplete for T != 20 C"
+  },
+  "phytoplankton_absorption": {
+    "file": "phyto_absorption_default.csv",
+    "quantity": "chlorophyll-a-specific phytoplankton absorption coefficient a_ph_star",
+    "unit": "m2 mg-1 Chl-a",
+    "runtime_equation": "a_ph[m-1] = a_ph_star[m2 mg-1] * TChl-a[mg m-3]",
+    "chl_1_interpretation": "at TChl-a=1 mg m-3, numerical a_ph equals a_ph_star",
+    "molecular_chlorophyll_a_spectrum": false,
+    "source_file": "source/phyto_absorption_plops2024_class_balanced_300_800_1nm_smoothed.csv",
+    "source_publication_doi": "10.1038/s41597-024-03001-z",
+    "source_dataset_doi": "10.5061/dryad.rbnzs7hfg",
+    "source_measurement_range_nm": [
+      300.0,
+      800.0
+    ],
+    "source_derived_runtime_segment_nm": [
+      330.0,
+      750.0
+    ],
+    "distributed_range_nm": [
+      330.0,
+      1100.0
+    ],
+    "selection": "34 screened cultures; median within six taxonomic classes; median across class medians",
+    "smoothing": "1-nm grid; 5-point centered moving average; reflected endpoint padding",
+    "longwave_policy": {
+      "taper_start_nm": 750.0,
+      "taper_end_nm": 800.0,
+      "a_ph_star_750_m2_per_mg_chla": 2.2351120859219934e-05,
+      "slope_per_nm": -4.4702241718439867e-07,
+      "equation": "a_ph_star(lambda)=a_ph_star(750)+slope*(lambda-750), 750<=lambda<=800",
+      "policy_from_800_nm": "exact zero through 1100 nm",
+      "source_values_751_800": "retained only in frozen derived source; intentionally replaced in active runtime table",
+      "scientific_status": "OCRT project closure; not a PLOPS measurement"
+    },
+    "runtime_special_case": false,
+    "runtime_interpolation": "generic in-range linear interpolation; fail outside table range",
+    "status": "component data complete for 330-1100 nm"
+  },
+  "phytoplankton_scattering": {
+    "policy": "disabled in Stage-2 constituent production; EAP catalog retained for advanced/generator validation",
+    "source_range_nm": [
+      350.0,
+      850.0
+    ],
+    "status": "not active"
+  },
+  "chl_linked_detritus_scattering": {
+    "file": "Detritus_Stramski2001.mie",
+    "source_phase_range_nm": [
+      350.0,
+      850.0
+    ],
+    "policy_above_850": "provisional 850-nm endpoint hold for P11/P12/P33 and bb/b",
+    "status": "330-349 nm unavailable; longwave scientific extrapolation pending",
+    "source_phase_wavelengths_nm": [
+      350.0,
+      400.0,
+      443.0,
+      490.0,
+      550.0,
+      620.0,
+      670.0,
+      745.0,
+      850.0
+    ],
+    "absolute_magnitude_model": "(1-f_ph(Chl))*Huot_bbp(550,Chl), spectrally partitioned by phase-derived r(lambda)=bb/b",
+    "f_ph_model": "0.035+0.015*tanh(log10(Chl)) for Chl>0",
+    "current_total_scattering_consequence": "b_det=[(1-f_ph)*Huot_bbp(550)]/r(550), hence wavelength-independent in the present closure",
+    "bulk_extinction_scattering_columns": "1.0 placeholders; not used for absolute detritus IOP magnitude",
+    "phase_gap_nm": [
+      [
+        330.0,
+        349.999999
+      ],
+      [
+        850.000001,
+        1100.0
+      ]
+    ]
+  },
+  "ahn_mineral_tsm": {
+    "source_range_nm": [
+      350.0,
+      3750.0
+    ],
+    "status": "330-349 nm input properties pending"
+  },
+  "overall_ocrt_330_1100_status": "phytoplankton absorption complete; full constituent model still blocked by non-absorption component gaps",
+  "chl_linked_detritus_absorption": {
+    "model": "a_d(lambda)=a_d440*exp[-S_d*(lambda-440)]",
+    "default_slope_nm_inverse": 0.0109,
+    "allowed_slope_range_nm_inverse": [
+      0.0024,
+      0.017
+    ],
+    "default_a_d440_m_inverse": 0.0,
+    "parameter_source": "a_d440 is an input parameter; it is not inferred from Chl-a in the current code",
+    "status": "analytic spectral model; default contribution is zero unless a_d440>0 is supplied"
+  }
+}

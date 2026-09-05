@@ -1,0 +1,26 @@
+--- /mnt/data/_audit_persist/OCRT_C_PERSISTENT_SURFACE_CACHE_EAP_DISABLED_2026-08-25/src/shared/surface_persistent_cache.h	2026-08-25 15:19:09.000000000 +0000
++++ /mnt/data/OCRT_C_FINAL_PLATFORM_NEUTRAL_PERF_2026-08-26/src/shared/surface_persistent_cache.h	2026-08-26 01:45:28.277704856 +0000
+@@ -12,8 +12,10 @@
+  *   - cache BUILD mode is rejected by the in-process --batch-full-grid driver.
+  *
+  * A cache miss in REQUIRED mode is a fail-loud error, never a wait for another
+- * row to finish.  BUILD is an explicit pre-run step performed before the
+- * independent simulation rows are launched.
++ * row to finish.  BUILD is an explicit, single-prebuilder pre-run step
++ * performed before the independent simulation rows are launched.  The cache
++ * implementation uses ISO C file I/O only and contains no OS-specific path,
++ * lock, process-ID, or filesystem API.
+  * ========================================================================== */
+ #ifndef SHARED_SURFACE_PERSISTENT_CACHE_H
+ #define SHARED_SURFACE_PERSISTENT_CACHE_H
+@@ -77,8 +79,8 @@
+                              double *payload, size_t payload_count);
+ 
+ /* Publish an immutable payload in BUILD mode. No-op in other modes.
+- * The writer uses a unique temporary file and one atomic rename; it never
+- * waits for another process and never creates a lock file. */
++ * BUILD is a single-prebuilder operation.  The writer uses ISO C file I/O
++ * and rename, never waits for another process, and never creates a lock file. */
+ int ocrt_surface_pcache_store(const ocrt_surface_pcache_key_t *key,
+                               const double *payload, size_t payload_count);
+ 

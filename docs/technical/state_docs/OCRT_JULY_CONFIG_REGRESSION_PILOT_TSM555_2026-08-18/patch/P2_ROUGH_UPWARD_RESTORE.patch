@@ -1,0 +1,129 @@
+--- a/src/rt_air_water_coupling.c	2026-08-17 13:08:02.000000000 +0000
++++ b/src/rt_air_water_coupling.c	2026-08-18 14:57:02.301721270 +0000
+@@ -520,11 +520,109 @@
+ 
+     const double n2 = n_water * n_water;
+ 
+-    /* Upward coupling uses the analytically resolved Snell/Fresnel mapping.
+-     * The former node-sampled rough BTDF experiment was disabled by default:
+-     * near-delta transmission rows were under-resolved on the water grid, and
+-     * the inactive path allocated scratch arrays on every call. */
+-    (void)sigma_type;
++    /* [P2 / WORKORDER-5, 2026-08-18] Milestone-2b rough water->air coupling
++     * RESTORED.  The former node-sampled variant was disabled because its
++     * near-delta transmission rows were under-resolved on the coarse water
++     * quadrature; the restored path resolves the lobe on a fine internal
++     * water-mu GL grid (Nfw = 192), symmetric to the forward FIX-B fine-grid
++     * technique.  wind <= 0 keeps the flat analytic path below untouched
++     * (bit-identical requirement, gate G1). */
++    if (wind_speed > 0.0) {
++        if (getenv("OCRT_DEBUG"))
++            fprintf(stderr, "[P2b] water_to_atm rough branch: n_mu_atm=%d m_max=%d\n",
++                    n_mu_atm, m_max);
++        /* [P2b / WORKORDER-5 delta handling] The reverse transmission row is a
++         * near-delta in mu_w centred at the reverse-Snell direction mu_w*(mu_a)
++         * (SESSION 14 finding: width ~1e-3 at nadir, narrower than any global
++         * quadrature).  Handling: per air direction, integrate on a composite
++         * grid = [dense uniform window of NWIN points across mu_w* +/- WHALF]
++         * + [global GL(NGLO) with window-interior weights zeroed].  The dense
++         * spacing (~3e-4) resolves the lobe core; the global part carries the
++         * broad wings incl. the TIR-cone leakage.  Deterministic construction,
++         * no per-angle branching. */
++        const int    NWIN  = 1024;
++        const int    NGLO  = 96;
++        const double WHALF = 0.30;
++        const int    NTOT  = NWIN + NGLO;
++        const int    n_phi_q = 2048;
++        double *xg = (double*)malloc((size_t)NGLO * sizeof(double));
++        double *wg = (double*)malloc((size_t)NGLO * sizeof(double));
++        double *xi = (double*)malloc((size_t)NTOT * sizeof(double));
++        double *wi = (double*)malloc((size_t)NTOT * sizeof(double));
++        double *Ff = (double*)malloc((size_t)NTOT * 3 * sizeof(double));
++        double *Tm = (double*)malloc((size_t)NTOT * 9 * sizeof(double));
++        int ok = (xg && wg && xi && wi && Ff && Tm) &&
++                 (rt_quadrature_gauss_legendre_pos(NGLO, xg, wg) == 0);
++        for (int j_a = 0; ok && j_a < n_mu_atm; ++j_a) {
++            const double mu_a = mu_atm_pos[j_a];
++            if (!(mu_a > 0.0) || mu_a > 1.0) {
++                for (int m = 0; m <= m_max; ++m) {
++                    I_air_per_m[(size_t)m * n_mu_atm + j_a] = 0.0;
++                    Q_air_per_m[(size_t)m * n_mu_atm + j_a] = 0.0;
++                    U_air_per_m[(size_t)m * n_mu_atm + j_a] = 0.0;
++                }
++                continue;
++            }
++            const double sin2_air = 1.0 - mu_a * mu_a;
++            const double mu_ws    = sqrt(fmax(0.0, 1.0 - sin2_air / n2));
++            double lo = mu_ws - WHALF; if (lo < 1e-6) lo = 1e-6;
++            double hi = mu_ws + WHALF; if (hi > 1.0 - 1e-9) hi = 1.0 - 1e-9;
++            const double h = (hi - lo) / (double)(NWIN - 1);
++            for (int i = 0; i < NWIN; ++i) {
++                xi[i] = lo + h * (double)i;
++                wi[i] = ((i == 0 || i == NWIN - 1) ? 0.5 : 1.0) * h;
++            }
++            for (int i = 0; i < NGLO; ++i) {
++                xi[NWIN + i] = xg[i];
++                wi[NWIN + i] = (xg[i] > lo && xg[i] < hi) ? 0.0 : wg[i];
++            }
++            for (int m = 0; m <= m_max; ++m) {
++                if (surface_T_wa_coxmunk_fourier_kernel(&mu_a, 1, xi, NTOT,
++                                                        m, n_phi_q,
++                                                        wind_speed, sigma_type,
++                                                        n_water, q_convention,
++                                                        Tm) != 0) { ok = 0; break; }
++                const double az = (m == 0) ? (2.0 * M_PI) : M_PI;
++                const double *I_w_m = &I_water_per_m[(size_t)m * (size_t)n_mu_water];
++                const double *Q_w_m = &Q_water_per_m[(size_t)m * (size_t)n_mu_water];
++                const double *U_w_m = &U_water_per_m[(size_t)m * (size_t)n_mu_water];
++                double Ia = 0.0, Qa = 0.0, Ua = 0.0;
++                for (int i = 0; i < NTOT; ++i) {
++                    if (wi[i] == 0.0) continue;
++                    const double wj = az * xi[i] * wi[i];
++                    const double *T = Tm + (size_t)i * 9;
++                    const double Iw = aw_interp_on_unsorted(mu_water_pos, I_w_m,
++                                                            n_mu_water, xi[i]);
++                    const double Qw = aw_interp_on_unsorted(mu_water_pos, Q_w_m,
++                                                            n_mu_water, xi[i]);
++                    const double Uw = aw_interp_on_unsorted(mu_water_pos, U_w_m,
++                                                            n_mu_water, xi[i]);
++                    Ia += wj * (T[0]*Iw + T[1]*Qw + T[2]*Uw);
++                    Qa += wj * (T[3]*Iw + T[4]*Qw + T[5]*Uw);
++                    Ua += wj * (T[6]*Iw + T[7]*Qw + T[8]*Uw);
++                }
++                I_air_per_m[(size_t)m * n_mu_atm + j_a] = Ia;
++                Q_air_per_m[(size_t)m * n_mu_atm + j_a] = Qa;
++                U_air_per_m[(size_t)m * n_mu_atm + j_a] = Ua;
++            }
++        }
++        free(Tm); free(Ff);
++        if (ok) {
++            /* mb_re_escape retained per original OPTION-2 design (multi-
++             * encounter add-on, both interface paths).  Gate measurement
++             * 2026-08-18: on the weightless single-view path this term
++             * contributes exactly zero (w_water NULL guard), so it does not
++             * interact with the restored kernel there; node-grid double-
++             * counting remains an open check (WORKORDER-5 follow-up). */
++            mb_re_escape_add_m0(I_water_per_m, mu_water_pos, w_water_pos,
++                                n_mu_water, n_water, wind_speed,
++                                mu_atm_pos, n_mu_atm, w_atm_pos, I_air_per_m);
++            free(xg); free(wg); free(xi); free(wi);
++            return 0;
++        }
++        free(xg); free(wg); free(xi); free(wi);
++        /* kernel/alloc failure: fall through to the flat analytic path */
++    }
+ 
+     for (int j_a = 0; j_a < n_mu_atm; ++j_a) {
+         double mu_a = mu_atm_pos[j_a];
+--- a/src/shared/surface.c	2026-08-17 13:08:02.000000000 +0000
++++ b/src/shared/surface.c	2026-08-18 14:49:27.789554633 +0000
+@@ -1540,7 +1540,8 @@
+     if (!mu_o || !mu_i || !T_m) return -1;
+     if (n_o < 1 || n_i < 1 || m < 0 || n_phi_quad < 4) return -1;
+ #ifdef OCRT_FAST_KERNELS
+-    if (ocrt_fkc_serve(&g_fkc_twa, surface_T_coxmunk_trig,
++    if (!getenv("OCRT_TWA_FKC_OFF") &&
++        ocrt_fkc_serve(&g_fkc_twa, surface_T_coxmunk_trig,
+                        mu_o, n_o, mu_i, n_i, m, n_phi_quad,
+                        ws, sigma_type, n_water, q_convention, T_m))
+         return 0;

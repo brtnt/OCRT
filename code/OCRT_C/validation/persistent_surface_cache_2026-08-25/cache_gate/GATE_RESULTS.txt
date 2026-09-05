@@ -1,0 +1,4 @@
+required_missing_rc=3
+batch_build_guard_rc=2
+corrupt_version_rc=3
+corrupted_file=ocrt_surface_v1_rww_1efe01972887d9c2c801eb671d47f18f.bin

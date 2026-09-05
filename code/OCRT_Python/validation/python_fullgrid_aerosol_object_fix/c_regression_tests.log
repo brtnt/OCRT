@@ -1,0 +1,8 @@
+$ build/test_phase_wavelength_pchip
+PASS phase-wavelength PCHIP: SciPy references, endpoint clamp, exact nodes, Mie pipeline
+$ build/test_ext_bottom_mode_bounds
+rt_solver: external bottom source shape mismatch (source n_mu=7 m_max=1, solver n_mu=8 m_max=4)
+rt_solver: external bottom source requires I/Q/U together
+PASS ext-bottom-mode-bounds zero-padding-and-shape-guard
+$ build/ocrt --version
+ocrt OCRT-v1.2-2026-07-21-KST-fullgrid-aerosol-object-fix

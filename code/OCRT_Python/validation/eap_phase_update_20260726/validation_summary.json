@@ -1,0 +1,86 @@
+{
+  "runtime_species_count": 17,
+  "legacy_alias_count": 3,
+  "canonical_group_count": 17,
+  "old_eap_files_removed": [
+    "pico_Synechococcus_EAP.mie",
+    "nano_Haptophytes_EAP.mie",
+    "Diatoms_centric_EAP.mie"
+  ],
+  "all_files_finite": true,
+  "max_phase_normalization_abs_error": 1.7032054960397502e-05,
+  "max_abs_P12_over_P11": 0.9887314215548335,
+  "max_abs_P33_over_P11": 1.0,
+  "max_beta0_abs_error": 0.0,
+  "c_python_all_eap_files_byte_identical": true,
+  "supplied_samples": [
+    {
+      "file": "EAP_02_Diatoms_centric_D6.mie",
+      "supplied_sha256": "499285f11d839544ece1d0169ed629161a15aeb1c3f1e6c2c6dc50078c8752b9",
+      "packaged_sha256": "499285f11d839544ece1d0169ed629161a15aeb1c3f1e6c2c6dc50078c8752b9",
+      "byte_identical": true
+    },
+    {
+      "file": "EAP_11_Prochlorococcus_D0p5.mie",
+      "supplied_sha256": "0adc790d1e04fb65085f02b7cd179e1b994a936770e55826efcaff72a9cb5a46",
+      "packaged_sha256": "0adc790d1e04fb65085f02b7cd179e1b994a936770e55826efcaff72a9cb5a46",
+      "byte_identical": true
+    },
+    {
+      "file": "EAP_15_Synechococcus_D1p2.mie",
+      "supplied_sha256": "5d1257849637e8c5574c5993ed16012207d76a63b90989322d82df8957e32149",
+      "packaged_sha256": "5d1257849637e8c5574c5993ed16012207d76a63b90989322d82df8957e32149",
+      "byte_identical": true
+    },
+    {
+      "file": "EAP_16_Microcystis_D5.mie",
+      "supplied_sha256": "b77f2487d2690cf927bd05a096ab76d557829f6907d84b6728c9a6e04d8dca77",
+      "packaged_sha256": "b77f2487d2690cf927bd05a096ab76d557829f6907d84b6728c9a6e04d8dca77",
+      "byte_identical": true
+    }
+  ],
+  "aliases": [
+    {
+      "alias": "pico",
+      "canonical": "eap_synechococcus",
+      "relative_file": "eap/EAP_15_Synechococcus_D1p2.mie",
+      "file_byte_identical": true,
+      "c_solver_stdout_byte_identical": true
+    },
+    {
+      "alias": "nano",
+      "canonical": "eap_hapto_prymnesiaceae",
+      "relative_file": "eap/EAP_12_Hapto_Prymnesiaceae_D4.mie",
+      "file_byte_identical": true,
+      "c_solver_stdout_byte_identical": true
+    },
+    {
+      "alias": "micro",
+      "canonical": "eap_diatoms_centric",
+      "relative_file": "eap/EAP_02_Diatoms_centric_D6.mie",
+      "file_byte_identical": true,
+      "c_solver_stdout_byte_identical": true
+    }
+  ],
+  "all_python_groups_finite_positive": true,
+  "phase_smoothness": [
+    {
+      "median_normalized_second_difference": 0.021087474266338464,
+      "max_normalized_second_difference": 1.04806148775931,
+      "mean_normalized_second_difference": 0.046114823337932855,
+      "dataset": "obsolete_Diatoms_centric_EAP",
+      "file": "/mnt/data/ocrt_eap_update_20260726_work/base/c/OCRT_v1.2_RRS_IQU_OUTPUT_2026-07-25/inputs/water_iop/Diatoms_centric_EAP.mie"
+    },
+    {
+      "median_normalized_second_difference": 0.0001439487542436749,
+      "max_normalized_second_difference": 0.006528186142210319,
+      "mean_normalized_second_difference": 0.0005991623107118462,
+      "dataset": "new_EAP_02_Diatoms_centric_D6",
+      "file": "/mnt/data/ocrt_eap_update_20260726_work/modified/OCRT_v1.2_EAP_PHASE_UPDATE_2026-07-26/inputs/water_iop/eap/EAP_02_Diatoms_centric_D6.mie",
+      "median_improvement_factor": 146.49292643854227,
+      "max_improvement_factor": 160.5440569445001
+    }
+  ],
+  "bundled_runtime_files": "17 representative species/diameter combinations",
+  "optional_generator_scope": "Table-1 70 combinations can be generated with tools/eap_generate_all.sh all; they are not pre-bundled."
+}

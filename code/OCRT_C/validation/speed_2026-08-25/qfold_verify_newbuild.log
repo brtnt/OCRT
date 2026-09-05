@@ -1,0 +1,7 @@
+[NEW-BUILD] pure      Rrs_I: median +0.240  max|.| 0.298  -> PASS
+[NEW-BUILD] pure      Rrs_Q: median -0.029  max|.| 0.127  -> PASS
+[NEW-BUILD] pure      Rrs_U: median -0.000  max|.| 0.091  -> PASS
+[NEW-BUILD] red_clay  Rrs_I: median +0.646  max|.| 0.889  -> PASS
+[NEW-BUILD] red_clay  Rrs_Q: median -0.012  max|.| 0.085  -> PASS
+[NEW-BUILD] red_clay  Rrs_U: median -0.000  max|.| 0.091  -> PASS
+VERIFY: PASS

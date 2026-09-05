@@ -1,0 +1,13 @@
+claim,verdict,evidence,scope
+17-species EAP generator integrated,PASS,API unit test and 17 generated mie files,catalog-to-phase
+EAP species RT scattering disabled,PASS,explicit species rc2 and phyto b/bb zero,production constituent model
+Chl absorption retained,PASS,OCRT_IOP dump a_phyto>0,production constituent model
+Detritus-only Chl particle phase,PASS,OCRT_PHASE_COMPONENT detritus only,production constituent model
+Constituent truncation works,REJECTED,flags previously ignored and now fail loudly,fixed-bulk only
+Fixed-bulk truncation preserved,PASS,test_stage2_eap_disabled.sh,diagnostic/validation path
+Provided underwater summary internally consistent,PASS,recomputed 50x26 summary max abs diff 0,provided data
+Provided Chl accuracy is production constituent accuracy,REJECTED,ff_chl2.py uses fixed-bulk bypass,provided Chl campaign
+OSOAA raw reference independently rerun,NOT CLAIMED,modified OSOAA provenance incomplete,this integration
+No non-Chl regression,PASS,18 stdout/stderr byte-identical cases,CDOM and TSM
+No runtime regression,PASS,same-physics no-Chl mean -0.978%,single geometry n_mu_water48
+Raw EAP source provenance complete,NOT COMPLETE,source hashes only; source files absent,raw-source-to-catalog

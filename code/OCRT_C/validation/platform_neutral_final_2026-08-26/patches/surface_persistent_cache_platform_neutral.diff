@@ -1,0 +1,110 @@
+--- /mnt/data/_audit_persist/OCRT_C_PERSISTENT_SURFACE_CACHE_EAP_DISABLED_2026-08-25/src/shared/surface_persistent_cache.c	2026-08-25 15:19:09.000000000 +0000
++++ /mnt/data/OCRT_C_FINAL_PLATFORM_NEUTRAL_PERF_2026-08-26/src/shared/surface_persistent_cache.c	2026-08-26 01:45:09.168215479 +0000
+@@ -17,22 +17,14 @@
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <string.h>
+-#include <sys/stat.h>
+ 
+-#ifdef _WIN32
+-#include <direct.h>
+-#include <process.h>
+-#define OCRT_PCACHE_GETPID() ((unsigned long)_getpid())
+-#define OCRT_PCACHE_SEP '\\'
+-#else
+-#include <unistd.h>
+-#define OCRT_PCACHE_GETPID() ((unsigned long)getpid())
+-#define OCRT_PCACHE_SEP '/'
+-#endif
+-
+-#ifndef PATH_MAX
+-#define PATH_MAX 4096
+-#endif
++/* The persistent-cache implementation deliberately uses only ISO C file I/O.
++ * The caller supplies an existing cache directory; the cache layer does not
++ * create directories, acquire OS locks, query process IDs, or call a
++ * platform-specific filesystem API.  Forward slashes are accepted by the
++ * supported C runtimes and keep one source path on all platforms. */
++#define OCRT_PCACHE_PATH_CAP 4096
++#define OCRT_PCACHE_SEP "/"
+ 
+ #define OCRT_PCACHE_MAGIC "OCRTSC01"
+ #define OCRT_PCACHE_MAGIC_N 8u
+@@ -48,7 +40,7 @@
+     int initialized;
+     ocrt_surface_pcache_mode_t mode;
+     int trace;
+-    char dir[PATH_MAX];
++    char dir[OCRT_PCACHE_PATH_CAP];
+ } ocrt_surface_pcache_config_t;
+ 
+ /* Immutable after the explicit pre-parallel initialization in OCRT main. */
+@@ -194,14 +186,10 @@
+                     ocrt_surface_pcache_mode_name());
+             return -1;
+         }
++        /* Directory creation/existence probing is intentionally outside the
++         * C solver.  BUILD will fail loudly if the path is not writable;
++         * READONLY/REQUIRED will report a cache miss. */
+         memcpy(g_pcache_cfg.dir, d, strlen(d) + 1u);
+-        struct stat st;
+-        if (stat(g_pcache_cfg.dir, &st) != 0 || !S_ISDIR(st.st_mode)) {
+-            fprintf(stderr,
+-                    "error: persistent surface cache directory does not exist: %s\n",
+-                    g_pcache_cfg.dir);
+-            return -1;
+-        }
+     }
+     g_pcache_cfg.initialized = 1;
+     if (g_pcache_cfg.trace) {
+@@ -256,7 +244,7 @@
+     const int add_sep = nd > 0 && g_pcache_cfg.dir[nd - 1] != '/' &&
+                         g_pcache_cfg.dir[nd - 1] != '\\';
+     int n = snprintf(path, cap, "%s%socrt_surface_v%u_%s_%016llx%016llx.bin",
+-                     g_pcache_cfg.dir, add_sep ? (OCRT_PCACHE_SEP == '\\' ? "\\" : "/") : "",
++                     g_pcache_cfg.dir, add_sep ? OCRT_PCACHE_SEP : "",
+                      OCRT_SURFACE_PCACHE_FORMAT_VERSION,
+                      ocrt_pcache_operator_name_(key->operator_kind),
+                      (unsigned long long)h.a, (unsigned long long)h.b);
+@@ -320,7 +308,7 @@
+     if (g_pcache_cfg.mode == OCRT_SURFACE_PCACHE_OFF) return 0;
+     if (!ocrt_pcache_key_valid_(key, payload_count) || !payload) return -1;
+ 
+-    char path[PATH_MAX]; ocrt_hash128_t expect_key_hash;
++    char path[OCRT_PCACHE_PATH_CAP]; ocrt_hash128_t expect_key_hash;
+     if (ocrt_pcache_make_path_(key,path,sizeof path,&expect_key_hash)!=0) return -1;
+     FILE *fp=fopen(path,"rb");
+     if(!fp) return ocrt_required_or_miss_("miss",path);
+@@ -390,11 +378,15 @@
+     if(g_pcache_cfg.mode!=OCRT_SURFACE_PCACHE_BUILD)return 0;
+     if(!ocrt_pcache_key_valid_(key,payload_count)||!payload)return -1;
+ 
+-    char path[PATH_MAX]; ocrt_hash128_t kh,ph;
++    char path[OCRT_PCACHE_PATH_CAP]; ocrt_hash128_t kh,ph;
+     if(ocrt_pcache_make_path_(key,path,sizeof path,&kh)!=0)return -1;
+     ocrt_pcache_hash_payload_(payload,payload_count,&ph);
+-    char tmp[PATH_MAX];
+-    int n=snprintf(tmp,sizeof tmp,"%s.tmp.%lu.%lu",path,OCRT_PCACHE_GETPID(),++g_pcache_tmp_counter);
++    char tmp[OCRT_PCACHE_PATH_CAP];
++    /* BUILD is an explicit single-prebuilder phase.  A payload-hash suffix
++     * plus a thread-local counter avoids process-ID and OS-runtime APIs while
++     * keeping incomplete files separate from the content-addressed target. */
++    int n=snprintf(tmp,sizeof tmp,"%s.tmp.%016llx.%lu",path,
++                   (unsigned long long)ph.a,++g_pcache_tmp_counter);
+     if(n<0||(size_t)n>=sizeof tmp)return -1;
+     FILE *fp=fopen(tmp,"wb");
+     if(!fp){fprintf(stderr,"error: cannot create persistent surface cache temp file %s: %s\n",tmp,strerror(errno));return -1;}
+@@ -426,8 +418,11 @@
+     if(fclose(fp)!=0)ok=0;
+     if(!ok){remove(tmp);fprintf(stderr,"error: failed to write persistent surface cache %s\n",tmp);return -1;}
+ 
+-    /* BUILD mode is an explicit pre-run step. No lock/poll: publish once by
+-     * atomic rename. If an identical target already exists, keep it. */
++    /* BUILD mode is an explicit single-prebuilder step.  Publication uses
++     * the ISO C rename operation; no lock, poll, wait, or OS-specific API is
++     * used.  If an identical target already exists, keep it.  REQUIRED mode
++     * validates the full header/key/payload, so an interrupted publication is
++     * detected rather than silently consumed. */
+     FILE *existing=fopen(path,"rb");
+     if(existing){fclose(existing);remove(tmp);}
+     else if(rename(tmp,path)!=0){

@@ -1,0 +1,9 @@
+# TSM Ahn: C=0.5 g m^-3 species=red_clay data=inputs/tsm_ahn phase=inputs/tsm_ahn/Red_clay_AHN.mie
+rt_absorption (SOS-integrated): λ=555.0nm τ_abs_col=0.0000e+00
+  h2o: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  o3: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  o2: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  co2: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  no2: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  ch4: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+error: persistent surface cache BUILD mode is forbidden inside --batch-full-grid; prebuild caches before launching independent rows, then use mode=required or readonly

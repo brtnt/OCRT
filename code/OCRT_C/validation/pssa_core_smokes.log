@@ -1,0 +1,49 @@
+== scripts/smoke_cli_water_branch_v118.sh ==
+PASS no_model
+PASS duplicate_model
+PASS cross_prefix
+PASS missing_required
+PASS legacy_unprefixed
+PASS non_ocean_model
+PASS species_without_tsm
+PASS iop_incomplete
+PASS iop_phase_conflict
+PASS orphan_iop_mie_control
+PASS ocrt_zero_pure
+PASS ccrr_zero_pure
+PASS zero_branches_stdout_bit_identity
+PASS iop_branch
+WATER_BRANCH_V118_SMOKE pass=14 fail=0
+== scripts/smoke_cli_ccrr_chl_v119.sh ==
+PASS canonical_legacy_byte_identity
+PASS table_reproducible
+PASS table_values
+PASS canonical_only_load
+PASS legacy_fallback_load
+PASS canonical_legacy_runtime_identity
+PASS run_440_1.0
+PASS run_443_0.3
+PASS run_555_0.3
+PASS run_670_0.3
+PASS runtime_absorption_values
+CCRR_CHL_V119_SMOKE pass=11 fail=0
+== scripts/smoke_cli_organic_chl.sh ==
+PASS organic module strict build and model anchors
+PASS canonical required-field gate
+PASS explicit-zero constituent input
+PASS pico/nano/micro group selection
+PASS detritus slope default bit identity
+PASS organic wavelength range gate
+PASS three-component vector phase and exact bb/b identity
+PASS phase preparation count independent of SOS orders
+PASS cache enabled/disabled stdout byte identity
+PASS P12/P33 affect IQU with invariant P11-derived IOP
+ORGANIC_CHL_SMOKE pass=10 fail=0
+== scripts/smoke_cli_tsm_ahn.sh ==
+PASS four-species 443-nm optical coefficients
+PASS Mie-only a*/b* fallback
+PASS CLI automatic red-clay vector-phase routing
+PASS default species equals explicit red_clay
+PASS species without positive TSM is rejected
+PASS explicit phase override conflict is rejected
+TSM_AHN_SMOKE pass=6 fail=0

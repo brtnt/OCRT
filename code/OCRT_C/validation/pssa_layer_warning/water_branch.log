@@ -1,0 +1,15 @@
+PASS no_model
+PASS duplicate_model
+PASS cross_prefix
+PASS missing_required
+PASS legacy_unprefixed
+PASS non_ocean_model
+PASS species_without_tsm
+PASS iop_incomplete
+PASS iop_phase_conflict
+PASS orphan_iop_mie_control
+PASS ocrt_zero_pure
+PASS ccrr_zero_pure
+PASS zero_branches_stdout_bit_identity
+PASS iop_branch
+WATER_BRANCH_V118_SMOKE pass=14 fail=0

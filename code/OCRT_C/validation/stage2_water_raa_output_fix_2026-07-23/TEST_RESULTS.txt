@@ -1,0 +1,44 @@
+OCRT stage-2 water RAA output fix test results
+Date: 2026-07-23
+Version: OCRT-v1.2-2026-07-23-KST-stage2-water-raa-output-fix
+
+BUILD
+PASS
+Binary: build/ocrt_stage2_final
+SHA256: 41391518435c788c4d99f798c82fd39a016c8e4227ce220cedc2096f001838df
+Compiler diagnostic output: empty
+
+SOURCE/UNIT AUDIT
+PASS: OCRT public RAA convention helpers
+PASS: stage-2 water RAA source audit
+
+RUNTIME REGRESSION
+PASS: water RAA output regression
+water/TOA ratio relative spread: 3.378%
+full-grid versus single geometry: PASS
+wind=0 branch: PASS
+principal-plane U: PASS
+
+FULL BASELINE GRID
+72/72 execution units completed
+600/600 comparison cells generated
+mirror identity maximum absolute difference: 0
+same-RAA TOA/irradiance maximum absolute difference: 0
+
+REPRESENTATIVE FINAL REBUILD CHECK
+Case: purewater 443 nm, SZA 40, wind 3, full grid
+Final rebuilt binary versus initial functional-patch binary:
+maximum difference over all numeric CSV columns = 0
+
+RUNTIME BENCHMARK
+baseline mean: 4.848506605 s
+updated mean:  4.848083745 s
+mean change:   -0.008721 %
+baseline median: 4.827955225 s
+updated median:  4.828571501 s
+median change:   +0.012765 %
+
+TIER-0
+NOT RUN: validation/assets/phase_lut/tier0_cs5.0_555.csv is absent from
+the supplied baseline, v1.01 full package, and handoff package.
+No Tier-0 result is claimed.

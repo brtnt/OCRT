@@ -1,0 +1,11 @@
+# water branch: ocrt selected with Chl=TSM=aDOM440=0; using native pure-water path
+rt_absorption (SOS-integrated): λ=555.0nm τ_abs_col=3.2570e-02
+  h2o: column=4.754e+22 mol/cm²  τ_abs_col=7.0809e-05
+  o3: column=9.321e+18 mol/cm²  τ_abs_col=3.2292e-02
+  o2: column=4.507e+24 mol/cm²  τ_abs_col=0.0000e+00
+  co2: column=7.116e+21 mol/cm²  τ_abs_col=0.0000e+00
+  no2: column=2.849e+15 mol/cm²  τ_abs_col=2.0694e-04
+  ch4: column=3.553e+19 mol/cm²  τ_abs_col=0.0000e+00
+rt_water_iop_lut: loaded 501 rows from 'inputs/water_iop/water_coef_z09_1nm.txt' (λ 400.00..900.00 nm)
+rt_water_iop_psi_T: loaded 501 rows from 'inputs/water_iop/psi_T_rottgers2014_OCRT.txt' (λ 400.0..900.0 nm)
+[D3tr] at-consume Ed=8.674105302e-02 Ed_diff=0.000000000e+00 Iview=1.269031373e-04 Up00=-1.000000000e+00 Up01=-1.000000000e+00

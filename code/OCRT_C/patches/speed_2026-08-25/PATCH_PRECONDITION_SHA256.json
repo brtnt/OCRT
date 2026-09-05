@@ -1,0 +1,24 @@
+{
+  "files": {
+    "src/shared/surface.c": {
+      "baseline_sha256": "6a7da737aa90649873736a1a7498a361857b94967701b3cc58659f145500ab76",
+      "patched_sha256": "9c41f187c019570576d68d3cb84e95799fe4de915aadf4b40eda179d1d7da23f"
+    },
+    "src/shared/surface.h": {
+      "baseline_sha256": "f52b0a6490f6d2f88166c5f975449ddb906abc7475a3e6c03ea7cbe78a093651",
+      "patched_sha256": "f2334bfee1c768dae4c717bdf53b303e64f5228f454f79bdebb6ed2784cb44eb"
+    },
+    "src/rt_air_water_coupling.c": {
+      "baseline_sha256": "2862979d3059209c24a878f5e39daf58aaedee3294597249f690832ab44c7d5a",
+      "patched_sha256": "ea3327f9d8531ef31737ea36e50cef43ea3d734d7a442a88ae1929450834c217"
+    },
+    "src/rt_solver.c": {
+      "baseline_sha256": "3f16fbc9bf401a44877876d802b978f66709b8f720590ffd6d40d8dae617040c",
+      "patched_sha256": "038330b0c5cff7c3a34980f7c80d30eb84ba814a2eb6fa6ff197423ed1a62e20"
+    },
+    "src/rt_water_rt.c": {
+      "baseline_sha256": "9a675a001bd2c2093ad2f3f22b42d10a7af01161208eb8678f76fe5c7381514f",
+      "patched_sha256": "7d6b1a56ffe4e077d298923f602c9c9d57076ac2ed1a435596c0e94e89486e6f"
+    }
+  }
+}

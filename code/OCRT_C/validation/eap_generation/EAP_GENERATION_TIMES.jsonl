@@ -1,0 +1,17 @@
+{"id": 3, "deff_um": 6.0, "file": "EAP_03_Cryptophytes_D6.mie", "rc": 0, "seconds": 14.164123140000015, "stderr": ""}
+{"id": 2, "deff_um": 6.0, "file": "EAP_02_Diatoms_centric_D6.mie", "rc": 0, "seconds": 14.173237433999986, "stderr": ""}
+{"id": 0, "deff_um": 6.0, "file": "EAP_00_Diatoms_pennate_D6.mie", "rc": 0, "seconds": 14.213538917999983, "stderr": ""}
+{"id": 1, "deff_um": 8.0, "file": "EAP_01_Chlorophytes_D8.mie", "rc": 0, "seconds": 27.983492221999995, "stderr": ""}
+{"id": 5, "deff_um": 6.0, "file": "EAP_05_Cyano_red_D6.mie", "rc": 0, "seconds": 17.522342071000025, "stderr": ""}
+{"id": 4, "deff_um": 6.0, "file": "EAP_04_Cyano_blue_D6.mie", "rc": 0, "seconds": 17.719761405999975, "stderr": ""}
+{"id": 9, "deff_um": 3.0, "file": "EAP_09_Pelagophytes_D3.mie", "rc": 0, "seconds": 3.4563977670000554, "stderr": ""}
+{"id": 10, "deff_um": 3.0, "file": "EAP_10_Prasinophytes_D3.mie", "rc": 0, "seconds": 3.400084493999998, "stderr": ""}
+{"id": 11, "deff_um": 0.5, "file": "EAP_11_Prochlorococcus_D0p5.mie", "rc": 0, "seconds": 0.16694938199998433, "stderr": ""}
+{"id": 7, "deff_um": 6.0, "file": "EAP_07_Eustigmatophytes_D6.mie", "rc": 0, "seconds": 12.898489286999961, "stderr": ""}
+{"id": 8, "deff_um": 6.0, "file": "EAP_08_Hapto_Pavlovaceae_D6.mie", "rc": 0, "seconds": 12.371357734000014, "stderr": ""}
+{"id": 12, "deff_um": 4.0, "file": "EAP_12_Hapto_Prymnesiaceae_D4.mie", "rc": 0, "seconds": 5.762088823999989, "stderr": ""}
+{"id": 15, "deff_um": 1.2, "file": "EAP_15_Synechococcus_D1p2.mie", "rc": 0, "seconds": 0.6735553400000072, "stderr": ""}
+{"id": 16, "deff_um": 5.0, "file": "EAP_16_Microcystis_D5.mie", "rc": 0, "seconds": 11.738346258999968, "stderr": ""}
+{"id": 14, "deff_um": 6.0, "file": "EAP_14_Rhodophytes_D6.mie", "rc": 0, "seconds": 15.313703517000022, "stderr": ""}
+{"id": 6, "deff_um": 24.0, "file": "EAP_06_Dinoflagellates_D24.mie", "rc": 0, "seconds": 195.424987365, "stderr": ""}
+{"id": 13, "deff_um": 24.0, "file": "EAP_13_Raphidophytes_D24.mie", "rc": 0, "seconds": 195.23650880000002, "stderr": ""}

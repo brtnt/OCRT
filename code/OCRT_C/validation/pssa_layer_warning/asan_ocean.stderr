@@ -1,0 +1,15 @@
+# water branch: ocrt selected with Chl=TSM=aDOM440=0; using native pure-water path
+rt_absorption (SOS-integrated): λ=443.0nm τ_abs_col=0.0000e+00
+  h2o: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  o3: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  o2: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  co2: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  no2: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+  ch4: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
+rt_water_iop_lut: loaded 501 rows from 'inputs/water_iop/water_coef_z09_1nm.txt' (λ 400.00..900.00 nm)
+rt_water_iop_psi_T: loaded 501 rows from 'inputs/water_iop/psi_T_rottgers2014_OCRT.txt' (λ 400.0..900.0 nm)
+warning: --debug-water-max-orders 2 is below the auto-selected in-water SOS cap 20 for this mode; high-omega0 in-water RT may not converge (Lu/Rrs under-estimated). Intended only for single-scatter / diagnostic isolation.
+warning: PSSA vertical resolution may be insufficient at SZA=80.000 deg with n_layers=40.
+         recommendation: use --n-layers >=200 for SZA 80-84 deg.
+         non-default Rayleigh-only layer counts require OCRT_ADVANCED=1.
+[D3tr] at-consume Ed=1.240710972e-01 Ed_diff=1.825961872e-01 Iview=1.254710236e-02 Up00=-1.000000000e+00 Up01=-1.000000000e+00

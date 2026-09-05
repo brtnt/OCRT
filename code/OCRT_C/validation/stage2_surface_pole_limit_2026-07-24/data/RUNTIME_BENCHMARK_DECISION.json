@@ -1,0 +1,12 @@
+{
+  "condition": "pure water 443 nm, SZA 40 deg, full grid 24 rows, OMP_NUM_THREADS=1",
+  "warmup_per_variant": 1,
+  "replicates_per_variant": 5,
+  "before_mean_s": 4.831626779600038,
+  "after_mean_s": 4.8569470852,
+  "mean_change_pct": 0.524053424549864,
+  "before_median_s": 4.819623711000077,
+  "after_median_s": 4.873949195000023,
+  "median_change_pct": 1.1271727266997322,
+  "bottleneck_profile_required": false
+}

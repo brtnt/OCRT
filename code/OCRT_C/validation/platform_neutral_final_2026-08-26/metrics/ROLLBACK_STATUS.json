@@ -1,0 +1,12 @@
+{
+  "final_source": "OCRT_C_FINAL_PLATFORM_NEUTRAL_PERF_2026-08-26",
+  "native_windows_gate": "ROLLED_BACK",
+  "source_platform_policy": "PLATFORM_NEUTRAL",
+  "persistent_cache_core": "ISO_C_FILE_IO_ONLY",
+  "new_os_specific_dependency_count": 0,
+  "powershell_files_in_final": 0,
+  "windows_executables_in_final": 0,
+  "portability_shim_unchanged": true,
+  "speed_optimization": "FROZEN_AT_PERSISTENT_CACHE",
+  "eap_runtime": "OFF_FAIL_LOUD"
+}

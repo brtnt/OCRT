@@ -1,0 +1,3 @@
+rt_solver: external bottom source shape mismatch (source n_mu=7 m_max=1, solver n_mu=8 m_max=4)
+rt_solver: external bottom source requires I/Q/U together
+PASS ext-bottom-mode-bounds zero-padding-and-shape-guard

@@ -1,0 +1,35 @@
+[
+  {
+    "component": "I",
+    "n": 624,
+    "max_abs_diff": 0.0,
+    "mean_diff": 0.0,
+    "rmse": 0.0,
+    "slope": 1.0,
+    "intercept": 0.0,
+    "r2": 1.0,
+    "byte_identical": true
+  },
+  {
+    "component": "Q",
+    "n": 624,
+    "max_abs_diff": 0.0,
+    "mean_diff": 0.0,
+    "rmse": 0.0,
+    "slope": 1.0,
+    "intercept": 0.0,
+    "r2": 1.0,
+    "byte_identical": true
+  },
+  {
+    "component": "U",
+    "n": 624,
+    "max_abs_diff": 0.0,
+    "mean_diff": 0.0,
+    "rmse": 0.0,
+    "slope": 1.0,
+    "intercept": 0.0,
+    "r2": 1.0,
+    "byte_identical": true
+  }
+]

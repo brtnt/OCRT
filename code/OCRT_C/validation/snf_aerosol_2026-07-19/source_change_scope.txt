@@ -1,0 +1,14 @@
+Source change scope versus OCRT_v1.2_PSSA_NUMERIC_FIXES_2026-07-19
+
+Directory comparison: ocrt/src/
+  changed: main.c
+  unchanged: all RT physics and numerical implementation modules
+
+main.c changes:
+  - release version string
+  - help text listing the 16 canonical SnF aerosol models
+  - removal of the filename-based M50C hard gate after canonical lineage replacement
+  - user-facing comments/error text for the expanded model set
+
+The build script is unchanged. The rebuilt release binary is byte-identical to
+the packaged build/ocrt binary.

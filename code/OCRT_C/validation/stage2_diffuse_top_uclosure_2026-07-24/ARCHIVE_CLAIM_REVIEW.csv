@@ -1,0 +1,11 @@
+issue,archive_status,independent_review,action,basis
+A: water-view RAA/U reconstruction,confirmed,confirmed,already retained,public RAA/output identity and exact mirror-transform regression
+B: air-to-water rotation azimuth pi shift,confirmed,confirmed,already retained,photon propagation-vector analytic limit and TAW matrix audit
+C: signed mu rotation plus m>0 incoming-U TAW storage,confirmed,confirmed,already retained,polar limit and 3x3 Fourier operator closure
+D: diffuse-top molecular incoming-U signs,candidate; do not apply,diagnosis confirmed; rejection overturned,apply ruI/ruQ/ruU sign correction,mode-node-basis source/operator closure to <=5.55e-17 in Rayleigh and mixed media
+interface closed within 0.05%,asserted,locally supported only,"retain as SZA40 strong-absorption interface gate, not global result",TAW/operator closure; no SZA80 coverage in archive gate
+minimum water optical depth 30,mandatory invariant,overgeneralized,replace by explicit equal physical depth plus depth-convergence test,current 443-nm sweep effectively converged near tau~6; exact depth parity is primary
+compare_entry exact input parity,claimed,not satisfied,add water depth and SOS caps to Config/OCRT command,"OSOAA receives derived depth, OCRT command receives no explicit depth; 412 nm stops at order 20"
+Rrs level-26 water-minus-black,primary gate,diagnostic branch only,retain in parallel with level-27+TWA,subtraction is ill-conditioned for Q and differs from TWA branch
+Q2=U2 pole constraint,reference-free invariant,conditionally valid,retain with explicit paired Fourier-coefficient definition,spin-2 polar limit; not a pointwise Q=U identity
+FIX4 judged by one aggregate Q/U ratio,basis for rejection,insufficient,replace with local operator closure plus multi-scope end-to-end tests,aggregate residual can improve/worsen through cancellation of independent errors

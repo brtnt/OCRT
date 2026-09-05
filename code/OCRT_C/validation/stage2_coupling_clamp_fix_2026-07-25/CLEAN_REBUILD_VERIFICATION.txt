@@ -1,0 +1,1 @@
+PASS: clean rebuild binary byte-identical

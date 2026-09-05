@@ -1,0 +1,41 @@
+OCRT EAP generator / phytoplankton-scattering-disable integration
+=================================================================
+Version: OCRT-v1.2-2026-07-26-KST-stage2-eap-generator-phyto-scattering-disabled
+
+PASS: EAP phase API normalization, physicality, determinism and error codes
+PASS: 17 representative EAP .mie files generated
+PASS: species 11 writer output repeated twice and packaged output byte-identical
+PASS: explicit canonical or legacy species + Chl > 0 fails with exit code 2
+PASS: species omitted + Chl > 0 retains phyto absorption and sets phyto b=bb=0
+PASS: Chl-linked particle phase is detritus only
+PASS: constituent truncation flags fail loudly
+PASS: fixed-bulk IOP truncation path remains operational
+PASS: 18 non-Chl CDOM/TSM cases stdout/stderr byte-identical
+PASS: underwater handoff 11154-row data -> 50-row summary exact recomputation
+PASS: 18 independent Rrs/rrs I/Q/U scatterplots regenerated
+PASS: public water RAA regression
+PASS: FIX1+FIX2+FIX3 regression
+PASS: diffuse-top FIX4 closure (2.776e-17 / 5.551e-17)
+PASS: exact-pole regression
+PASS: coupling-clamp n_mu_water 48/64/96 regression
+PASS: single/full-grid parity
+PASS: direct-glint RAA anchors
+
+Performance (same-physics no-Chl CDOM, 5 interleaved runs):
+  old mean   0.228257 s
+  new mean   0.226025 s
+  mean delta -0.978%
+  old median 0.227057 s
+  new median 0.226742 s
+  median delta -0.139%
+  verdict: no performance regression; no bottleneck profile required
+
+Important scope limitation:
+  The supplied Chl 0.13-0.25% rrs-I results use a fixed-bulk bypass with
+  detritus-only truncation and pure-water Rayleigh re-mixing. They are not
+  direct end-to-end validation of the production constituent-model path.
+
+Provenance limitation:
+  EAP_invivo_means.csv and 501nm_extended_e1701000.mat are absent. Their hashes
+  are frozen in src/generated/rt_eap_species_data.inc, so catalog->phase is
+  reproducible but raw-source->catalog is not reproducible from this package.
