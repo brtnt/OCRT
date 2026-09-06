@@ -20,7 +20,10 @@ repository root).
 
 2. Connect the local folder `<LOCAL_ROOT>`. It is the authoritative copy and the repository root
    (`.git` lives there). The local VM has git 2.34 and reaches github.com. Delete permission must
-   be granted again in every session (git needs it for lock files).
+   be granted again in every session (git needs it to remove its lock files). Without it, a stale
+   `.git/index.lock` can be moved aside with `mv` (renaming is allowed), and commits can be made in
+   a VM-local clone (`git clone https://github.com/brtnt/OCRT.git /tmp/ocrt_rw`, copy the changed
+   files from the mount, commit and push there).
 
 3. Mie tables come from the GitHub Release `data-v1` (four zip files, 1.3 GB → 181 tables, 4.3 GB):
    `bash scripts/fetch_data.sh` (Windows: `scripts\fetch_data.ps1`). If release downloads are
@@ -168,7 +171,9 @@ Environment variables: `OCRT_ADVANCED=1` (advanced options), `OCRT_DEBUG=1`, `OC
 
 2. 로컬 폴더 `<LOCAL_ROOT>` 를 연결한다. 이 폴더가 정본이며 저장소 루트다(`.git` 이 여기 있다).
    로컬 VM 에는 git 2.34 가 있고 github.com 에 닿는다. 삭제 권한은 세션마다 다시 받아야 한다
-   (git 의 lock 파일 처리에 필요).
+   (git 이 lock 파일을 지우는 데 필요). 권한이 없으면 남은 `.git/index.lock` 은 `mv` 로 옮겨 두고(이름
+   바꾸기는 허용됨), 커밋은 VM 로컬 클론에서 한다(`git clone https://github.com/brtnt/OCRT.git /tmp/ocrt_rw`
+   → 마운트에서 바뀐 파일 복사 → 거기서 커밋·푸시).
 
 3. Mie 표는 GitHub Release `data-v1`(zip 4개, 1.3 GB → 181 표 4.3 GB)에서 받는다:
    `bash scripts/fetch_data.sh` (Windows: `scripts\fetch_data.ps1`). 샌드박스에서 릴리스 다운로드가
