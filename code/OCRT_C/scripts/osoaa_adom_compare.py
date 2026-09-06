@@ -9,7 +9,7 @@
 import subprocess, os, csv, math, sys
 import numpy as np
 from scipy.interpolate import PchipInterpolator as PCHIP
-ROOT="/home/claude/osoaa_build"; EXE=f"{ROOT}/exe/OSOAA_MAIN.exe"; SURF=f"{ROOT}/DATABASE/SURF_MATR"
+ROOT="/home/user/osoaa_build"; EXE=f"{ROOT}/exe/OSOAA_MAIN.exe"; SURF=f"{ROOT}/DATABASE/SURF_MATR"
 OCRT="./build/v2_solver_vk"
 BANDS=[412,443,490,555,660,865]; WUM={b:f"{b/1000:.5f}" for b in BANDS}
 TAU={412:0.318540221,443:0.236054530,490:0.155974381,555:0.093751620,660:0.046362496,865:0.015540855}

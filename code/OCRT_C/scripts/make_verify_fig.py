@@ -104,5 +104,5 @@ d.text(xpos[4]+0.42, (cox_full+osoaa_nadir)/2, f"gap\n{osoaa_nadir-cox_full:.2e}
        fontsize=8.5, color="red", va="center")
 
 plt.tight_layout(rect=[0, 0.045, 1, 0.97])
-plt.savefig("/home/claude/work/verify_value_kernel.png", dpi=140, bbox_inches="tight")
+plt.savefig("/home/user/work/verify_value_kernel.png", dpi=140, bbox_inches="tight")
 print("saved verify_value_kernel.png")

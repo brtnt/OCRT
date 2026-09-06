@@ -5,9 +5,9 @@ OSOAA HYD.Model 3(ExtData=합성위상, UserProfile=합성 a,b) + AER 동일. �
 import subprocess, os, csv, math, sys, re
 import numpy as np
 from scipy.interpolate import PchipInterpolator as PCHIP
-ROOT="/home/claude/ws/SPEEDUP_2026-07-09/osoaa"; SURF=f"{ROOT}/DATABASE/SURF_MATR"
-OCRT="/home/claude/ws/SPEEDUP_2026-07-09/ocrt_opt/build/v2o_fbaer"
-MIEDIR="/home/claude/ws/SPEEDUP_2026-07-09/OCRT_FULLPKG_v1.09_2026-07-08/aux/phase_mie"
+ROOT="/home/user/ws/SPEEDUP_2026-07-09/osoaa"; SURF=f"{ROOT}/DATABASE/SURF_MATR"
+OCRT="/home/user/ws/SPEEDUP_2026-07-09/ocrt_opt/build/v2o_fbaer"
+MIEDIR="/home/user/ws/SPEEDUP_2026-07-09/OCRT_FULLPKG_v1.09_2026-07-08/aux/phase_mie"
 BANDS=[412,443,490,555,660,865]
 TAU={412:0.318540221,443:0.236054530,490:0.155974381,555:0.093751620,660:0.046362496,865:0.015540855}
 A_W={412:4.5506e-3,443:7.069e-3,490:1.500e-2,555:5.960e-2,660:4.100e-1,865:4.605}

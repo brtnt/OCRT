@@ -32,7 +32,7 @@ value kernel을 **완전히 wiring**:
 6. `src/main.c`: 로컬 `int aer_use_value_kernel = 0;` + `--aer-phase-kernel value|moment` 파싱 + ropts 4곳 중 **init 2(단일-case, line~1498)와 init 4(ropts2, LUT path, line~1674)에 `.use_value_kernel = aer_use_value_kernel` 추가**. init 1(batch struct, mie_path 있음)·init 3(ocean path)은 미수정(의도적).
    - **핵심 발견**: LUT(`--lut --output-full-grid --vector --surface coxmunk`)는 `rt_solve_case_pol_lut`(main.c line~1688) → ropts2(init 4) → aer2를 씀. 처음에 init 2만 고쳐서 발화 안 했음. init 4 고친 뒤 발화 확인.
 
-빌드 OK: `cd /home/claude/work/OCRT_AC_LUT_bundle && gcc -std=c11 -O2 -fopenmp -Isrc $(find src -name '*.c') -o build/v2_solver_vk -lm`
+빌드 OK: `cd /home/user/work/OCRT_AC_LUT_bundle && gcc -std=c11 -O2 -fopenmp -Isrc $(find src -name '*.c') -o build/v2_solver_vk -lm`
 (주의: `src/*.c shared/*.c`는 실패 — shared .c는 `src/shared/`에 있음. 반드시 `$(find src -name '*.c')` 사용.)
 
 ## 3. 틀린 증상 (정확한 수치)
@@ -72,7 +72,7 @@ MAPE: moment 4.99% → value **74.50%** (악화). nadir만 올바른 방향(−2
 - OCRT 명령(value 테스트): `./build/v2_solver_vk --surface coxmunk --wind-speed 3 --sza 30 --vza 0 --raa 90 --wavelength 412 --pressure 0 --mie inputs/M80C.mie --aod 0.2 --aer-l-max 80 --m-max 16 --aer-h-km 2.0 --n-layers 400 --trunc-aer-loglin --aer-phase-kernel value --vector --lut --lut-vza-step 10 --lut-vza-max 80 --lut-raa-step 30 --output-full-grid /tmp/vk_value.csv`
 - moment 비교는 `--aer-phase-kernel moment`로 동일 실행.
 - aerosol-only는 `--pressure 0` 필수(Rayleigh OFF). coupled로 보면 412서 Rayleigh가 nadir 지배해 결함이 가려짐(coupled@412 nadir +0.37%로 맞아버림).
-- OSOAA 기준: `/home/claude/work/OSOAA_OCRT_purewater_default_source` 내 AERONLY M80C 412 sza30 raa90 run의 `LUM_vsVZA.txt`. REFL 컬럼(=π·L/Ed) 사용. OCRT rho_I(=π·L/Ed)와 직접 비교. VZA<=0(upward) 행만, raa=90.
+- OSOAA 기준: `/home/user/work/OSOAA_OCRT_purewater_default_source` 내 AERONLY M80C 412 sza30 raa90 run의 `LUM_vsVZA.txt`. REFL 컬럼(=π·L/Ed) 사용. OCRT rho_I(=π·L/Ed)와 직접 비교. VZA<=0(upward) 행만, raa=90.
 - OSOAA 48-Gauss VZA 격자 → OCRT vza 격자로 linear 보간(nearest 금지).
 - OSOAA 재컴파일됨: `inc/OSOAA.h`의 `CTE_MAXNB_ANG_EXT` 200→400.
 

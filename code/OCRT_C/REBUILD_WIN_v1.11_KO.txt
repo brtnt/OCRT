@@ -6,7 +6,7 @@ sandbox 에서 소스·게이트·검증산출을 이미 반영했고 Linux 빌�
 통과했다. 남은 것은 Windows 실행파일 재빌드 하나다.  MSYS2 MinGW64 gcc 가
 PATH 에 있는 창(Anaconda PowerShell Prompt 도 가능)에서:
 
-    cd D:\Claud_Cowork\OCRT\code\OCRT_C
+    cd <LOCAL_ROOT>\code\OCRT_C
     .\build_win.bat
 
 옵션 없이 실행하면 -march=x86-64-v3 (AVX2) 로 빌드해

@@ -1,6 +1,6 @@
 # OCRT 마이그레이션 README — v1.11.1 (2026-09-05)
 
-새 Claude 세션이 이 저장소 하나로 작업을 재개하기 위한 문서다. 순서: 부트스트랩 → 현재 상태 →
+새 작업 세션이 이 저장소 하나로 작업을 재개하기 위한 문서다. 순서: 부트스트랩 → 현재 상태 →
 인벤토리(무엇이 git 에 있고 무엇이 로컬에만 있는가) → 재빌드·게이트 → 세션 종료 시 GitHub 반영 절차 →
 규칙 → 남은 과제. 이전 패키지(2026-08-19, `00_README_MIGRATION_KO.md`)의 §1–§5 는 상태 문서
 `OCRT_MIGRATION_STATUS_2026-08-23.md` 에 누적돼 있으므로 여기서는 반복하지 않는다.
@@ -15,7 +15,8 @@
        cd ocrt/code/OCRT_C && make        # 샌드박스는 AVX-512 지원 → Makefile 기본값 사용 가능
        bash scripts/run_ipss_gates.sh     # Mie 자료 없이 실행됨. ALL PASS 확인
 
-2. 로컬 폴더 `D:\Claud_Cowork\OCRT` 를 연결한다. 이 폴더가 **정본**이며 저장소 루트와 같다
+2. 로컬 폴더 `<LOCAL_ROOT>` 를 연결한다(`<LOCAL_ROOT>` = 이 저장소를 체크아웃한 로컬 작업 폴더, 이하 동일).
+   이 폴더가 **정본**이며 저장소 루트와 같다
    (`.git` 이 여기 있다). 로컬 VM 에는 git 2.34 가 있고 github.com 에 닿는다. 삭제 권한은 세션마다
    다시 받아야 한다(git 의 lock 파일 처리에 필요).
 
@@ -25,7 +26,7 @@
      `water_iop/Detritus_Stramski2001.mie`, `water_iop/eap/EAP_06_Dinoflagellates_D24.mie`
    - 전량이 필요하면 `package/PART01–PART10*.zip` 을 로컬에서 풀어 쓴다(198 canonical Mie).
 
-4. RTSOS 교차검증이 필요하면 `D:\Claud_Cowork\RTSOS` 를 따로 연결한다(이 저장소에 없음, 저자 코드).
+4. RTSOS 교차검증이 필요하면 `<LOCAL_ROOT>\..\RTSOS` 를 따로 연결한다(이 저장소에 없음, 저자 코드).
    빌드 주의는 상태 문서 §14 와 IPSS 기록 §11.2(링크 순서, `fSnowBRDF_INPUT` 초기화).
 
 5. Windows 실행파일은 사용자가 로컬에서 빌드한다: `code\OCRT_C\build_win.bat`
@@ -46,7 +47,7 @@
   OCRT −0.240 %(VZA 55). RTSOS 결함 2건(미초기화 플래그, 링크 순서)과 이산화 인공항 exp(−Δτ)−1 기록.
 - **저 SZA 잔차의 정체.** VZA 55 에서 남는 −0.2 % 는 시선경로 곡률 −(h̄/R_e)tan²θ_v 이며 legacy 가
   빠뜨렸던 항이다(SZA 무관, 천저에서 0). 구면 보정이 실제로 필요한 구간은 SZA 75° 이상.
-- 상세: 상태 문서 §14·§14.1, IPSS 기록 문서(§1–§11.6), `Claude outputs/` 의 그림 figI1–figI5.
+- 상세: 상태 문서 §14·§14.1, IPSS 기록 문서(§1–§11.6), `docs/reports/` 의 그림 figI1–figI5.
 - 참고: `src/main.c` 의 `V2_VERSION` 문자열은 v1.2 계보 표기이고 문서 버전(v1.11.1)과 체계가 다르다.
 
 ## 3. 인벤토리 — git 에 있는 것 / 로컬에만 있는 것
@@ -54,7 +55,7 @@
 git 에 있음(공개): `code/OCRT_C`(src·tests·scripts·tools·docs·validation·patches·매니페스트),
 `code/OCRT_Python`(코드·문서·테스트), `code/OSOAA`(기록·diff·매니페스트), `code/campaign_runner`,
 `code/run_tools`, `code/validation_05`(harness·bit_baselines·tools), `docs/technical`, `docs/validation`,
-`Claude outputs`, 상태 문서, 이 README, `LICENSE`, `.gitignore`, `.gitattributes`(`* -text`, 바이트 보존).
+`docs/reports`, 상태 문서, 이 README, `LICENSE`, `.gitignore`, `.gitattributes`(`* -text`, 바이트 보존).
 
 로컬에만 있음(`.gitignore`):
 
@@ -67,7 +68,7 @@ git 에 있음(공개): `code/OCRT_C`(src·tests·scripts·tools·docs·validati
 | 투고 전 원고 | `docs/paper/` | 69 MB | RSE 리뷰 논문·OCRT 논문 LaTeX/PDF/그림 |
 | 기술 문서 대형 자료 | `docs/technical/**/*.gz` | 64 MB | 편광 legacy 참조 CSV |
 | 빌드 산출물 | `build/`, `*.exe` | — | 재빌드 |
-| RTSOS | `D:\Claud_Cowork\RTSOS` | — | 저자 코드, 별도 폴더 |
+| RTSOS | `<LOCAL_ROOT>\..\RTSOS` | — | 저자 코드, 별도 폴더 |
 
 ## 4. 재빌드·게이트 (verbatim)
 
@@ -93,7 +94,7 @@ git 에 있음(공개): `code/OCRT_C`(src·tests·scripts·tools·docs·validati
 2. 로컬 VM 에서 커밋(저장소 루트 = 연결 폴더):
 
        cd ~/mnt/OCRT && git add -A && git status --short | head
-       git commit -m "<요약>" -m "Co-Authored-By: Claude <noreply@anthropic.com>"
+       git commit -m "<요약>"
 
 3. 푸시. 토큰은 저장소 밖에 둔다 — 폴더 루트의 `.github_token`(gitignore 됨) 에 한 줄로 두면
    다음 세션이 대화에 붙여넣지 않고 읽어 쓴다. 토큰은 해당 repo 한정 fine-grained(Contents: Read/Write),
@@ -113,7 +114,6 @@ git 에 있음(공개): `code/OCRT_C`(src·tests·scripts·tools·docs·validati
 - 정합 비교는 1:1 산포도(오차 밴드) 표준, 속도 비교는 동일 호스트 재실측 "OSOAA 대비 %" 만 유효.
 - OSOAA 수중 비교에서 풍속 3 m/s 미만 제외(3 포함).
 - RAA 규약: 180° = 경면(글린트), 0° = 후방산란. RT 파장 ≤ 2000 nm.
-- 모델 정책: 세션 기본은 최신 Fable. Opus 로 수행된 작업은 전수 재조사 대상.
 - 공개 저장소: 원고(`docs/paper`)·자료·토큰은 올리지 않는다. 라이선스는 학술·비상업(`LICENSE`).
 
 ## 7. 남은 과제

@@ -8,7 +8,7 @@ import subprocess, os, csv, math, sys
 import numpy as np
 from scipy.interpolate import PchipInterpolator as PCHIP
 
-ROOT="/home/claude/osoaa_build"; EXE=f"{ROOT}/exe/OSOAA_MAIN.exe"; SURF=f"{ROOT}/DATABASE/SURF_MATR"
+ROOT="/home/user/osoaa_build"; EXE=f"{ROOT}/exe/OSOAA_MAIN.exe"; SURF=f"{ROOT}/DATABASE/SURF_MATR"
 TAU={412:0.318540221,443:0.2360545301,490:0.1559743814,555:0.09375162019,660:0.04636249595,865:0.01554085494}
 WUM={b:f"{b/1000:.5f}" for b in TAU}
 BANDS=[412,443,490,555,660,865]; SZA=[0,40,80]; VZA_T=[0,30,60]; RAA=90; PHI=90  # raa90↔Phi90 invariant

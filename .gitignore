@@ -10,9 +10,10 @@
 # unpublished manuscript (LaTeX, PDF, figures) — local only until publication
 /docs/paper/
 
-# large scientific data, distributed separately (PART01–PART10 zips in package/)
+# large scientific data: the 181 Mie tables (4.3 GB) are distributed as GitHub Release assets
+# (see MIGRATION_README §3 / scripts/fetch_data.sh); small data files stay in git
 *.mie
-/code/OCRT_Python/data/
+!/code/OCRT_C/tests/fixtures/*.mie
 /code/validation_05/runs/
 *.gz
 *.zip
@@ -39,3 +40,6 @@ Thumbs.db
 .DS_Store
 desktop.ini
 *.swp
+
+# probe files
+.perm_probe

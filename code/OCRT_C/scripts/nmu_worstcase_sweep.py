@@ -6,7 +6,7 @@
 # n_mu=48 rows must reproduce the golden CSV (cross-check of this setup).
 import subprocess, os, csv, time, re
 
-BIN   = "/home/claude/work/build/v2_solver_vk"
+BIN   = "/home/user/work/build/v2_solver_vk"
 LUTD  = "/tmp/harness"                       # stored blend P11 LUTs from the harness
 OUT   = "/tmp/nmu_sweep.csv"
 BUDGET_S = 240                               # per-call wall budget (resumable)

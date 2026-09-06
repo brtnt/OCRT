@@ -104,7 +104,7 @@ OMP_NUM_THREADS=4 ./build/v2_solver_vk --surface ocean --wind-speed 3 \
 ### §I. OSOAA HYD shared-phase (외부 phase 주입)
 - `-HYD.Model 2 또는 3` + `-HYD.ExtData <phase파일>` + `-HYD.UserProfile <a,b 프로파일>` (OSOAA_MAIN.F:848).
 - ExtData = IMOD=4 포맷 (변환기 `mie_to_osoaa_extdata.py`: col ANGLE/F11/−F12·F11/F22·F11/F33·F11, 0→180 오름차순). 361각이면 `OSOAA.h CTE_MAXNB_ANG_EXT≥400`(현재 700 패치됨).
-- OSOAA 런: EXE=/home/claude/osoaa_build/exe/OSOAA_MAIN.exe, env OSOAA_NO_DIRECT_GLINT=1. 출력 Standard/RESLUM_vsVZA.txt(REFL air-side), Advanced/RESLUM_Adv_UP.txt(level0=TOA, level27=0- water-side), Flux.txt(Ed).
+- OSOAA 런: EXE=/home/user/osoaa_build/exe/OSOAA_MAIN.exe, env OSOAA_NO_DIRECT_GLINT=1. 출력 Standard/RESLUM_vsVZA.txt(REFL air-side), Advanced/RESLUM_Adv_UP.txt(level0=TOA, level27=0- water-side), Flux.txt(Ed).
 
 ---
 

@@ -63,7 +63,7 @@
 
 ## D군 — 문헌 기반 확장 후보 (RT_Papers 16편 학습 세션, 2026-08-25 추가)
 
-근거·상세: `D:\Claud_Cowork\RT_Papers\OCRT_UPGRADE_CANDIDATES_2026-08-23.md` (항목별 구현 경로·수치 벤치마크·레퍼런스 전문). 문헌 번호 [n]은 같은 폴더의 `RT_Papers_Review_2026-08-23.md` 컬렉션 번호. 기구현 항목(Cox–Munk+Sancer, view-as-node, truncation 계열, PCHIP, LBL 가스흡수, GPU 등)은 검토 후 제외했고, IOSM 임의각 후처리[2]는 view-as-node 기구현으로 **비적용 판정**.
+근거·상세: `<LOCAL_ROOT>\..\RT_Papers\OCRT_UPGRADE_CANDIDATES_2026-08-23.md` (항목별 구현 경로·수치 벤치마크·레퍼런스 전문). 문헌 번호 [n]은 같은 폴더의 `RT_Papers_Review_2026-08-23.md` 컬렉션 번호. 기구현 항목(Cox–Munk+Sancer, view-as-node, truncation 계열, PCHIP, LBL 가스흡수, GPU 등)은 검토 후 제외했고, IOSM 임의각 후처리[2]는 view-as-node 기구현으로 **비적용 판정**.
 
 29. **비탄성 산란 구현(엽록소 형광→FDOM→Raman 순).** 배경: elastic 전용 한계 — GOCI 680nm이 685nm 형광 방출역 내부, 논문 §8 planned 명시. 다음 행동: (i) 형광부터 — 등방·무편광이라 m=0·I 성분 소스만 추가(quenching 파라미터 기본값 문헌 제공), (ii) FDOM(Hawes 표), (iii) Raman(m≤2 위상행렬로 3×3 구조에 무손실, 여기 8점; Pope&Fry a_w의 a_R 이중가산 금지, UV 입력 확장 선결). 공통 구조: 여기파장 탄성 루프→소스 조립→방출파장 1회 재실행. 근거: [6] Zhai 2017 OE 25 A223, [7] Zhai 2018 RS 10 1309, [5] Zhai 2015 OE 23 23582. 의존: 33(UV a_w). 승인: 설계 승인 후 착수.
 30. **채널 분광응답 합성(double-k + ILS 통합).** 배경: LBL 단색만 있고 밴드 평균 계층 부재 — GLIMR '활용 가능' 주장과 GOCI 밴드 시뮬의 실질 요건. 다음 행동: 약흡수 채널 유효 τ̄_g 1회 호출(<0.5%), O₂-A/B급은 double-k(채널당 3/5/7회); 선행 확인 = GOCI 680nm 대역폭의 O₂-B(686nm) 중첩 여부. 근거: [15] Zhai 2022 FRSEN 3:840188 §2.3. 의존: 없음. 승인: 불요(기능 추가).

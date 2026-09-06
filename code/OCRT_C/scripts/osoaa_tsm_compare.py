@@ -6,10 +6,10 @@ OCRT: fixed-bulk, 무대기(P=0,aod=0,§E), nmw48(§D). OSOAA: HYD.Model 3, thin
 import subprocess, os, csv, math, sys, re
 import numpy as np
 from scipy.interpolate import PchipInterpolator as PCHIP
-ROOT="/home/claude/ws/SPEEDUP_2026-07-09/osoaa"; SURF=f"{ROOT}/DATABASE/SURF_MATR"
-OCRT="/home/claude/ws/SPEEDUP_2026-07-09/ocrt_opt/build/v2o_s23"
-CONV="/home/claude/ws/SPEEDUP_2026-07-09/OCRT_FULLPKG_v1.09_2026-07-08/ocrt/scripts/mie_to_osoaa_extdata.py"
-MIE="/home/claude/ws/SPEEDUP_2026-07-09/OCRT_FULLPKG_v1.09_2026-07-08/inputs/tsm_ahn/Brown_earth_AHN.mie"
+ROOT="/home/user/ws/SPEEDUP_2026-07-09/osoaa"; SURF=f"{ROOT}/DATABASE/SURF_MATR"
+OCRT="/home/user/ws/SPEEDUP_2026-07-09/ocrt_opt/build/v2o_s23"
+CONV="/home/user/ws/SPEEDUP_2026-07-09/OCRT_FULLPKG_v1.09_2026-07-08/ocrt/scripts/mie_to_osoaa_extdata.py"
+MIE="/home/user/ws/SPEEDUP_2026-07-09/OCRT_FULLPKG_v1.09_2026-07-08/inputs/tsm_ahn/Brown_earth_AHN.mie"
 BANDS=[412,443,490,555,660,865]
 A_W={412:4.5506e-3,443:7.069e-3,490:1.500e-2,555:5.960e-2,660:4.100e-1,865:4.605}
 B_W={412:6.650e-3,443:4.872e-3,490:3.164e-3,555:1.859e-3,660:8.875e-4,865:2.763e-4}

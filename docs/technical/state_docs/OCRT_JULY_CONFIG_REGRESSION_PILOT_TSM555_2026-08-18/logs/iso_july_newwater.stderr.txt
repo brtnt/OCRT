@@ -1,5 +1,5 @@
 # TSM Ahn: C=0.5 g m^-3 species=red_clay data=inputs/tsm_ahn phase=inputs/tsm_ahn/Red_clay_AHN.mie
-# LUT grid output: /home/claude/work/runs/iso_july_newwater/fullgrid.csv (vza step 5 deg, raa step 15 deg, vza max 60 deg)
+# LUT grid output: /home/user/work/runs/iso_july_newwater/fullgrid.csv (vza step 5 deg, raa step 15 deg, vza max 60 deg)
 rt_absorption (SOS-integrated): λ=555.0nm τ_abs_col=0.0000e+00
   h2o: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
   o3: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
@@ -10,4 +10,4 @@ rt_absorption (SOS-integrated): λ=555.0nm τ_abs_col=0.0000e+00
 rt_water_iop_lut: loaded 2250 rows from 'inputs/water_iop/water_coef_z09_1nm.txt' (λ 200.00..2449.00 nm)
 rt_water_iop_psi_T: loaded 501 rows from 'inputs/water_iop/psi_T_rottgers2014_OCRT.txt' (λ 400.0..900.0 nm)
 [D3tr] at-consume Ed=7.940889474e-01 Ed_diff=0.000000000e+00 Iview=2.102201960e-02 Up00=-1.000000000e+00 Up01=-1.000000000e+00
-ocean_rrs_full_grid: n_mu=13 n_raa=24 rows=312 fail=0 output=/home/claude/work/runs/iso_july_newwater/fullgrid.csv
+ocean_rrs_full_grid: n_mu=13 n_raa=24 rows=312 fail=0 output=/home/user/work/runs/iso_july_newwater/fullgrid.csv

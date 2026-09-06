@@ -1,0 +1,50 @@
+# AFGL user-defined atmospheric profile — TEMPLATE (빈 껍데기)
+# Generated: 2026-05-24 KST (OCRT v1.04+qaa_debug Phase 2)
+#
+# 사용법:
+#   1. 본 file 의 데이터 행 (`# --- 데이터 행 작성 영역 ---` 아래) 을
+#      자신의 vertical profile 값으로 채운다.
+#   2. CLI: --atm-profile userdef  (기체흡수는 기본 활성; 본 파일은
+#      inputs/afgl_atm/ 경로 고정 -- --afgl-dir/--use-absorption 은 2026-07-15 삭제)
+#   3. 데이터 행 column 순서는 아래 헤더와 정확히 일치해야 한다.
+#
+# 단위:
+#   z_km          : km, **ascending order** (0 = ground, 마지막 = TOA)
+#   P_mbar        : pressure [mbar]
+#   T_K           : temperature [K]
+#   n_cm-3        : total atmospheric number density [cm⁻³]
+#                   (= P_mbar × 7.2429e18 / T_K from ideal gas law,
+#                    k_B = 1.380649e-23 J/K)
+#   mr_<gas>_ppmv : volume mixing ratio [ppmv = parts per million by volume]
+#                   for {H2O, O3, O2, CO2, NO2, CH4} (순서 정확히 일치)
+#
+# 결정 4 (2026-05-24): z_km 의 마지막 값 이상 고도는 OCRT layered
+# integration 에서 자동으로 기여 0 (외삽 안 함). AFGL usstd76 의
+# z >= 60 km 기여가 모든 가스에서 < 0.1 % 이므로, 0 ~ 60 km 까지만
+# 작성해도 충분히 안전.
+#
+# Gas column override (--gas-column-<gas>) 가 동시에 주어지면, 본 file 의
+# vertical profile shape 는 유지되고 total column 만 사용자 입력값으로
+# scaling 된다 (option C, 결정 3).
+#
+# 일관성 자동 검증 (결정 3, 2026-05-24):
+#   - n_cm-3 vs ideal-gas P/(k_B T) 가 1 % 이상 차이 시 stderr 경고.
+#   - T <= 0 K 또는 P <= 0 mbar 시 비물리적 값 경고.
+#   - 사용자 책임으로 두고 OCRT 는 abort 하지 않음 (경고만 출력).
+#   - 첫 5 layer 까지 개별 경고, 그 이상은 suppressed count.
+#
+# columns: z_km  P_mbar  T_K  n_cm-3  mr_H2O_ppmv  mr_O3_ppmv  mr_O2_ppmv  mr_CO2_ppmv  mr_NO2_ppmv  mr_CH4_ppmv
+#
+# ============================================================
+# --- 데이터 행 작성 영역 (이 line 아래에 채워 넣기) ---
+# ============================================================
+#
+# 아래 두 줄은 file 의 동작을 보장하기 위한 placeholder 입니다.
+# 모든 가스 mr = 0 이므로 OCRT 의 τ_abs 결과는 항상 0 이 됩니다.
+# 실제 사용 시 사용자 측정/모델 값으로 교체해주세요.
+#
+# 참고: usstd76 ground level 값은 (예시, 직접 복사 시 단위 일치 확인):
+#   0.00  1.01300e+03  288.200  2.54585e+19  7.74500e+03  2.66000e-02  2.09000e+05  3.30000e+02  3.00000e-05  1.70000e+00
+#
+  0.00  0.00000e+00  0.00000e+00  0.00000e+00  0.00000e+00  0.00000e+00  0.00000e+00  0.00000e+00  0.00000e+00  0.00000e+00
+100.00  0.00000e+00  0.00000e+00  0.00000e+00  0.00000e+00  0.00000e+00  0.00000e+00  0.00000e+00  0.00000e+00  0.00000e+00

@@ -1,0 +1,126 @@
+{
+  "schema_version": 2,
+  "release_date": "2026-08-14",
+  "official_elastic_range_nm": [
+    330.0,
+    1100.0
+  ],
+  "runtime_policy": {
+    "interpolation": "in-range only",
+    "out_of_range": "fail-loud",
+    "silent_endpoint_clamp": false,
+    "component_specific_wavelength_fallbacks": false,
+    "raman_in_scope": false,
+    "osoaa_extension_in_scope": false
+  },
+  "pure_water_aw_bw": {
+    "file": "water_coef_z09_1nm.txt",
+    "range_nm": [
+      200.0,
+      2449.0
+    ],
+    "step_nm": 1.0,
+    "status": "complete; unchanged from prior canonical release",
+    "bb_policy": "bb_w=0.5*b_w"
+  },
+  "pure_water_temperature_correction": {
+    "file": "psi_T_rottgers2014_OCRT.txt",
+    "range_nm": [
+      330.0,
+      1100.0
+    ],
+    "step_nm": 1.0,
+    "status": "complete",
+    "method": "330-440 exact zero; 441-1100 PCHIP from Rottgers/WOPP family with 440 zero anchor"
+  },
+  "phytoplankton_absorption": {
+    "file": "phyto_absorption_default.csv",
+    "range_nm": [
+      330.0,
+      1100.0
+    ],
+    "step_nm": 1.0,
+    "status": "complete",
+    "method": "PLOPS class-balanced robust median; 330-750 source-derived, 750-800 linear taper, 800-1100 exact zero"
+  },
+  "phytoplankton_scattering": {
+    "status": "disabled in Stage-2 production",
+    "eap_catalog_range_nm": [
+      350.0,
+      850.0
+    ],
+    "runtime_policy": "advanced/catalog only; fail-loud outside native range"
+  },
+  "chl_linked_detritus_scattering": {
+    "active_file": "Detritus_Stramski2001.mie",
+    "active_bulk_range_nm": [
+      350.0,
+      850.0
+    ],
+    "active_phase_range_nm": [
+      350.0,
+      850.0
+    ],
+    "status": "validated legacy phase retained; fail-loud outside native range",
+    "rejected_candidate": "candidates/Detritus_Stramski2001_330_1100_CANDIDATE_REJECTED_L200.mie",
+    "candidate_range_nm": [
+      330.0,
+      1100.0
+    ],
+    "candidate_decision": "rejected for Stage-2 production after matched-input RT test",
+    "rejection_reason": "L=200 reconstruction negative (min about -8.07e-2) and water SOS failed to converge; candidate produced nonphysical divergent radiance",
+    "operational_consequence": "OCRT constituent runs with Chl>0 are currently supported only over 350-850 nm; Chl absorption data itself covers 330-1100, but coupled Chl-linked scattering is unavailable outside the active detritus range"
+  },
+  "ahn_mineral_tsm": {
+    "scalar_files": 8,
+    "mie_files": 4,
+    "range_nm": [
+      330.0,
+      1100.0
+    ],
+    "status": "complete",
+    "science_caveat": "source-informed seawater forward-Mie restoration; not claimed as exact historical reproduction"
+  },
+  "atmospheric_aerosol": {
+    "mie_files": 176,
+    "range_nm": [
+      330.0,
+      1100.0
+    ],
+    "status": "complete",
+    "families": {
+      "snf_opac": 16,
+      "ahmad2010_paper": 80,
+      "ahmad2010_accurt": 80
+    },
+    "method": "legacy nodes retained; explicit 330 and 1100 nodes added"
+  },
+  "absorbing_gases": {
+    "files": 6,
+    "gases": [
+      "h2o",
+      "o2",
+      "co2",
+      "ch4",
+      "o3",
+      "no2"
+    ],
+    "range_nm": [
+      330.0,
+      1100.0
+    ],
+    "step_nm": 1.0,
+    "vertical_levels": 40,
+    "status": "complete for six-gas contract",
+    "excluded": [
+      "O2-O2/O4 CIA"
+    ]
+  },
+  "legacy_narrow_mie_removed": [
+    "inputs/Phytoplankton.mie",
+    "inputs/TSM_mineral.mie",
+    "inputs/Calcareous_sand_from_OSOAA_phase_443_550.mie",
+    "Python root-level legacy r*.mie duplicates (80 files)"
+  ],
+  "scope_note": "The 330-1100 official elastic contract is component-selective: a run is valid only when every selected active component covers the requested wavelength. Pure water, CDOM, AHN mineral TSM, atmosphere/aerosol and six gases cover the full range; Chl-linked detritus currently limits Chl>0 constituent runs to 350-850 nm."
+}

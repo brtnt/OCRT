@@ -1,6 +1,6 @@
 # OCRT 마이그레이션 상태 문서 (2026-08-23)
 
-이 문서가 D:\Claud_Cowork\OCRT의 **유일한 최상위 기준 문서**다. 새 작업 세션은 이 문서만 읽으면 현재 상태에서 이어갈 수 있다.
+이 문서가 <LOCAL_ROOT>의 **유일한 최상위 기준 문서**다. 새 작업 세션은 이 문서만 읽으면 현재 상태에서 이어갈 수 있다.
 
 프로젝트 목표: **OCRT의 Python & C 페어 구현 개발. 구현 정확도 레퍼런스는 OSOAA.**
 
@@ -9,7 +9,7 @@
 ## 1. 폴더 구조 (2026-08-23 재조직 완료)
 
 ```text
-D:\Claud_Cowork\OCRT\
+<LOCAL_ROOT>\
 ├─ OCRT_MIGRATION_STATUS_2026-08-23.md   ← 이 문서 (root에는 이것만 유지)
 ├─ code\
 │  ├─ OCRT_C\            C 소스 최신 패치 상태. build\ocrt.exe = Windows 실행파일
@@ -57,7 +57,7 @@ D:\Claud_Cowork\OCRT\
 
 ## 4. 샌드박스(클라우드 개발환경) 상태 — 완전 구축됨
 
-경로 `~/ocrt/` (이 Cowork 세션 유지 중 유효):
+경로 `~/ocrt/` (이 작업 세션 유지 중 유효):
 
 - `runtime/MIGRATION_PKG_2026-08-19/` : 공식 설치기 `setup_runtime.py`로 구축한 **완전 런타임**. 217파일 설치, canonical 198 전수, C release 빌드(march=cascadelake) + PSSA full-grid 스모크 PASS.
 - **스모크 CSV SHA-256이 2026-08-22 레퍼런스 런과 비트단위 일치** (`98e4b243…c723`) — 샌드박스가 레퍼런스 환경을 정확 재현함을 뜻한다.

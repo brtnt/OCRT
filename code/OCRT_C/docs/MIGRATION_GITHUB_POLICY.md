@@ -9,7 +9,7 @@
 
 ## Distribution policy
 
-1. ChatGPT session deliverables are provided directly in the current session by default.
+1. Session deliverables are provided directly in the current session by default.
 2. GitHub upload is performed only when the user explicitly requests Git backup or upload.
 3. Every future OCRT Git operation must target `brtnt/OCRT`.
 4. Preserve the latest validated source baseline and do not overwrite it with an older session package.

@@ -59,7 +59,7 @@ if __name__ == "__main__":
     #   atm: rayleigh | aerosol | ray_aer | pilot
     #   band_group: lo(412,443,490) | hi(555,660,865) | all
     # grid 파일에 append (timeout 회피용 chunk 실행). 각 chunk는 단일 command 내 완료.
-    out="/home/claude/work/OCRT_item1_grid.csv"
+    out="/home/user/work/OCRT_item1_grid.csv"
     fields=["item","atm","band","aot865","aot_band","sza","vza","raa","rho_I","rho_Q","rho_U"]
     atm = sys.argv[1] if len(sys.argv)>1 else "pilot"
     bg  = sys.argv[2] if len(sys.argv)>2 else "all"

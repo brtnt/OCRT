@@ -23,7 +23,7 @@ port; validated against OSOAA.
 | `code/OSOAA/` | OSOAA 참조 구성 기록·패치(diff)·매니페스트 (OSOAA 본체는 포함하지 않음) |
 | `code/campaign_runner/`, `code/run_tools/`, `code/validation_05/` | 캠페인 실행기, 실행 도구, 검증 하니스·비트 기준선 |
 | `docs/technical/`, `docs/validation/` | 기술 보고서, 검증 기록 |
-| `Claude outputs/` | 세션 산출 기록(검증 문서·그림) |
+| `docs/reports/` | 세션 산출 기록(검증 문서·그림) |
 | `OCRT_MIGRATION_STATUS_2026-08-23.md` | 마이그레이션 상태 문서(누적) |
 | `MIGRATION_README_2026-09-05_KO.md` | **새 세션 부트스트랩 절차와 인벤토리** |
 

@@ -52,10 +52,10 @@ import numpy as np
 _trapz = getattr(np, "trapezoid", getattr(np, "trapz", None))   # NumPy 2.x renamed trapz
 
 # ============================== CONFIG =======================================
-OCRT_BIN     = "/home/claude/ws/MIGRATION_FULL_2026-07-04_1917KST/ocrt/build/v2_solver_vk"
-OSOAA_ROOT   = "/home/claude/ws/MIGRATION_FULL_2026-07-04_1917KST/osoaa"
-CONVERTER    = "/home/claude/ws/MIGRATION_FULL_2026-07-04_1917KST/ocrt/scripts/mie_to_osoaa_extdata.py"   # mie -> ExtData
-MINERAL_MIE  = "/home/claude/ws/MIGRATION_FULL_2026-07-04_1917KST/inputs/tsm_ahn/Brown_earth_AHN.mie"                # any of the 4 minerals
+OCRT_BIN     = "/home/user/ws/MIGRATION_FULL_2026-07-04_1917KST/ocrt/build/v2_solver_vk"
+OSOAA_ROOT   = "/home/user/ws/MIGRATION_FULL_2026-07-04_1917KST/osoaa"
+CONVERTER    = "/home/user/ws/MIGRATION_FULL_2026-07-04_1917KST/ocrt/scripts/mie_to_osoaa_extdata.py"   # mie -> ExtData
+MINERAL_MIE  = "/home/user/ws/MIGRATION_FULL_2026-07-04_1917KST/inputs/tsm_ahn/Brown_earth_AHN.mie"                # any of the 4 minerals
 BANDS        = [412, 443, 490, 555, 660, 865]               # nm
 CSED         = [0.5, 5.0, 50.0]                             # suspended mineral g/m3
 # =============================================================================
@@ -174,7 +174,7 @@ def build_osoaa_profile(cs, band, a_min, b_min, d):
 def run_osoaa(cs, band, ext_path, prof_path, d):
     """OSOAA HYD.Model 3 (thin atm AP.MOT). Returns rrs(0-,nadir) or None."""
     res = f"{d}/osoaa/{band}_{cs}"; os.makedirs(res, exist_ok=True)
-    env = {**os.environ, "OSOAA_ROOT": OSOAA_ROOT, "HOME": "/home/claude",
+    env = {**os.environ, "OSOAA_ROOT": OSOAA_ROOT, "HOME": "/home/user",
            "OSOAA_NO_DIRECT_GLINT": "1"}
     surf = f"{OSOAA_ROOT}/DATABASE/SURF_MATR"
     cmd = [f"{OSOAA_ROOT}/exe/OSOAA_MAIN.exe", "-OSOAA.ResRoot", res, "-OSOAA.Log", "M.Log",

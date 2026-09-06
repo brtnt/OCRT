@@ -98,7 +98,7 @@ Run from the full package root:
 
 Canonical repository: https://github.com/brtnt/OCRT
 
-ChatGPT session deliverables are provided directly in the session by default. GitHub upload is performed only when explicitly requested by the user.
+Session deliverables are provided directly in the session by default. GitHub upload is performed only when explicitly requested by the user.
 
 ## License
 

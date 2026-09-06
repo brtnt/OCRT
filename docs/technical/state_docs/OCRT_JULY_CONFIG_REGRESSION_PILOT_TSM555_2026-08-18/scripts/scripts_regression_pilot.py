@@ -7,11 +7,11 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-OUT = "/home/claude/work/diag_out/OCRT_JULY_CONFIG_REGRESSION_PILOT_TSM555_2026-08-18"
+OUT = "/home/user/work/diag_out/OCRT_JULY_CONFIG_REGRESSION_PILOT_TSM555_2026-08-18"
 for d in ("tables", "figures", "raw"):
     os.makedirs(f"{OUT}/{d}", exist_ok=True)
 
-ARCH = ("/home/claude/work/OCRT_MIE_COMPLETE_HANDOFF_COMPACT_2026-08-17/06_VALIDATION_REFERENCE/"
+ARCH = ("/home/user/work/OCRT_MIE_COMPLETE_HANDOFF_COMPACT_2026-08-17/06_VALIDATION_REFERENCE/"
         "OCRT_OSOAA_STEP_A_RAW_MATCHUP_LOCATIONS_2026-08-16/OCRT_OSOAA_underwater_validation_2026-07-26.csv")
 
 july = {}
@@ -35,7 +35,7 @@ def load_grid(path):
                     "Rrs0plus_Q": float(r["Rrs_Q"]), "Rrs0plus_U": float(r["Rrs_U"])}
     return out
 
-cur = {m: load_grid(f"/home/claude/work/runs/regpilot_{m}/fullgrid.csv")
+cur = {m: load_grid(f"/home/user/work/runs/regpilot_{m}/fullgrid.csv")
        for m in ("moment", "direct")}
 keys = sorted(july.keys())
 assert all(k in cur["moment"] and k in cur["direct"] for k in keys), "기하 매칭 실패"

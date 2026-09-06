@@ -29,13 +29,13 @@
 ## 3. 빌드 시스템 (새 세션에서 논문을 재생성하는 방법)
 
 ### 3.1 논문 빌드 스크립트
-- **위치**: `/home/claude/build_ocrt_paper.js` (약 94 KB, Node docx-js v9.6.1)
-- **실행**: `NODE_PATH=/home/claude/.npm-global/lib/node_modules node build_ocrt_paper.js`
+- **위치**: `/home/user/build_ocrt_paper.js` (약 94 KB, Node docx-js v9.6.1)
+- **실행**: `NODE_PATH=/home/user/.npm-global/lib/node_modules node build_ocrt_paper.js`
 - 출력: `/mnt/user-data/outputs/OCRT_reference_paper_draft.docx`
 - 헬퍼 함수: `para/seg/eq/h/bullet/simpleTable/fillNote/figure/figcaption`
 - 폰트: FONT='Calibri', SERIF='Cambria'. 수식은 eq()로 중앙정렬 이탤릭 유니코드(OMML 아님).
 - `[TO COMPLETE]` = 주황색 fillNote 박스.
-- 그림: `figure(파일명, 종횡비, {widthIn})` + `figcaption(라벨, 텍스트)`. FIG_DIR='/home/claude/paper_figs'.
+- 그림: `figure(파일명, 종횡비, {widthIn})` + `figcaption(라벨, 텍스트)`. FIG_DIR='/home/user/paper_figs'.
 
 ### 3.2 빌드 검증 (PDF 렌더링)
 ```
@@ -47,7 +47,7 @@ cd /tmp/render && pdftoppm -jpeg -r 72 OCRT_reference_paper_draft.pdf page
 
 ### 3.3 반복되는 빌드 버그 (주의)
 1. **단일 문자열 문단**: `P(para('...'))`는 끝이 `');`여야 한다. `')]));`로 끝나면 문법 오류(배열 닫기 대괄호는 `P(para([seg(...)]))`에만 붙는다). 이 버그가 여러 번 발생했다.
-2. **그림 ENOENT**: 그림은 빌드 전 반드시 `/home/claude/paper_figs/`에 cp되어 있어야 한다. 없으면 빌드가 조용히 실패하고 이전 PDF가 렌더링된다.
+2. **그림 ENOENT**: 그림은 빌드 전 반드시 `/home/user/paper_figs/`에 cp되어 있어야 한다. 없으면 빌드가 조용히 실패하고 이전 PDF가 렌더링된다.
 3. **이중 이스케이프**: str_replace로 `\u2013`(en-dash) 등을 넣을 때 `\\u2013`(이중 백슬래시)로 들어가면 리터럴로 출력된다. 파이썬 문자열 치환으로 파일을 편집하는 게 안전하다(파이썬이 이스케이프를 투명 처리). str_replace는 view에 보이는 실제 문자를 그대로 써야 한다.
 
 ---
@@ -55,9 +55,9 @@ cd /tmp/render && pdftoppm -jpeg -r 72 OCRT_reference_paper_draft.pdf page
 ## 4. 그림 생성 시스템
 
 ### 4.1 그림 생성 스크립트
-- **위치**: `/home/claude/compare_data/make_figs.py` (약 17 KB)
-- **실행**: `cd /home/claude/compare_data && python3 make_figs.py`
-- 출력: `figs_final/` → 반드시 `/home/claude/paper_figs/`로 cp해야 빌드가 인식.
+- **위치**: `/home/user/compare_data/make_figs.py` (약 17 KB)
+- **실행**: `cd /home/user/compare_data && python3 make_figs.py`
+- 출력: `figs_final/` → 반드시 `/home/user/paper_figs/`로 cp해야 빌드가 인식.
 - **통일 스타일**: DejaVu Serif, 큰 폰트(축라벨 16, 틱 14, 제목 17, 범례 14 — 사용자가 캡션 수준 크기 요청함), 마커 크기 큼.
 - **통계 박스**: `stats_box()`(MAPE/RMSE/bias)와 `stats_box_ratio()`(Q/U용 RMS/I·max/I)가 각 산포도 패널 안에 통계를 넣는다. 모든 산포도에 통계 박스 필수(사용자 요청).
 
@@ -72,16 +72,16 @@ cd /tmp/render && pdftoppm -jpeg -r 72 OCRT_reference_paper_draft.pdf page
 **삭제된 그림**: Rayleigh 각도곡선(I/Q/U vs VZA)은 사용자 요청으로 제거했다. make_figs.py에 `stokes_vza_figure()` 함수는 남아있지만 호출 안 함.
 
 ### 4.3 데이터 소스 (그림 재생성에 필요)
-- `/home/claude/compare_data/` — master1(대기 Rayleigh IQU), csv/master2(P6 shadowing), csv/master3(aCDOM), csv/master4(Chl/TSM rrs), csv/master5(timing), summaryD_timing.csv
-- `/home/claude/compare_data/item6_aerosol_162.csv` — 에어로솔 (최신: 새 composite, AOT865=0.1)
-- `/home/claude/compare_data/pure_ocean_rrs.csv` — 순수해수 Rrs/rrs (신규, gate3 150셀)
-- `/home/claude/newdata/OCRT_Rrs_rrs_Aerosol_IQU_Comparison_20260720/` — 최신 첨부 원본(README_KO.md에 공식 수치)
+- `/home/user/compare_data/` — master1(대기 Rayleigh IQU), csv/master2(P6 shadowing), csv/master3(aCDOM), csv/master4(Chl/TSM rrs), csv/master5(timing), summaryD_timing.csv
+- `/home/user/compare_data/item6_aerosol_162.csv` — 에어로솔 (최신: 새 composite, AOT865=0.1)
+- `/home/user/compare_data/pure_ocean_rrs.csv` — 순수해수 Rrs/rrs (신규, gate3 150셀)
+- `/home/user/newdata/OCRT_Rrs_rrs_Aerosol_IQU_Comparison_20260720/` — 최신 첨부 원본(README_KO.md에 공식 수치)
 
 ---
 
 ## 5. OCRT 코드 사실 (검증됨, 소스에서 확인)
 
-- **코드 패키지**: `/home/claude/ocrt/OCRT_v1.2_SNF_PLUS_ACCURT_AHMAD2010_80_AEROSOL_MODELS_2026-07-19/ocrt/`
+- **코드 패키지**: `/home/user/ocrt/OCRT_v1.2_SNF_PLUS_ACCURT_AHMAD2010_80_AEROSOL_MODELS_2026-07-19/ocrt/`
 - **언어**: **순수 C (C11)**, C++ 아님. .c 파일만, gcc -std=c11, malloc/free만(class/template/namespace/new/delete 0개). 사용자가 초기에 "C++"라 했으나 착각으로 확정됨.
 - **버전 번호 논문에 절대 넣지 않음**: v1.1과 v1.2 결과 동일. 논문 전체에서 버전 번호 제거 완료.
 - **배포**: 오픈소스. GitHub: **https://github.com/brtnt/OCRT** (Code and data availability 절에 명시됨)
@@ -159,7 +159,7 @@ List 1968(Bodhaine 하위), Sullivan 2006·Pegau/Gray/Zaneveld 1997(순수수 �
 
 ## 10. 새 세션 시작 시 권장 순서
 
-1. 이 문서(`/home/claude/OCRT_paper_MIGRATION.md`)를 먼저 읽는다.
+1. 이 문서(`/home/user/OCRT_paper_MIGRATION.md`)를 먼저 읽는다.
 2. 사용자에게 docx/md 파일을 업로드받거나, 없으면 `build_ocrt_paper.js`가 유실됐는지 확인.
 3. **만약 build_ocrt_paper.js도 유실됐다면**: 이 문서만으로는 94KB 스크립트 전체를 재현 불가. 사용자에게 docx를 받아 내용을 파악하거나, 처음부터 재작성해야 함. → **사용자가 build_ocrt_paper.js와 make_figs.py도 백업하는 것을 강력 권장** (docx/md만으로는 편집 재개가 어렵다).
 4. 데이터 소스(compare_data, newdata, item6, ocrt 패키지)가 유실됐으면 그림 재생성 불가 → 사용자에게 재업로드 요청.
@@ -171,8 +171,8 @@ List 1968(Bodhaine 하위), Sullivan 2006·Pegau/Gray/Zaneveld 1997(순수수 �
 
 **docx/md만으로는 작업 재개가 제한적이다.** 논문은 `build_ocrt_paper.js`(스크립트)에서 생성되므로, 편집을 이어가려면 이 스크립트가 필요하다. docx를 직접 편집하면 스크립트와 동기화가 깨진다. 따라서:
 - **사용자가 백업해야 할 파일** (docx/md 외 추가):
-  - `/home/claude/build_ocrt_paper.js` (논문 빌드 스크립트, 필수)
-  - `/home/claude/compare_data/make_figs.py` (그림 생성 스크립트)
-  - `/home/claude/paper_figs/*.png` (임베드된 그림 8개)
-  - 데이터: `/home/claude/compare_data/`, `/home/claude/newdata/` (그림 재생성용)
+  - `/home/user/build_ocrt_paper.js` (논문 빌드 스크립트, 필수)
+  - `/home/user/compare_data/make_figs.py` (그림 생성 스크립트)
+  - `/home/user/paper_figs/*.png` (임베드된 그림 8개)
+  - 데이터: `/home/user/compare_data/`, `/home/user/newdata/` (그림 재생성용)
 - 이것들이 없으면 새 세션에서 논문 편집을 처음부터 다시 해야 한다.

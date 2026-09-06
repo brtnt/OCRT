@@ -5,7 +5,7 @@ OCRT 측 grid 생성 + OSOAA 명령 emit. 확장: items 2-6 (IOP 매핑 주석).
 """
 import subprocess, itertools, csv, sys, os
 
-OCRT = "/home/claude/ws/SPEEDUP_2026-07-09/ocrt_opt/build/v2o_s18"
+OCRT = "/home/user/ws/SPEEDUP_2026-07-09/ocrt_opt/build/v2o_s18"
 MIE  = "inputs/M80C.mie"          # #1 aerosol model (maritime M80C)
 WIND = 3                           # OSOAA Cox-Munk 사전계산 wind {3,5,7,10}
 

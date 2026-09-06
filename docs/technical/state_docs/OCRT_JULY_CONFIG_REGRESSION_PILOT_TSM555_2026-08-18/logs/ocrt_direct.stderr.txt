@@ -1,5 +1,5 @@
 # TSM Ahn: C=0.5 g m^-3 species=red_clay data=inputs/tsm_ahn phase=inputs/tsm_ahn/Red_clay_AHN.mie
-# LUT grid output: /home/claude/work/runs/regpilot_direct/fullgrid.csv (vza step 5 deg, raa step 15 deg, vza max 60 deg)
+# LUT grid output: /home/user/work/runs/regpilot_direct/fullgrid.csv (vza step 5 deg, raa step 15 deg, vza max 60 deg)
 rt_absorption (SOS-integrated): λ=555.0nm τ_abs_col=0.0000e+00
   h2o: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
   o3: column=0.000e+00 mol/cm² (overridden)  τ_abs_col=0.0000e+00
@@ -111,4 +111,4 @@ WATER_DEPTH_AUTO tau_base=16.635863 tau_max=16.635863 z_max=36.3552082 ext=0.457
 WATER_LAYER_AUTO n_layers=333 tau_max=16.635863 dtau=0.0499575465
 EDCOMP Ed_direct=6.602619e-01 Ed_diffuse=4.589576e-02 Ed_intrefl=0.000000e+00 Eu_diffuse=8.466023e-02 | intrefl/Ed_total=0.0000 Eu/Ed=0.1199
 [native-coupled-lut] calls=3 water_cold=1 water_views=13 exact_near_nadir=1 cells=312 replay=0
-ocean_rrs_full_grid: n_mu=13 n_raa=24 rows=312 fail=0 replay=0 output=/home/claude/work/runs/regpilot_direct/fullgrid.csv
+ocean_rrs_full_grid: n_mu=13 n_raa=24 rows=312 fail=0 replay=0 output=/home/user/work/runs/regpilot_direct/fullgrid.csv

@@ -1,6 +1,6 @@
 import sys, numpy as np
 chl, band, out = sys.argv[1], int(sys.argv[2]), sys.argv[3]
-MIEDIR="/home/claude/ws/SPEEDUP_2026-07-09/OCRT_FULLPKG_v1.09_2026-07-08/aux/phase_mie"
+MIEDIR="/home/user/ws/SPEEDUP_2026-07-09/OCRT_FULLPKG_v1.09_2026-07-08/aux/phase_mie"
 BANDCOL={412:1,443:2,490:3,555:4,660:5,865:6}
 lines=open(f"{MIEDIR}/blend_chl{chl}.mie").read().splitlines()
 for ln in lines[2:8]:

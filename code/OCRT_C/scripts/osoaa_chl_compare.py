@@ -4,10 +4,10 @@ NOTE_item3_chl_setup 규약. OSOAA HYD.Model 3(외부 phase 주입, PM 경로 �
 DT-HIOM table 커널이 double-cap 우회하는지 검증. 인자: <sza> [chl]"""
 import subprocess, os, csv, math, sys, re
 import numpy as np
-ROOT="/home/claude/ws/SPEEDUP_2026-07-09/osoaa"; SURF=f"{ROOT}/DATABASE/SURF_MATR"
-OCRT="/home/claude/ws/SPEEDUP_2026-07-09/ocrt_opt/build/v2o_hiom"
-CONV="/home/claude/ws/SPEEDUP_2026-07-09/OCRT_FULLPKG_v1.09_2026-07-08/ocrt/scripts/mie_to_osoaa_extdata.py"
-MIEDIR="/home/claude/ws/SPEEDUP_2026-07-09/OCRT_FULLPKG_v1.09_2026-07-08/aux/phase_mie"
+ROOT="/home/user/ws/SPEEDUP_2026-07-09/osoaa"; SURF=f"{ROOT}/DATABASE/SURF_MATR"
+OCRT="/home/user/ws/SPEEDUP_2026-07-09/ocrt_opt/build/v2o_hiom"
+CONV="/home/user/ws/SPEEDUP_2026-07-09/OCRT_FULLPKG_v1.09_2026-07-08/ocrt/scripts/mie_to_osoaa_extdata.py"
+MIEDIR="/home/user/ws/SPEEDUP_2026-07-09/OCRT_FULLPKG_v1.09_2026-07-08/aux/phase_mie"
 BANDS=[412,443,490,555,660,865]
 A_W={412:4.5506e-3,443:7.069e-3,490:1.500e-2,555:5.960e-2,660:4.100e-1,865:4.605}
 B_W={412:6.650e-3,443:4.872e-3,490:3.164e-3,555:1.859e-3,660:8.875e-4,865:2.763e-4}

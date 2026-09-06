@@ -65,6 +65,6 @@ OCRT_WORKORDER_TWA_QFOLD_FIX_2026-08-25.zip
 ## 7. 반영 위치
 
 - 샌드박스 런타임: `~/ocrt/runtime/MIGRATION_PKG_2026-08-19/01_OCRT_C` — 패치·재빌드 완료(binary sha 70833d4d…). OSOAA 기준·비교 스크립트 포함 전체 환경 유효.
-- 로컬(D:\Claud_Cowork\OCRT): `code/OCRT_C/src/shared/surface.c`(패치본), `code/OCRT_C/tests/test_twa_spin2_gate.c`, `code/OCRT_C/build/ocrt.exe`·`ocrt_x86-64-baseline.exe`(수정 트리로 재컴파일, -march=x86-64-v3/x86-64, static) 커밋됨.
+- 로컬(<LOCAL_ROOT>): `code/OCRT_C/src/shared/surface.c`(패치본), `code/OCRT_C/tests/test_twa_spin2_gate.c`, `code/OCRT_C/build/ocrt.exe`·`ocrt_x86-64-baseline.exe`(수정 트리로 재컴파일, -march=x86-64-v3/x86-64, static) 커밋됨.
 - 검증 CSV 최신본(수정 후): `docs/validation/cross_check_fr631_20260823/`의 `Rrs_above_156geom.csv`·`rrs_underwater_raa90.csv`·`atm_rhoI_bfo.csv`는 2026-08-25 수정 후 버전으로 갱신됨(수정 전 Rrs는 `Rrs_above_156geom_prefix_20260824.csv`로 보존).
 - 본 압축 패키지: `docs/technical/workorders_2026-07/OCRT_WORKORDER_TWA_QFOLD_FIX_2026-08-25.zip`.

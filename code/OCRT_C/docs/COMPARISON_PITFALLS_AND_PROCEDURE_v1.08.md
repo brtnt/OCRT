@@ -54,11 +54,11 @@ P7은 아직 open. P8 = 단일물량의 가장 흔한 실수: 큰 gap이면 **�
 
 ## 4. OSOAA sandbox 빌드 recipe (매 세션 — 파일시스템 초기화됨)
 ```bash
-cd /home/claude && git clone --depth 1 https://github.com/CNES/RadiativeTransferCode-OSOAA.git osoaa_build
+cd /home/user && git clone --depth 1 https://github.com/CNES/RadiativeTransferCode-OSOAA.git osoaa_build
 # 수정 4파일 덮어쓰기 (Jae 패키지 osoaa_pkg/ 또는 uploads zip)
 cp osoaa_pkg/OSOAA.h osoaa_build/inc/ ; cp osoaa_pkg/OSOAA_{MAIN,PROFILE,TRPHI}.F osoaa_build/src/
 apt-get install -y gfortran
-export OSOAA_ROOT=/home/claude/osoaa_build && cd $OSOAA_ROOT/gen && make -f Makefile_OSOAA.gfortran
+export OSOAA_ROOT=/home/user/osoaa_build && cd $OSOAA_ROOT/gen && make -f Makefile_OSOAA.gfortran
 mkdir -p $OSOAA_ROOT/DATABASE/SURF_MATR   # surface matrix 첫 run 자동 캐시
 ```
 - 버전: master = OSOAA V2.0(2025-01-30) = patch base 일치. patch는 full-file 교체라 클린 적용.
