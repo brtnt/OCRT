@@ -11,7 +11,7 @@
 
 1. 샌드박스에서 저장소를 받는다(코드·문서·검증 기록 약 130 MB, Mie 자료 없음).
 
-       git clone https://github.com/<GITHUB_USER>/<REPO>.git ocrt
+       git clone https://github.com/brtnt/OCRT.git ocrt
        cd ocrt/code/OCRT_C && make        # 샌드박스는 AVX-512 지원 → Makefile 기본값 사용 가능
        bash scripts/run_ipss_gates.sh     # Mie 자료 없이 실행됨. ALL PASS 확인
 
@@ -99,7 +99,7 @@ git 에 있음(공개): `code/OCRT_C`(src·tests·scripts·tools·docs·validati
    다음 세션이 대화에 붙여넣지 않고 읽어 쓴다. 토큰은 해당 repo 한정 fine-grained(Contents: Read/Write),
    만료 90일 권장, 유출 의심 시 GitHub 에서 즉시 폐기.
 
-       git push "https://<GITHUB_USER>:$(cat .github_token)@github.com/<GITHUB_USER>/<REPO>.git" HEAD:main
+       git push "https://brtnt:$(cat .github_token)@github.com/brtnt/OCRT.git" HEAD:main
 
    원격 URL 에 토큰을 저장하지 않는다(`git remote` 는 토큰 없는 URL 로 등록).
 4. 푸시 뒤 GitHub API 로 커밋 SHA 와 파일 수를 확인하고 이 README §2 의 상태를 갱신한다.
