@@ -20,7 +20,6 @@ port; validated against OSOAA.
 |---|---|
 | `code/OCRT_C/` | C 참조 구현(`src/`), 게이트·회귀 테스트(`tests/`, `scripts/`), 진단 도구(`tools/`), 기술 문서(`docs/`), 검증 기록(`validation/`), 변경 이력(`CHANGES_*.md`, `RELEASE_NOTES_*.md`), 파일 매니페스트(`SHA256SUMS.txt`) |
 | `code/OCRT_Python/` | Python 배치 패키지(`ocrt_py/`, `produce_grid.py`, `ocrt_solve.py`, GPU 게이트) |
-| `code/OSOAA/` | OSOAA 참조 구성 기록·패치(diff)·매니페스트 (OSOAA 본체는 포함하지 않음) |
 | `code/campaign_runner/`, `code/run_tools/`, `code/validation_05/` | 캠페인 실행기, 실행 도구, 검증 하니스·비트 기준선 |
 | `docs/technical/`, `docs/validation/` | 기술 보고서, 검증 기록 |
 | `docs/reports/` | 작업 세션 산출 기록(검증 문서·그림) |
@@ -46,7 +45,9 @@ IOP 표, 테스트 픽스처)는 저장소에 들어 있다.
 ## 저장소에 없는 것
 
 `.gitignore` 로 제외한 것: 위 Mie 표(릴리스로 배포), `code/validation_05/runs/`(OSOAA 참조 런 원문 158 MB),
-`package/`(배포 묶음), `task/`(캠페인 산출물), `docs/paper/`(투고 전 원고), 빌드 산출물(`build/`, `*.exe`).
+`package/`(배포 묶음), `task/`(캠페인 산출물), `docs/paper/`(투고 전 원고), 빌드 산출물(`build/`, `*.exe`),
+그리고 **제3자 코드** — OSOAA(CNES) 작업 사본과 RTSOS 파생 드라이버·벤치마크 입력(교차검증 기록의 결과 파일만 남김).
+두 코드는 각 저작자 배포처에서 받아야 한다: OSOAA https://github.com/CNES/RadiativeTransferCode-OSOAA , RTSOS(P.-W. Zhai, CC BY-NC 4.0).
 위치와 복구 절차는 `MIGRATION_README_2026-09-05_KO.md` §3.
 
 ## 빌드

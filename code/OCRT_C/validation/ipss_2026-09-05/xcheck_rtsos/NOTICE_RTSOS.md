@@ -1,7 +1,8 @@
 # Third-party material in this folder — RTSOS (CC BY-NC 4.0)
 
-`main_pp.f90`, `main_ipss_gnd.f90`, `main_ipss_toa.f90`, `main_pssonly.f90` are **modified copies of
-`src/main_program_monochromatic/main.f90` from RTSOS** — Radiative Transfer model based on Successive
+The cross-check used `main_pp.f90`, `main_ipss_gnd.f90`, `main_ipss_toa.f90`, `main_pssonly.f90` — **modified copies of
+`src/main_program_monochromatic/main.f90` from RTSOS** (kept out of this public repository together with the
+benchmark inputs `ray.pmtx` / `auxiliary_directory`; only our own inputs (`sosi.*`, `make_case.py`) and the run outputs are published) — Radiative Transfer model based on Successive
 Orders of Scattering, Copyright © 2025 Pengwang Zhai, released under the Creative Commons
 Attribution–NonCommercial 4.0 International License (https://creativecommons.org/licenses/by-nc/4.0/).
 `case*/ray.pmtx` and `case*/auxiliary_directory` are copied from RTSOS `validation/benchmark/Coulson_thick/`.

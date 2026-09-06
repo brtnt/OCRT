@@ -54,7 +54,7 @@
 ## 3. 인벤토리 — git 에 있는 것 / 로컬에만 있는 것
 
 git 에 있음(공개): `code/OCRT_C`(src·tests(픽스처 Mie 1개 포함)·scripts·tools·docs·validation·patches·매니페스트),
-`code/OCRT_Python`(코드·문서·테스트·소형 data: AFGL·xsec·IOP 표), `scripts/`(자료 설치·매니페스트), `code/OSOAA`(기록·diff·매니페스트), `code/campaign_runner`,
+`code/OCRT_Python`(코드·문서·테스트·소형 data: AFGL·xsec·IOP 표), `scripts/`(자료 설치·매니페스트), `code/campaign_runner`,
 `code/run_tools`, `code/validation_05`(harness·bit_baselines·tools), `docs/technical`, `docs/validation`,
 `docs/reports`, 상태 문서, 이 README, `LICENSE`, `.gitignore`, `.gitattributes`(`* -text`, 바이트 보존).
 
@@ -69,7 +69,8 @@ git 에 있음(공개): `code/OCRT_C`(src·tests(픽스처 Mie 1개 포함)·scr
 | 투고 전 원고 | `docs/paper/` | 69 MB | RSE 리뷰 논문·OCRT 논문 LaTeX/PDF/그림 |
 | 기술 문서 대형 자료 | `docs/technical/**/*.gz` | 64 MB | 편광 legacy 참조 CSV |
 | 빌드 산출물 | `build/`, `*.exe` | — | 재빌드 |
-| RTSOS | `<LOCAL_ROOT>\..\RTSOS` | — | 저자 코드, 별도 폴더 |
+| RTSOS | `<LOCAL_ROOT>\..\RTSOS` | — | 저자 코드(CC BY-NC 4.0), 별도 폴더. 교차검증용 수정 드라이버 `main_*.f90`·`ray.pmtx` 도 저장소에서 제외(변경 내용은 `xcheck_rtsos/NOTICE_RTSOS.md`) |
+| OSOAA 작업 사본 | `<LOCAL_ROOT>\code\OSOAA` | 4 MB | CNES 코드 — 제3자 자산이라 저장소에서 제외(이력 포함 삭제, 2026-09-06) |
 
 ## 4. 재빌드·게이트 (verbatim)
 

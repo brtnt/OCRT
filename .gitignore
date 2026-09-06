@@ -10,6 +10,13 @@
 # unpublished manuscript (LaTeX, PDF, figures) — local only until publication
 /docs/paper/
 
+# third-party code and data (not ours to redistribute): OSOAA (CNES) working copy,
+# RTSOS-derived driver files and benchmark inputs used for the IPSS cross-check
+/code/OSOAA/
+/code/OCRT_C/validation/ipss_2026-09-05/xcheck_rtsos/main_*.f90
+/code/OCRT_C/validation/ipss_2026-09-05/xcheck_rtsos/*/ray.pmtx
+/code/OCRT_C/validation/ipss_2026-09-05/xcheck_rtsos/*/auxiliary_directory
+
 # large scientific data: the 181 Mie tables (4.3 GB) are distributed as GitHub Release assets
 # (see MIGRATION_README §3 / scripts/fetch_data.sh); small data files stay in git
 *.mie
