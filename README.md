@@ -23,18 +23,31 @@ port; validated against OSOAA.
 | `code/OSOAA/` | OSOAA 참조 구성 기록·패치(diff)·매니페스트 (OSOAA 본체는 포함하지 않음) |
 | `code/campaign_runner/`, `code/run_tools/`, `code/validation_05/` | 캠페인 실행기, 실행 도구, 검증 하니스·비트 기준선 |
 | `docs/technical/`, `docs/validation/` | 기술 보고서, 검증 기록 |
-| `docs/reports/` | 세션 산출 기록(검증 문서·그림) |
+| `docs/reports/` | 작업 세션 산출 기록(검증 문서·그림) |
+| `scripts/` | Mie 자료 설치 스크립트(`fetch_data.sh` / `.ps1`)와 SHA-256 매니페스트 |
 | `OCRT_MIGRATION_STATUS_2026-08-23.md` | 마이그레이션 상태 문서(누적) |
 | `MIGRATION_README_2026-09-05_KO.md` | **새 세션 부트스트랩 절차와 인벤토리** |
 
-## 저장소에 없는 것 (로컬 디스크에만 있음)
+## 자료 설치 (Mie 표 — 실행에 필요)
 
-GitHub 용량 정책상 다음은 `.gitignore` 로 제외했다. 위치와 복구 절차는 `MIGRATION_README_2026-09-05_KO.md` §3.
+에어로졸·하이드로졸 계산에 쓰는 Mie 표 181개(FR631, 4.3 GB)는 git 이 아니라 **GitHub Release
+[`data-v1`](https://github.com/brtnt/OCRT/releases/tag/data-v1)** 의 zip 4개(1.3 GB)로 배포한다.
+클론 후 한 번 실행하면 `code/OCRT_C/inputs/` 와 `code/OCRT_Python/data/` 에 설치된다.
 
-- Mie 산란 자료 `*.mie` (182 파일, 4.3 GB; `code/OCRT_C/inputs/`) — 배포본은 `package/PART01–PART10*.zip`
-- `code/OCRT_Python/data/` (4.3 GB), `code/validation_05/runs/` (OSOAA 참조 런 원문)
-- `package/`(배포 묶음), `task/`(캠페인 산출물), `docs/paper/`(투고 전 원고)
-- 빌드 산출물(`build/`, `*.exe`)
+```
+bash scripts/fetch_data.sh                                          # Linux / macOS
+powershell -ExecutionPolicy Bypass -File scripts\fetch_data.ps1     # Windows
+```
+
+zip 의 SHA-256 은 `scripts/fetch_data.sha256`, 표 181개 각각의 SHA-256 은 `scripts/MIE_SHA256SUMS_data-v1.txt`.
+Rayleigh 단독 계산과 IPSS 게이트는 Mie 표 없이 실행된다. 그 밖의 소형 입력 자료(AFGL 대기, 기체 흡수 단면적,
+IOP 표, 테스트 픽스처)는 저장소에 들어 있다.
+
+## 저장소에 없는 것
+
+`.gitignore` 로 제외한 것: 위 Mie 표(릴리스로 배포), `code/validation_05/runs/`(OSOAA 참조 런 원문 158 MB),
+`package/`(배포 묶음), `task/`(캠페인 산출물), `docs/paper/`(투고 전 원고), 빌드 산출물(`build/`, `*.exe`).
+위치와 복구 절차는 `MIGRATION_README_2026-09-05_KO.md` §3.
 
 ## 빌드
 

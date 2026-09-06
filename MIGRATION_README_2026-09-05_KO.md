@@ -20,11 +20,12 @@
    (`.git` 이 여기 있다). 로컬 VM 에는 git 2.34 가 있고 github.com 에 닿는다. 삭제 권한은 세션마다
    다시 받아야 한다(git 의 lock 파일 처리에 필요).
 
-3. 필요한 Mie 자료만 로컬에서 스테이징한다(전체 4.3 GB 는 옮기지 않는다).
-   - IPSS 벤치·SZA 스윕: `code/OCRT_C/inputs/M80C.mie` (24 MB)
-   - OSOAA 정합 하니스: `C50.mie`, `tsm_ahn/Red_clay_AHN.mie`, `tsm_ahn/Brown_earth_AHN.mie`,
-     `water_iop/Detritus_Stramski2001.mie`, `water_iop/eap/EAP_06_Dinoflagellates_D24.mie`
-   - 전량이 필요하면 `package/PART01–PART10*.zip` 을 로컬에서 풀어 쓴다(198 canonical Mie).
+3. Mie 표는 GitHub Release `data-v1`(zip 4개, 1.3 GB → 181 표 4.3 GB)에서 받는다:
+   `bash scripts/fetch_data.sh` (Windows: `scripts\fetch_data.ps1`). 샌드박스에서 릴리스 다운로드가 막혀 있으면
+   로컬 폴더에서 필요한 표만 스테이징한다 — IPSS 벤치·SZA 스윕은 `code/OCRT_C/inputs/M80C.mie` 하나(24 MB),
+   OSOAA 정합 하니스는 `C50.mie`, `tsm_ahn/Red_clay_AHN.mie`, `tsm_ahn/Brown_earth_AHN.mie`,
+   `water_iop/Detritus_Stramski2001.mie`. 로컬에는 zip 원본이 `package/release_data_v1/` 에 있다.
+   설치 후 검증: `cd code/OCRT_C/inputs && sha256sum -c ../../../scripts/MIE_SHA256SUMS_data-v1.txt`.
 
 4. RTSOS 교차검증이 필요하면 `<LOCAL_ROOT>\..\RTSOS` 를 따로 연결한다(이 저장소에 없음, 저자 코드).
    빌드 주의는 상태 문서 §14 와 IPSS 기록 §11.2(링크 순서, `fSnowBRDF_INPUT` 초기화).
@@ -52,8 +53,8 @@
 
 ## 3. 인벤토리 — git 에 있는 것 / 로컬에만 있는 것
 
-git 에 있음(공개): `code/OCRT_C`(src·tests·scripts·tools·docs·validation·patches·매니페스트),
-`code/OCRT_Python`(코드·문서·테스트), `code/OSOAA`(기록·diff·매니페스트), `code/campaign_runner`,
+git 에 있음(공개): `code/OCRT_C`(src·tests(픽스처 Mie 1개 포함)·scripts·tools·docs·validation·patches·매니페스트),
+`code/OCRT_Python`(코드·문서·테스트·소형 data: AFGL·xsec·IOP 표), `scripts/`(자료 설치·매니페스트), `code/OSOAA`(기록·diff·매니페스트), `code/campaign_runner`,
 `code/run_tools`, `code/validation_05`(harness·bit_baselines·tools), `docs/technical`, `docs/validation`,
 `docs/reports`, 상태 문서, 이 README, `LICENSE`, `.gitignore`, `.gitattributes`(`* -text`, 바이트 보존).
 
@@ -61,7 +62,7 @@ git 에 있음(공개): `code/OCRT_C`(src·tests·scripts·tools·docs·validati
 
 | 항목 | 위치 | 크기 | 비고 |
 |---|---|---|---|
-| Mie 자료 `*.mie` | `code/OCRT_C/inputs/`(182), `code/OCRT_Python/data/` | 4.3 + 4.3 GB | 배포본 `package/PART01–PART10*.zip`(1.5 GB) |
+| Mie 표 `*.mie` (181, 두 트리에 같은 파일) | `code/OCRT_C/inputs/`, `code/OCRT_Python/data/` | 4.3 + 4.3 GB | **GitHub Release `data-v1`** zip 4개(1.3 GB), 로컬 원본 `package/release_data_v1/`; 수령 원본 `package/PART01–PART10*.zip` |
 | OSOAA 참조 런 원문 | `code/validation_05/runs/` | 158 MB | 재분석용 소비 파일 |
 | 배포 묶음 | `package/` | 2.3 GB | 세션별 tar.gz·zip |
 | 캠페인 산출물 | `task/` | 1.9 GB | sens/analysis 등 |
