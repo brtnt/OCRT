@@ -1,5 +1,7 @@
 # OCRT — Ocean Colour vector Radiative Transfer
 
+저장소: https://github.com/brtnt/OCRT (공개, 학술·비상업 라이선스)
+
 해색 위성(GOCI-II / GOCI-III) 대기보정을 위한 **대기–해양 결합 벡터 복사전달 코드**다.
 연속차수산란(SOS) 기반의 C 참조 구현과, 같은 물리를 배치 자료생산용으로 재현한 Python 패키지로
 구성된다. 정확도 기준(reference)은 OSOAA 이며, 파장 범위는 330–1100 nm(≤ 2000 nm 정책)다.

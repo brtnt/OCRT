@@ -99,9 +99,10 @@ git 에 있음(공개): `code/OCRT_C`(src·tests·scripts·tools·docs·validati
    다음 세션이 대화에 붙여넣지 않고 읽어 쓴다. 토큰은 해당 repo 한정 fine-grained(Contents: Read/Write),
    만료 90일 권장, 유출 의심 시 GitHub 에서 즉시 폐기.
 
-       git push "https://brtnt:$(cat .github_token)@github.com/brtnt/OCRT.git" HEAD:main
+       git -c credential.helper='!f() { echo "username=brtnt"; echo "password=$(cat .github_token)"; }; f' push origin main
 
-   원격 URL 에 토큰을 저장하지 않는다(`git remote` 는 토큰 없는 URL 로 등록).
+   원격 URL 에 토큰을 저장하지 않는다(`origin` 은 `https://github.com/brtnt/OCRT.git`, 토큰 없음).
+   저장소: https://github.com/brtnt/OCRT (공개). 첫 푸시 2026-09-05, main = a5655e2 → 9d7b63e.
 4. 푸시 뒤 GitHub API 로 커밋 SHA 와 파일 수를 확인하고 이 README §2 의 상태를 갱신한다.
 
 ## 6. 규칙 (불변)
