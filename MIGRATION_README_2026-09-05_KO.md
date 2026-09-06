@@ -19,11 +19,13 @@ repository root).
        bash scripts/run_ipss_gates.sh     # runs without Mie tables; expect ALL PASS
 
 2. Connect the local folder `<LOCAL_ROOT>`. It is the authoritative copy and the repository root
-   (`.git` lives there). The local VM has git 2.34 and reaches github.com. Delete permission must
-   be granted again in every session (git needs it to remove its lock files). Without it, a stale
-   `.git/index.lock` can be moved aside with `mv` (renaming is allowed), and commits can be made in
-   a VM-local clone (`git clone https://github.com/brtnt/OCRT.git /tmp/ocrt_rw`, copy the changed
-   files from the mount, commit and push there).
+   (`.git` lives there). The local VM has git 2.34 and reaches github.com, but it cannot delete
+   files in the folder, so every git command that writes the index there leaves a stale
+   `.git/index.lock` or `HEAD.lock` behind. Therefore the session runs only read-only git
+   commands in the folder (`git log`, `git rev-parse`, `git ls-files`, `git show`); add, commit,
+   push and reset are run by the user in PowerShell (§5). A stale lock can be moved aside with
+   `mv` into `.git/_stale_locks/` (renaming is allowed) or deleted by the user. For inspection
+   work a VM-local clone is fast (`git clone https://github.com/brtnt/OCRT.git /tmp/ocrt_rw`).
 
 3. Mie tables come from the GitHub Release `data-v1` (four zip files, 1.3 GB → 181 tables, 4.3 GB):
    `bash scripts/fetch_data.sh` (Windows: `scripts\fetch_data.ps1`). If release downloads are
@@ -105,21 +107,39 @@ Environment variables: `OCRT_ADVANCED=1` (advanced options), `OCRT_DEBUG=1`, `OC
 
 ## 5. GitHub update procedure (only when the user asks for a sync — not automatic)
 
-1. Confirm ALL PASS on the gates, regenerate `SHA256SUMS.txt`, add a section to the status document.
-2. Commit in the local VM (repository root = connected folder):
+Since 2026-09-06 the user runs every git command that writes to the repository (add, commit,
+push, reset) himself in PowerShell. Two reasons: commits made from the session carry
+tool-attribution trailers that must not enter the public history (the history was rewritten once
+on 2026-09-06 to remove them), and the session cannot remove the lock files that git creates in
+the connected folder (§1 item 2).
 
-       cd ~/mnt/OCRT && git add -A && git status --short | head
+1. Session: confirm ALL PASS on the gates, regenerate `SHA256SUMS.txt`, add a section to the
+   status document, and hand the user a one-line commit summary. The session changes files only;
+   it does not run `git status`, `git add`, `git commit` or `git reset` in the folder.
+2. User, in PowerShell:
+
+       cd <LOCAL_ROOT>
+       git status --short
+       git add -A
        git commit -m "<summary>"
+       git push origin main
 
-3. Push. The token stays outside the repository: one line in `.github_token` at the folder root
-   (ignored by git). Use a fine-grained token limited to this repository (Contents: read/write),
-   90-day expiry; revoke it on GitHub if it may have leaked.
+   Authentication: Git Credential Manager, or user name `brtnt` with a fine-grained token limited
+   to this repository (Contents: read/write, 90-day expiry) as the password. No token is stored in
+   the remote URL (`origin` is `https://github.com/brtnt/OCRT.git`); a token file at the folder
+   root (`.github_token`) is ignored by git. Repository: https://github.com/brtnt/OCRT (public).
+   First push 2026-09-05.
+3. Session: after the push, check the commit SHA, the commit message and the release state
+   through the GitHub API, and update §2.
+4. If git stops with "Unable to create '.git/HEAD.lock' (or 'index.lock'): File exists" while no
+   other git process is running, the lock is stale: delete it (`Remove-Item .git\HEAD.lock`) and
+   run the command again.
 
-       git -c credential.helper='!f() { echo "username=brtnt"; echo "password=$(cat .github_token)"; }; f' push origin main
-
-   No token is stored in the remote URL (`origin` is `https://github.com/brtnt/OCRT.git`).
-   Repository: https://github.com/brtnt/OCRT (public). First push 2026-09-05.
-4. After the push, check the commit SHA and file count through the GitHub API and update §2.
+Record (2026-09-06): the user rewrote the history with `git filter-branch --msg-filter` in a
+separate clone to remove the trailers from all 9 commits and force-pushed `main` and the tag.
+The trees are unchanged (root tree `ddbdbed9…`); the head is `cf6860d`, the tag `data-v1` now
+points to `bcfe3d2`, and release `data-v1` (4 assets) stayed published. The local folder was
+reset to the new `origin/main`.
 
 ## 6. Rules (fixed)
 
@@ -170,10 +190,12 @@ Environment variables: `OCRT_ADVANCED=1` (advanced options), `OCRT_DEBUG=1`, `OC
        bash scripts/run_ipss_gates.sh     # Mie 표 없이 실행됨. ALL PASS 확인
 
 2. 로컬 폴더 `<LOCAL_ROOT>` 를 연결한다. 이 폴더가 정본이며 저장소 루트다(`.git` 이 여기 있다).
-   로컬 VM 에는 git 2.34 가 있고 github.com 에 닿는다. 삭제 권한은 세션마다 다시 받아야 한다
-   (git 이 lock 파일을 지우는 데 필요). 권한이 없으면 남은 `.git/index.lock` 은 `mv` 로 옮겨 두고(이름
-   바꾸기는 허용됨), 커밋은 VM 로컬 클론에서 한다(`git clone https://github.com/brtnt/OCRT.git /tmp/ocrt_rw`
-   → 마운트에서 바뀐 파일 복사 → 거기서 커밋·푸시).
+   로컬 VM 에는 git 2.34 가 있고 github.com 에 닿지만, 이 폴더의 파일을 지울 수 없어서 인덱스를 쓰는
+   git 명령을 여기서 실행하면 `.git/index.lock` 이나 `HEAD.lock` 이 지워지지 않고 남는다. 그래서 세션은
+   이 폴더에서 읽기 전용 git 명령만 실행한다(`git log`, `git rev-parse`, `git ls-files`, `git show`).
+   add·commit·push·reset 은 사용자가 PowerShell 에서 실행한다(§5). 남은 lock 은 `mv` 로
+   `.git/_stale_locks/` 에 옮겨 두거나(이름 바꾸기는 허용됨) 사용자가 지운다. 점검 작업에는 VM 로컬
+   클론이 빠르다(`git clone https://github.com/brtnt/OCRT.git /tmp/ocrt_rw`).
 
 3. Mie 표는 GitHub Release `data-v1`(zip 4개, 1.3 GB → 181 표 4.3 GB)에서 받는다:
    `bash scripts/fetch_data.sh` (Windows: `scripts\fetch_data.ps1`). 샌드박스에서 릴리스 다운로드가
@@ -247,20 +269,34 @@ patches·매니페스트), `code/OCRT_Python`(코드·문서·테스트·소형 
 
 ## 5. GitHub 반영 절차 (사용자가 동기화를 요청할 때만 — 자동·상시 동기화 아님)
 
-1. 게이트 ALL PASS 확인, `SHA256SUMS.txt` 재생성, 상태 문서에 절 추가.
-2. 로컬 VM 에서 커밋(저장소 루트 = 연결 폴더):
+2026-09-06 부터 저장소에 쓰는 git 명령(add, commit, push, reset)은 모두 사용자가 PowerShell 에서 직접
+실행한다. 이유는 둘이다. 세션에서 만든 커밋에는 도구 귀속 트레일러가 붙는데 이것이 공개 히스토리에
+들어가면 안 되고(2026-09-06 에 이를 지우기 위해 히스토리를 한 번 다시 썼다), 세션은 연결 폴더에서 git 이
+만드는 lock 파일을 지울 수 없다(§1 의 2항).
 
-       cd ~/mnt/OCRT && git add -A && git status --short | head
+1. 세션: 게이트 ALL PASS 확인, `SHA256SUMS.txt` 재생성, 상태 문서에 절 추가, 커밋 요약 한 줄을
+   사용자에게 전달. 세션은 파일만 바꾸며, 이 폴더에서 `git status`·`git add`·`git commit`·`git reset` 을
+   실행하지 않는다.
+2. 사용자(PowerShell):
+
+       cd <LOCAL_ROOT>
+       git status --short
+       git add -A
        git commit -m "<요약>"
+       git push origin main
 
-3. 푸시. 토큰은 저장소 밖에 둔다 — 폴더 루트의 `.github_token`(gitignore 됨)에 한 줄. 토큰은 이 repo
-   한정 fine-grained(Contents: Read/Write), 만료 90일 권장, 유출 의심 시 GitHub 에서 즉시 폐기.
-
-       git -c credential.helper='!f() { echo "username=brtnt"; echo "password=$(cat .github_token)"; }; f' push origin main
-
-   원격 URL 에 토큰을 저장하지 않는다(`origin` 은 `https://github.com/brtnt/OCRT.git`).
+   인증은 Git Credential Manager 또는 사용자명 `brtnt` 와 이 repo 한정 fine-grained 토큰(Contents:
+   Read/Write, 만료 90일)을 비밀번호로 쓴다. 원격 URL 에 토큰을 저장하지 않으며(`origin` 은
+   `https://github.com/brtnt/OCRT.git`), 폴더 루트의 토큰 파일 `.github_token` 은 gitignore 된다.
    저장소: https://github.com/brtnt/OCRT (공개). 첫 푸시 2026-09-05.
-4. 푸시 뒤 GitHub API 로 커밋 SHA 와 파일 수를 확인하고 §2 를 갱신한다.
+3. 세션: 푸시 뒤 GitHub API 로 커밋 SHA·커밋 메시지·릴리스 상태를 확인하고 §2 를 갱신한다.
+4. 다른 git 프로세스가 없는데 "Unable to create '.git/HEAD.lock'(또는 'index.lock'): File exists" 로
+   멈추면 남은 lock 이다. 지우고(`Remove-Item .git\HEAD.lock`) 명령을 다시 실행한다.
+
+기록(2026-09-06): 사용자가 별도 클론에서 `git filter-branch --msg-filter` 로 커밋 9개의 트레일러를
+지우고 `main` 과 태그를 force-push 했다. 트리는 그대로이고(루트 트리 `ddbdbed9…`), 헤드는 `cf6860d`,
+태그 `data-v1` 은 `bcfe3d2` 를 가리키며, 릴리스 `data-v1`(자산 4개)은 공개 상태를 유지했다. 로컬 폴더는
+새 `origin/main` 으로 reset 했다.
 
 ## 6. 규칙 (불변)
 
