@@ -1,19 +1,76 @@
-# 축약 결과 안내
+# Reduced results — guide
 
-- 만든 때: 2026-08-03 17:51
-- 원본 폴더: D:\temp\star_run
-- 실행 8045 건, 각 실행의 각도 격자 1296 방향
+- Created: 2026-08-03 17:51
+- Source folder: the local campaign output folder (`star_run`)
+- 8,045 runs, each on an angle grid of 1,296 directions
 
 ## metrics.csv.gz
 
-주 산출물이다. 한 행이 (밴드, 태양천정각, 풍속, N가지 광학두께, 관측천정각,
-방위각) 하나에 해당한다. 모두 63504 행이다.
+The main product. One row is one combination of (band, SZA, wind, one of N AOD levels, viewing
+zenith angle, azimuth). 63,504 rows in total.
+
+| column | meaning |
+|---|---|
+| `theta_deg` | scattering angle. cos(theta) = −cos(sza)cos(vza) − sin(sza)sin(vza)cos(raa) |
+| `glint_tilt_deg` | surface tilt needed for direct sun glint; 0 means the direction of direct glint on a flat surface |
+| `N_resid` | polarization variation not explained by intensity when the water is scanned (standard deviation) |
+| `N_r2` | how well intensity alone explains polarization |
+| `N_slope` | slope of polarization against intensity |
+| `S_spread` | spread of polarization between aerosol models at the same intensity |
+| `S_overlap` | fraction of the intensity range shared by the models; a low value makes `S_spread` unreliable |
+| `S_pair_max` | maximum polarization difference measured on pairs of models over their overlapping intensity range; always defined because no common range of all models is required |
+| `S_pair_n` | number of overlapping pairs used |
+| `S_pair_extreme` | value for the pair of the lowest- and highest-albedo models |
+| `S_dolp` | spread of the degree of linear polarization between models at fixed AOD |
+| `R` | usefulness = `S_spread` / `N_resid` |
+| `R_pair` | usefulness = `S_pair_max` / `N_resid`; few missing values, suitable for maps |
+| `I_mean` `P_mean` `dolp_mean` | mean intensity, polarized reflectance and degree of linear polarization over the water scan |
+| `I_span` `P_span` | ranges over the water scan |
+| `n_water` `n_aer` | number of water states and aerosol models used |
+
+## atm_reference.csv.gz
+
+All-angle reflectance of the reference atmosphere without ocean (black Fresnel surface).
+Subtracting it from the coupled run under the same conditions gives the ocean contribution; the
+subtraction works for polarization in the same way as for intensity. Columns are `atm_I`,
+`atm_Q`, `atm_U`, to be matched by the design axes and the angles.
+
+Polarized reflectance is sqrt(Q² + U²); the degree of linear polarization is that value divided
+by I.
+
+## cases_thin.csv.gz
+
+Raw values on a coarse angle grid (viewing zenith 15°, azimuth 45° steps). Contains the design
+axes and the TOA reflectances I, Q, U. Used for scatter plots and for re-checking the metrics
+above.
+
+## runs_summary.csv
+
+One line per run: status, duration, number of non-converged rows, scattering orders, code version
+and executable hash. For quality checks.
+
+## Total size
+
+55.3 MB
+
+---
+
+# 축약 결과 안내
+
+- 만든 때: 2026-08-03 17:51
+- 원본 폴더: 로컬 캠페인 산출물 폴더(`star_run`)
+- 실행 8,045건, 각 실행의 각도 격자 1,296방향
+
+## metrics.csv.gz
+
+주 산출물이다. 한 행이 (밴드, 태양천정각, 풍속, N가지 광학두께 중 하나, 관측천정각, 방위각) 하나에
+해당한다. 모두 63,504행이다.
 
 | 열 | 뜻 |
 |---|---|
-| `theta_deg` | 산란각. cos(theta) = -cos(sza)cos(vza) - sin(sza)sin(vza)cos(raa) |
+| `theta_deg` | 산란각. cos(theta) = −cos(sza)cos(vza) − sin(sza)sin(vza)cos(raa) |
 | `glint_tilt_deg` | 직달 선글린트가 생기려면 수면이 기울어야 하는 각도. 0 이면 잔잔한 수면에서 곧바로 선글린트가 생기는 방향이다 |
-| `N_resid` | 해수를 훑을 때 세기로 설명되지 않는 편광 변화 (표준편차) |
+| `N_resid` | 해수를 훑을 때 세기로 설명되지 않는 편광 변화(표준편차) |
 | `N_r2` | 세기 하나로 편광을 설명하는 정도 |
 | `N_slope` | 세기에 대한 편광의 기울기 |
 | `S_spread` | 세기가 같은 지점에서 에어로졸 모델 사이 편광 벌어짐 |
@@ -30,23 +87,21 @@
 
 ## atm_reference.csv.gz
 
-해수가 없는 기준 대기(흑색 프레넬 해면)의 전 각도 반사도다. 같은 조건의
-결합 실행에서 이 값을 빼면 해수가 더한 몫이 나온다. 편광에서도 세기와
-같은 방식으로 뺄 수 있다. 열은 `atm_I`, `atm_Q`, `atm_U` 이며 설계 축과
-각도로 맞추면 된다.
+해수가 없는 기준 대기(흑색 Fresnel 해면)의 전 각도 반사도다. 같은 조건의 결합 실행에서 이 값을 빼면 해수가
+더한 몫이 나온다. 편광에서도 세기와 같은 방식으로 뺄 수 있다. 열은 `atm_I`, `atm_Q`, `atm_U` 이며 설계
+축과 각도로 맞추면 된다.
 
-편광 반사도는 sqrt(Q^2 + U^2), 선형편광도는 그 값을 I 로 나눈 것이다.
+편광 반사도는 sqrt(Q² + U²), 선형편광도는 그 값을 I 로 나눈 것이다.
 
 ## cases_thin.csv.gz
 
-성긴 각도(관측천정각 15도, 방위각 45도 간격)에서의 원값이다.
-설계 축과 함께 TOA 반사도 I, Q, U 가 들어 있다. 산포도를 그리거나 위의
-계산을 다시 확인할 때 쓴다.
+성긴 각도(관측천정각 15도, 방위각 45도 간격)에서의 원값이다. 설계 축과 함께 TOA 반사도 I, Q, U 가 들어
+있다. 산포도를 그리거나 위의 계산을 다시 확인할 때 쓴다.
 
 ## runs_summary.csv
 
-실행 한 건에 한 줄이다. 상태, 소요, 미수렴 행 수, 산란차수, 코드 판번호와
-실행 파일 해시가 들어 있다. 품질 점검용이다.
+실행 한 건에 한 줄이다. 상태, 소요, 미수렴 행 수, 산란차수, 코드 판번호와 실행 파일 해시가 들어 있다. 품질
+점검용이다.
 
 ## 총 용량
 
