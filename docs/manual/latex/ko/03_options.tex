@@ -1,0 +1,586 @@
+% Authoritative LaTeX chapter. Edit this file for future revisions.
+% Initially migrated 2026-09-11; no Markdown import occurs during PDF builds.
+\chapter{C 실행 프로그램 옵션 전체 참조}
+\label{chap:03_options}
+매뉴얼 목차 · \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_C/src/main.c}{소스: main.c} · \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_C/src/rt_types.h}{수치 기본값}
+
+이 장은 2026-09-11에 확인한 C 실행 프로그램의 인자 파서와 실제 실행 경로를 기준으로 한다. 일반 옵션, 별칭, 수치 실험 옵션, 진단 옵션과 삭제된 이름을 모두 구분한다. 과거 \texttt{-\allowbreak{}-\allowbreak{}help}와 변경 기록에는 현재 구현과 다른 설명이 남아 있으므로 아래의 \textbf{현재 동작}을 우선한다. Python 인터페이스는 부록~\ref{chap:06_python_batch}를 참고한다.
+
+\section{입력 규칙과 실행 모드}
+\label{sec:auto:03_options:1}
+명령은 \texttt{code/\allowbreak{}OCRT\_\allowbreak{}C} 디렉터리에서 실행한다. 옵션과 값은 공백으로 나눈다. 예를 들어 \texttt{-\allowbreak{}-\allowbreak{}wavelength 443}이며, \texttt{-\allowbreak{}-\allowbreak{}wavelength=\allowbreak{}443} 형식은 지원하지 않는다. 경로에 공백이 있으면 경로 전체를 따옴표로 감싼다. 값은 대소문자를 구분한다. 숫자는 소수점 \texttt{.\allowbreak{}}과 지수 표기(\texttt{1e-\allowbreak{}7})를 사용한다.
+
+파서는 모든 숫자의 문법·유한성·물리 범위를 엄격하게 검사하지 않는다. 아래에서 제시한 물리 범위와 단위를 지키며, 숫자 자리에는 \texttt{NaN}, 무한대, 단위 문자열을 넣지 않는다. 인자를 인식했다는 사실만으로 물리적으로 유효한 실행이 보장되지는 않는다.
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.2300\linewidth-6.00pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2400\linewidth-6.00pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2300\linewidth-6.00pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.3000\linewidth-6.00pt\relax}@{}}
+\toprule
+\textbf{모드} & \textbf{선택 방법} & \textbf{필요한 공통 입력} & \textbf{출력} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{모드} & \textbf{선택 방법} & \textbf{필요한 공통 입력} & \textbf{출력} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+단일 기하 & \texttt{-\allowbreak{}-\allowbreak{}vza}와 \texttt{-\allowbreak{}-\allowbreak{}raa}를 모두 지정 & \texttt{-\allowbreak{}-\allowbreak{}surface}, \texttt{-\allowbreak{}-\allowbreak{}sza}, \texttt{-\allowbreak{}-\allowbreak{}wavelength}; 해면이면 풍속 & 표준출력의 한 사례 결과 \\
+각도 격자 & \texttt{-\allowbreak{}-\allowbreak{}vza}, \texttt{-\allowbreak{}-\allowbreak{}raa}를 모두 생략 & 위와 같음 & \texttt{-\allowbreak{}-\allowbreak{}output-\allowbreak{}full-\allowbreak{}grid} 파일; 생략 시 \texttt{result<N>.\allowbreak{}csv} \\
+대기 사례 배치 & \texttt{-\allowbreak{}-\allowbreak{}batch IN.\allowbreak{}csv -\allowbreak{}-\allowbreak{}output OUT.\allowbreak{}csv} & \texttt{-\allowbreak{}-\allowbreak{}surface}; 행의 기하·파장 및 공통 물성 & 사례당 한 행의 CSV \\
+해양 격자 배치 & \texttt{-\allowbreak{}-\allowbreak{}batch-\allowbreak{}full-\allowbreak{}grid IN.\allowbreak{}csv} & \texttt{-\allowbreak{}-\allowbreak{}surface ocean}, 완전한 CLI 기본 수질, \texttt{-\allowbreak{}-\allowbreak{}sza}, \texttt{-\allowbreak{}-\allowbreak{}wavelength}; 풍속은 CLI 또는 행 & 입력 행의 \texttt{out}에 지정한 파일마다 각도 격자 \\
+\end{longtable}
+}
+
+단일 기하와 격자·배치 지시는 함께 쓸 수 없다. \texttt{-\allowbreak{}-\allowbreak{}vza} 또는 \texttt{-\allowbreak{}-\allowbreak{}raa}만 하나 지정하면 오류다. \texttt{-\allowbreak{}-\allowbreak{}batch}와 \texttt{-\allowbreak{}-\allowbreak{}batch-\allowbreak{}full-\allowbreak{}grid}도 배타적이다. 해양의 \texttt{-\allowbreak{}-\allowbreak{}water-\allowbreak{}model}은 정확히 한 번 지정하고, 선택한 모델과 다른 접두사의 수질 옵션을 섞지 않는다.
+
+\texttt{-\allowbreak{}-\allowbreak{}batch}는 별도 대기 사례 경로다. 특히 현재 \texttt{main.\allowbreak{}c}에서는 기체흡수 초기화보다 먼저 이 경로로 반환한다. 따라서 일반 단일/격자 실행의 기체흡수 기본값과 기체 컬럼 지정이 \texttt{-\allowbreak{}-\allowbreak{}batch}에도 적용된다고 가정하지 않는다. 기체흡수를 포함한 대기 자료는 단일 기하 또는 각도 격자 명령을 반복 실행한다. 배치 CSV의 정확한 열과 제한은 출력·파일 형식 장을 참고한다.
+
+\section{기하·파장·표면}
+\label{sec:auto:03_options:2}
+\input{figures/options_surfaces.tex}
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3000\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2300\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.4700\linewidth-5.33pt\relax}@{}}
+\toprule
+\textbf{옵션} & \textbf{값·기본값} & \textbf{설명과 조건} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{옵션} & \textbf{값·기본값} & \textbf{설명과 조건} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{-\allowbreak{}-\allowbreak{}sza DEG} & 도, 일반 실행 필수, \texttt{0 \ensuremath{\leq} SZA < 90} & 화소에서 태양을 향한 천정각. 야간 계산용 옵션이 아니다. \\
+\texttt{-\allowbreak{}-\allowbreak{}vza DEG} & 도, 단일 기하 필수, \texttt{0 \ensuremath{\leq} VZA < 90} & 공기 쪽 관측 천정각. 수중 굴절각을 직접 넣지 않는다. \\
+\texttt{-\allowbreak{}-\allowbreak{}raa DEG} & 도, 단일 기하 필수 & OCRT 상대방위각. 통상 \texttt{0 \ensuremath{\leq} RAA < 360}으로 입력한다. \textbf{RAA=180\textdegree{}가 직달 선글린트 가지, 0\textdegree{}가 반대 주평면 가지}다. 다른 모델·위성 자료의 RAA를 그대로 복사하지 않는다. \\
+\texttt{-\allowbreak{}-\allowbreak{}wavelength NM} & nm, 일반 실행 필수, \texttt{330 \ensuremath{\leq} \ensuremath{\lambda} \ensuremath{\leq} 1100} & 단색 계산 파장. 외부 \texttt{.\allowbreak{}mie}·LUT도 이 파장을 지원해야 한다. 지원 범위 밖의 외삽용 옵션은 없다. \\
+\texttt{-\allowbreak{}-\allowbreak{}surface STR} & 필수 & 아래 표의 네 표면 중 선택. \\
+\texttt{-\allowbreak{}-\allowbreak{}wind-\allowbreak{}speed MS} & m s\textsuperscript{-}\textsuperscript{1}, 음수 금지 & \texttt{ocean}, \texttt{black\_\allowbreak{}fresnel\_\allowbreak{}ocean}에서 필수. 무풍도 \texttt{0}을 명시한다. \\
+\texttt{-\allowbreak{}-\allowbreak{}n-\allowbreak{}water X} & 무차원, 기본 \texttt{1.\allowbreak{}34} & 공기--물 경계의 실수 굴절률. 물리적인 해수 값(\texttt{>1})을 사용한다. 온도·염분·파장에 따라 경계 굴절률이 자동 변경되는 기본값이 아니다. \\
+\texttt{-\allowbreak{}-\allowbreak{}decouple-\allowbreak{}sunglint} & 값 없는 플래그, 일반 기본 OFF & 비해양 표적 결과에서 직달 선글린트 단일반사 항을 분리·제외한다. 모든 표면 반사와 대기--수면 상호작용을 제거하는 옵션은 아니다. 직접 IOP 경로는 내부적으로 이 플래그를 ON으로 강제한다. 해양 기본 TOA는 별도 합성 경로에서 직달 glint를 분리하므로 단순히 OFF=포함으로 해석하지 않는다(\hyperref[chap:05_output_formats]{출력 정의}). \\
+\texttt{-\allowbreak{}-\allowbreak{}pssa} & 값 없는 플래그, 기본 OFF & 현재 구현의 구면 보정 \textbf{IPSS}를 켠다. 각도는 지상 화소 기준이다. 대기/흑해양 경로에 적용하며 결합 \texttt{-\allowbreak{}-\allowbreak{}surface ocean} 실행에는 지원되지 않아 오류가 난다. \\
+\end{longtable}
+}
+
+RAA 변환식, 산란각, 편광 부호의 상세 설명은 기하·출력 해석 장을 함께 읽는다. 특히 \texttt{abs(sensor\_\allowbreak{}azimuth -\allowbreak{} solar\_\allowbreak{}azimuth)}만 계산하고 OCRT RAA라고 부르면 글린트 방향이 뒤바뀔 수 있다.
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3400\linewidth-4.00pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.6600\linewidth-4.00pt\relax}@{}}
+\toprule
+\textbf{\texttt{-\allowbreak{}-\allowbreak{}surface} 값} & \textbf{의미} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{\texttt{-\allowbreak{}-\allowbreak{}surface} 값} & \textbf{의미} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{black} & 반사하지 않는 하부 경계. 수면 반사를 제외한 대기 신호 계산에 사용한다. \\
+\texttt{flat} & 평면 Fresnel 경계와 흑해양. 수중 산란·수중 수질 모델을 풀지 않는다. \\
+\texttt{black\_\allowbreak{}fresnel\_\allowbreak{}ocean} & Fresnel 반사를 하는 해면 아래를 검게 둔 경로. \texttt{-\allowbreak{}-\allowbreak{}wind-\allowbreak{}speed 0}은 평면, 양수 풍속은 거친 해면이다. 해양 대기보정의 대기·표면 항 계산에 사용한다. \\
+\texttt{ocean} & 대기--해면--수중 복사전달 결합. \texttt{-\allowbreak{}-\allowbreak{}water-\allowbreak{}model ocrt\textbackslash{}|ccrr\allowbreak{}\textbackslash{}|iop} 및 해당 수질 입력이 필수다. \\
+\end{longtable}
+}
+
+\texttt{black-\allowbreak{}fresnel-\allowbreak{}ocean}은 \texttt{black\_\allowbreak{}fresnel\_\allowbreak{}ocean}의 현재 별칭이다. \texttt{coxmunk}도 인식하지만 폐기 예정 경고와 함께 \texttt{black\_\allowbreak{}fresnel\_\allowbreak{}ocean}으로 해석한다. \texttt{lambert}는 경계조건이 구현되지 않아 오류가 난다.
+
+\input{figures/options_glint.tex}
+
+\section{Rayleigh 대기와 기체흡수}
+\label{sec:auto:03_options:3}
+\input{figures/options_gas.tex}
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3000\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2300\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.4700\linewidth-5.33pt\relax}@{}}
+\toprule
+\textbf{옵션} & \textbf{값·기본값} & \textbf{설명} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{옵션} & \textbf{값·기본값} & \textbf{설명} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{-\allowbreak{}-\allowbreak{}pressure P} & hPa, 기본 \texttt{1013.\allowbreak{}25}, \texttt{P \ensuremath{\geq} 0} & Rayleigh 광학두께를 표준 압력 대비 \texttt{P/\allowbreak{}1013.\allowbreak{}25}로 조절한다. \texttt{0}이면 Rayleigh가 없다. 기체흡수·에어로졸과는 독립이다. \\
+\texttt{-\allowbreak{}-\allowbreak{}surface-\allowbreak{}pressure P} & 위와 같음 & \texttt{-\allowbreak{}-\allowbreak{}pressure} 별칭. \\
+\texttt{-\allowbreak{}-\allowbreak{}no-\allowbreak{}rayleigh} & 값 없는 플래그 & 현재 파서에 남아 있는 호환 옵션. 압력을 \texttt{0}으로 설정한다. 새 명령에는 \texttt{-\allowbreak{}-\allowbreak{}pressure 0}을 사용한다. \\
+\texttt{-\allowbreak{}-\allowbreak{}rayleigh on\textbackslash{}|off\allowbreak{}} & 기본 압력 기반 & \texttt{off}는 압력 \texttt{0}. \texttt{on}은 현재 압력이 \texttt{\ensuremath{\leq}0}이면 \texttt{1013.\allowbreak{}25}로 복원하며, 기존 양수 압력은 유지한다. 이후 \texttt{-\allowbreak{}-\allowbreak{}pressure}가 나오면 그 값이 우선한다. \\
+\texttt{-\allowbreak{}-\allowbreak{}atm-\allowbreak{}profile STR} & 기본 \texttt{usstd76} & 기체흡수의 AFGL 수직 프로파일. \texttt{usstd76}, \texttt{tropical}, \texttt{mlsumm}, \texttt{mlwint}, \texttt{sasumm}, \texttt{sawint}, \texttt{userdef}. \\
+\texttt{-\allowbreak{}-\allowbreak{}gas-\allowbreak{}profile STR} & 위와 같음 & \texttt{-\allowbreak{}-\allowbreak{}atm-\allowbreak{}profile} 별칭. \\
+\texttt{-\allowbreak{}-\allowbreak{}gas-\allowbreak{}column-\allowbreak{}h2o G} & g cm\textsuperscript{-}\textsuperscript{2}, 기본 AFGL 적분값 & 수증기 총량. \texttt{G \ensuremath{\geq} 0}. 물 분자수로 변환한 뒤 선택한 수직 프로파일의 형태를 보존하면서 총량을 맞춘다. \\
+\texttt{-\allowbreak{}-\allowbreak{}pwv-\allowbreak{}g-\allowbreak{}cm G} & 위와 같음 & \texttt{-\allowbreak{}-\allowbreak{}gas-\allowbreak{}column-\allowbreak{}h2o} 별칭. \\
+\texttt{-\allowbreak{}-\allowbreak{}gas-\allowbreak{}column-\allowbreak{}o3 DU} & DU, 기본 AFGL 적분값 & 오존 총량. \texttt{DU \ensuremath{\geq} 0}. \texttt{1 DU =\allowbreak{} 2.\allowbreak{}6868\ensuremath{\times}10\textsuperscript{1}\textsuperscript{6} molecu\allowbreak{}les cm\textsuperscript{-}\textsuperscript{2}}. \\
+\texttt{-\allowbreak{}-\allowbreak{}gas-\allowbreak{}column-\allowbreak{}no2 DU} & DU, 기본 AFGL 적분값 & 이산화질소 총량. O\textsubscript{3}와 같은 DU 변환을 사용한다. \\
+\texttt{-\allowbreak{}-\allowbreak{}gas-\allowbreak{}column-\allowbreak{}o2 N} & \textbf{molecules cm\textsuperscript{-}\textsuperscript{2}}, 기본 AFGL 적분값 & 산소 분자수 컬럼. 음수 금지. \\
+\texttt{-\allowbreak{}-\allowbreak{}gas-\allowbreak{}column-\allowbreak{}co2 N} & \textbf{molecules cm\textsuperscript{-}\textsuperscript{2}}, 기본 AFGL 적분값 & 이산화탄소 분자수 컬럼. ppm 값을 직접 넣지 않는다. \\
+\texttt{-\allowbreak{}-\allowbreak{}gas-\allowbreak{}column-\allowbreak{}ch4 N} & \textbf{molecules cm\textsuperscript{-}\textsuperscript{2}}, 기본 AFGL 적분값 & 메탄 분자수 컬럼. 음수 금지. \\
+\end{longtable}
+}
+
+\textbf{단위 정정:} 기존 도움말과 표준오류 로그의 \texttt{mol/\allowbreak{}cm\textsuperscript{2}} 표기는 몰수가 아니라 \textbf{분자수/cm\textsuperscript{2}}를 뜻한다. 실제 H\textsubscript{2}O 변환은 \texttt{G \ensuremath{\times} 6.\allowbreak{}02214076e23 /\allowbreak{} 18.\allowbreak{}01528}이다. O\textsubscript{2}·CO\textsubscript{2}·CH\textsubscript{4} 입력에 mol cm\textsuperscript{-}\textsuperscript{2} 값을 넣으면 아보가드로 수만큼 잘못된 입력이 된다.
+
+단일/격자 실행에서 기체흡수는 기본 활성이다. 순수 Rayleigh 기준 계산에는 다음 여섯 값을 모두 명시한다.
+
+
+\begin{ManualCode}
+--gas-column-h2o 0 --gas-column-o3 0 --gas-column-no2 0 --gas-column-o2 0 --gas-column-co2 0 --gas-column-ch4 0
+\end{ManualCode}
+
+각 기체의 기본 컬럼은 프로파일과 배포 데이터에 의존한다. 실제 로그의 \texttt{column=\allowbreak{}} 및 \texttt{overridden} 표시를 기록한다. 음수는 내부에서 미지정 표지처럼 취급될 수 있으므로 흡수 OFF 용도로 사용하지 않는다. 사용자 프로파일은 \texttt{inputs/\allowbreak{}afgl\_\allowbreak{}atm/\allowbreak{}afgl\_\allowbreak{}userdef.\allowbreak{}dat}에 두며 \texttt{-\allowbreak{}-\allowbreak{}atm-\allowbreak{}profile userdef}로 선택한다. \texttt{-\allowbreak{}-\allowbreak{}atm-\allowbreak{}profile}은 기체 프로파일 선택이며 Rayleigh 분자 대기 자체를 일곱 종류 중 고르는 옵션은 아니다.
+
+\section{에어로졸}
+\label{sec:auto:03_options:4}
+\input{figures/options_aod.tex}
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3000\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2300\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.4700\linewidth-5.33pt\relax}@{}}
+\toprule
+\textbf{옵션} & \textbf{값·기본값} & \textbf{설명과 조건} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{옵션} & \textbf{값·기본값} & \textbf{설명과 조건} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{-\allowbreak{}-\allowbreak{}mie FILE} & 에어로졸 \texttt{.\allowbreak{}mie}, 기본 없음 & \texttt{AOD>0}이면 필수. 수중 입자 위상함수 파일인 \texttt{-\allowbreak{}-\allowbreak{}iop-\allowbreak{}mie-\allowbreak{}phase}와 용도가 다르다. \\
+\texttt{-\allowbreak{}-\allowbreak{}aod-\allowbreak{}555 X} & 무차원, 기본 \texttt{0}, \texttt{X \ensuremath{\geq} 0} & 555 nm 기준 AOD. 계산 파장의 AOD는 \texttt{.\allowbreak{}mie} 소광계수 비로 변환한다. \\
+\texttt{-\allowbreak{}-\allowbreak{}aod-\allowbreak{}865 X} & 무차원 & 865 nm 기준 AOD. \\
+\texttt{-\allowbreak{}-\allowbreak{}aod X} & 무차원, 기본 \texttt{0} & 호환 입력. \texttt{-\allowbreak{}-\allowbreak{}aod-\allowbreak{}ref-\allowbreak{}wavelength} 기준의 AOD이며 현재 계산 파장 기준 AOD가 아니다. \\
+\texttt{-\allowbreak{}-\allowbreak{}aod-\allowbreak{}ref-\allowbreak{}wavelength NM} & nm, 기본 \texttt{555} & \texttt{-\allowbreak{}-\allowbreak{}aod}의 기준 파장. 에어로졸 파일이 해당 기준 파장과 계산 파장을 모두 지원해야 한다. \\
+\texttt{-\allowbreak{}-\allowbreak{}aer-\allowbreak{}h-\allowbreak{}km H} & km, 기본 \texttt{2.\allowbreak{}0}, \texttt{H>0} & 에어로졸 수직 분포 \texttt{exp(-\allowbreak{}z/\allowbreak{}H)}의 척도 높이. 현재 CLI는 양수 여부를 검사하며 ADVANCED 차단은 구현하지 않는다. 기존 도움말의 “advanced only”와 다르다. \\
+\texttt{-\allowbreak{}-\allowbreak{}aer-\allowbreak{}l-\allowbreak{}max L} & 정수 \texttt{L\ensuremath{\geq}2}, 활성 에어로졸 기본 \texttt{80} & 에어로졸 위상 모멘트 최대 차수. 기본과 다르게 지정할 때 \texttt{OCRT\_\allowbreak{}ADVANCED=\allowbreak{}1}. \\
+\end{longtable}
+}
+
+기준 파장을 혼동하지 않도록 AOD 입력 방식은 한 종류만 사용한다. 여러 \texttt{-\allowbreak{}-\allowbreak{}aod-\allowbreak{}*}를 함께 쓰면 파싱 순서에 따라 AOD 값과 기준 파장이 바뀐다. 예를 들어 \texttt{-\allowbreak{}-\allowbreak{}aod-\allowbreak{}555 0.\allowbreak{}1 -\allowbreak{}-\allowbreak{}aod-\allowbreak{}ref-\allowbreak{}wavelength 865}는 최종적으로 865 nm 기준 AOD 0.1이 된다.
+
+비배치 실행에서 AOD가 0이면 \texttt{-\allowbreak{}-\allowbreak{}mie}, \texttt{-\allowbreak{}-\allowbreak{}aer-\allowbreak{}h-\allowbreak{}km}, \texttt{-\allowbreak{}-\allowbreak{}aer-\allowbreak{}l-\allowbreak{}max}와 절단 관련 에어로졸 옵션을 함께 지정할 수 없다. AOD>0에서 기본 선택은 value 커널, 실각도 log10-linear 전방 피크 절단, \texttt{L=\allowbreak{}80}, 대기 Fourier \texttt{m=\allowbreak{}16}, 대기 400층이다. 이 에어로졸 기본 절단은 수중 입자의 FR631 기본 절단 OFF 정책과 구분한다.
+
+\texttt{T50}, \texttt{C50}, \texttt{M80C}는 코드가 안내하는 공식 검증 하위 집합이다. 파일명에 \texttt{M50C}가 포함되면 현재 파서는 \texttt{OCRT\_\allowbreak{}DEBUG=\allowbreak{}1}을 요구하고 진단용 경고를 낸다. 해당 모델의 계보 문제는 \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_C/inputs/deprecated/DEPRECATED_M50C.md}{M50C 기록}을 참고한다.
+
+\section{수중 모델 공통 입력}
+\label{sec:auto:03_options:5}
+\input{figures/options_water.tex}
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3000\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2300\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.4700\linewidth-5.33pt\relax}@{}}
+\toprule
+\textbf{옵션} & \textbf{값·기본값} & \textbf{설명} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{옵션} & \textbf{값·기본값} & \textbf{설명} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{-\allowbreak{}-\allowbreak{}water-\allowbreak{}model M} & \texttt{ocrt}, \texttt{ccrr}, \texttt{iop} & \texttt{-\allowbreak{}-\allowbreak{}surface ocean}에서 정확히 한 번 필수. 다른 surface에는 사용할 수 없다. \\
+\texttt{-\allowbreak{}-\allowbreak{}water-\allowbreak{}temperature C} & \textdegree{}C, 기본 \texttt{20} & 순수 해수 IOP의 온도 보정 입력. 경계 굴절률 \texttt{-\allowbreak{}-\allowbreak{}n-\allowbreak{}water}와 별개다. \\
+\texttt{-\allowbreak{}-\allowbreak{}water-\allowbreak{}salinity G} & g kg\textsuperscript{-}\textsuperscript{1}, 기본 \texttt{38.\allowbreak{}4} & 순수 해수 IOP의 염분 입력. 음수는 사용하지 않는다. \\
+\end{longtable}
+}
+
+온도·염분의 모든 외삽 범위가 CLI에서 차단되는 것은 아니다. 실험에 사용할 범위는 배포 순수 해수 데이터의 출처·보정식과 함께 판단한다. 세 모델 모두 대기 압력, 기체흡수, 풍속, 에어로졸을 별도로 지정할 수 있다. 수중만 계산하려면 \texttt{-\allowbreak{}-\allowbreak{}pressure 0}, AOD 0, 기체 여섯 컬럼 0을 함께 사용한다.
+
+\subsection{OCRT 구성성분 모델}
+\label{sec:auto:03_options:5.1}
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3000\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2300\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.4700\linewidth-5.33pt\relax}@{}}
+\toprule
+\textbf{옵션} & \textbf{값·기본값} & \textbf{설명과 조건} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{옵션} & \textbf{값·기본값} & \textbf{설명과 조건} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{-\allowbreak{}-\allowbreak{}ocrt-\allowbreak{}chl X} & mg m\textsuperscript{-}\textsuperscript{3}, 필수, \texttt{X\ensuremath{\geq}0} & chlorophyll-a 농도. 현재 생산 경로는 식물플랑크톤 흡수와 detritus 산란을 사용하며, EAP 종별 산란은 비활성이다. \\
+\texttt{-\allowbreak{}-\allowbreak{}ocrt-\allowbreak{}tsm X} & g m\textsuperscript{-}\textsuperscript{3}, 필수, \texttt{X\ensuremath{\geq}0} & 무기 부유물의 건조 질량 농도. 수중 성분을 모두 합한 일반적인 총 부유물 농도와 구분한다. \\
+\texttt{-\allowbreak{}-\allowbreak{}ocrt-\allowbreak{}adom440 X} & m\textsuperscript{-}\textsuperscript{1}, 필수, \texttt{X\ensuremath{\geq}0} & 440 nm의 용존유기물 흡수계수. \\
+\texttt{-\allowbreak{}-\allowbreak{}ocrt-\allowbreak{}adom-\allowbreak{}slope X} & nm\textsuperscript{-}\textsuperscript{1}, 기본 \texttt{0.\allowbreak{}014}, \texttt{X>0} & \texttt{aDOM(\ensuremath{\lambda})=\allowbreak{}aDOM(440) exp[-\allowbreak{}X(\ensuremath{\lambda}-440)]}. \\
+\texttt{-\allowbreak{}-\allowbreak{}ocrt-\allowbreak{}tsm-\allowbreak{}species N} & 기본 \texttt{red\_\allowbreak{}clay} & \texttt{red\_\allowbreak{}clay}, \texttt{brown\_\allowbreak{}earth}, \texttt{yellow\_\allowbreak{}clay}, \texttt{calcareous\_\allowbreak{}sand}. 명시하면 \texttt{-\allowbreak{}-\allowbreak{}ocrt-\allowbreak{}tsm>0}이어야 한다. \\
+\texttt{-\allowbreak{}-\allowbreak{}ocrt-\allowbreak{}detritus-\allowbreak{}a440 X} & m\textsuperscript{-}\textsuperscript{1}, 기본 \texttt{0}, \texttt{X\ensuremath{\geq}0} & 유기 detritus의 440 nm 흡수 입력. 명시하면 \texttt{-\allowbreak{}-\allowbreak{}ocrt-\allowbreak{}chl>0}이어야 한다. Chl=0에서 별도 detritus만 켜는 인터페이스는 아니다. \textbf{0은 detritus 흡수 0이며, Chl로 산출되는 detritus 산란까지 끄지는 않는다.} \\
+\texttt{-\allowbreak{}-\allowbreak{}ocrt-\allowbreak{}detritus-\allowbreak{}slope X} & nm\textsuperscript{-}\textsuperscript{1}, 기본 \texttt{0.\allowbreak{}0109}, \texttt{X>0} & detritus 흡수 스펙트럼 지수 기울기. 명시하면 \texttt{-\allowbreak{}-\allowbreak{}ocrt-\allowbreak{}chl>0}. 출처 범위 \texttt{[0.\allowbreak{}0024,\allowbreak{}0.\allowbreak{}0170]} 밖의 양수는 경고 후 진행한다. \\
+\texttt{-\allowbreak{}-\allowbreak{}ocrt-\allowbreak{}phyto-\allowbreak{}group G} & 현재 생산 실행 사용 불가 & 파서는 \texttt{pico}, \texttt{nano}, \texttt{micro} 및 canonical \texttt{eap\_\allowbreak{}*} 종 이름을 인식하지만, Chl>0이면 미지원 오류로 종료한다. Chl=0도 의존조건 오류다. 따라서 현재는 이 옵션을 생략한다. \\
+\end{longtable}
+}
+
+\texttt{Chl=\allowbreak{}TSM=\allowbreak{}aDOM440=\allowbreak{}0}이면 OCRT/CCRR 모두 같은 native 순수 해수 경로로 내려간다. 세 값은 \textbf{0이라도 명시}해야 한다. Chl, TSM, aDOM440 및 aDOM slope를 중복 지정하면 오류다.
+
+\subsection{CCRR 구성성분 어댑터}
+\label{sec:auto:03_options:5.2}
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3000\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2300\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.4700\linewidth-5.33pt\relax}@{}}
+\toprule
+\textbf{옵션} & \textbf{값·기본값} & \textbf{설명과 조건} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{옵션} & \textbf{값·기본값} & \textbf{설명과 조건} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{-\allowbreak{}-\allowbreak{}ccrr-\allowbreak{}chl X} & mg m\textsuperscript{-}\textsuperscript{3}, 필수, \texttt{X\ensuremath{\geq}0} & CCRR식 구성성분 변환에 사용하는 Chl. 양수 Chl에는 배포 Morel (1988)/MM01 Case-1 흡수 관계가 사용된다. \\
+\texttt{-\allowbreak{}-\allowbreak{}ccrr-\allowbreak{}tsm X} & g m\textsuperscript{-}\textsuperscript{3}, 필수, \texttt{X\ensuremath{\geq}0} & CCRR 구성성분 TSM 농도. \\
+\texttt{-\allowbreak{}-\allowbreak{}ccrr-\allowbreak{}adom440 X} & m\textsuperscript{-}\textsuperscript{1}, 필수, \texttt{X\ensuremath{\geq}0} & 440 nm aDOM 흡수. \\
+\texttt{-\allowbreak{}-\allowbreak{}ccrr-\allowbreak{}adom-\allowbreak{}slope X} & nm\textsuperscript{-}\textsuperscript{1}, 기본 \texttt{0.\allowbreak{}014}, \texttt{X>0} & aDOM 지수 기울기. \\
+\texttt{-\allowbreak{}-\allowbreak{}ccrr-\allowbreak{}phase-\allowbreak{}moments FILE} & 기본 없음 & CCRR 입자 위상 모멘트 대체 파일. Chl 또는 TSM이 양수여야 하며 \texttt{-\allowbreak{}-\allowbreak{}ccrr-\allowbreak{}particle-\allowbreak{}phase-\allowbreak{}lut}와 함께 사용할 수 없다. \\
+\end{longtable}
+}
+
+CCRR은 구성성분을 OCRT의 IOP/위상 입력으로 변환하는 어댑터다. 이 옵션이 별도의 CCRR 복사전달 솔버를 실행하는 것은 아니다.
+
+\subsection{총 IOP 직접 입력}
+\label{sec:auto:03_options:5.3}
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3000\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2300\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.4700\linewidth-5.33pt\relax}@{}}
+\toprule
+\textbf{옵션} & \textbf{값·기본값} & \textbf{설명과 조건} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{옵션} & \textbf{값·기본값} & \textbf{설명과 조건} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{-\allowbreak{}-\allowbreak{}iop-\allowbreak{}a A} & m\textsuperscript{-}\textsuperscript{1}, 필수, \texttt{A\ensuremath{\geq}0} & 순수 해수와 입자 등을 합한 총 흡수계수. \\
+\texttt{-\allowbreak{}-\allowbreak{}iop-\allowbreak{}b B} & m\textsuperscript{-}\textsuperscript{1}, 필수, \texttt{B>0} & 총 산란계수. \\
+\texttt{-\allowbreak{}-\allowbreak{}iop-\allowbreak{}bb BB} & m\textsuperscript{-}\textsuperscript{1}, 필수, \texttt{0<BB<0.\allowbreak{}5 B} & 총 후방산란계수. 순수 해수 성분을 다시 더하지 않는다. \\
+\texttt{-\allowbreak{}-\allowbreak{}iop-\allowbreak{}phase-\allowbreak{}lut FILE} & 기본 없음 & 스칼라 P11 위상 LUT. 기본 처리 경로는 weak-cap \texttt{lut-\allowbreak{}deltam}. \\
+\texttt{-\allowbreak{}-\allowbreak{}iop-\allowbreak{}mie-\allowbreak{}phase FILE} & 기본 없음 & 벡터 P11/P12/P33 위상 \texttt{.\allowbreak{}mie}. IOP의 a,b,bb는 여전히 위 세 입력에서 가져온다. \\
+\texttt{-\allowbreak{}-\allowbreak{}iop-\allowbreak{}phase-\allowbreak{}nphi N} & 기본 \texttt{720} & 스칼라 위상 커널의 방위각 적분 수. \textbf{명시하면 기본값 720이어도} \texttt{OCRT\_\allowbreak{}ADVANCED=\allowbreak{}1}이 필요하다. 양의 정수를 사용한다. \\
+\end{longtable}
+}
+
+두 위상 파일 옵션은 동시에 쓸 수 없다. 둘 다 생략하면 후방산란비 \texttt{bb/\allowbreak{}b}에 맞춘 내부 스칼라 벌크 위상 표현을 사용한다. 사용자 위상을 넣을 때는 벌크 \texttt{bb/\allowbreak{}b}와 위상 후방산란 적분의 물리적 정합도 사용자가 확인해야 한다. 이 경로에서는 직달 선글린트 분리가 내부적으로 강제된다.
+
+\section{수중 Mie 위상 처리}
+\label{sec:auto:03_options:6}
+아래에서 \texttt{-\allowbreak{}-\allowbreak{}ocrt-\allowbreak{}mie-\allowbreak{}*}는 \texttt{-\allowbreak{}-\allowbreak{}water-\allowbreak{}model ocrt}이며 Chl 또는 TSM>0인 사례용이고, \texttt{-\allowbreak{}-\allowbreak{}iop-\allowbreak{}mie-\allowbreak{}*}는 \texttt{-\allowbreak{}-\allowbreak{}water-\allowbreak{}model iop -\allowbreak{}-\allowbreak{}iop-\allowbreak{}mie-\allowbreak{}phase FILE}용이다. 두 접두사를 섞거나 CCRR 모델에서 사용하면 오류다.
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3000\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2300\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.4700\linewidth-5.33pt\relax}@{}}
+\toprule
+\textbf{옵션} & \textbf{값·기본값} & \textbf{설명} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{옵션} & \textbf{값·기본값} & \textbf{설명} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{-\allowbreak{}-\allowbreak{}ocrt-\allowbreak{}mie-\allowbreak{}moment-\allowbreak{}mode M}, \texttt{-\allowbreak{}-\allowbreak{}iop-\allowbreak{}mie-\allowbreak{}moment-\allowbreak{}mode M} & 기본 \texttt{gauss} & \texttt{.\allowbreak{}mie}에서 모멘트를 계산하는 적분 방식. \texttt{gauss} 별칭은 \texttt{quadrature}, \texttt{gauss-\allowbreak{}mu}. \texttt{dense} 별칭은 \texttt{pchip-\allowbreak{}theta}이며 기본 변경에 \texttt{OCRT\_\allowbreak{}ADVANCED=\allowbreak{}1} 필요. \\
+\texttt{-\allowbreak{}-\allowbreak{}ocrt-\allowbreak{}mie-\allowbreak{}moment-\allowbreak{}nmu N}, \texttt{-\allowbreak{}-\allowbreak{}iop-\allowbreak{}mie-\allowbreak{}moment-\allowbreak{}nmu N} & 기본 \texttt{400}, 정수 \texttt{N>1} & 모멘트 적분의 \ensuremath{\mu} 구적 수. 대기·수중 RT 구적 수와 다른 값이다. 400 이외에는 \texttt{OCRT\_\allowbreak{}ADVANCED=\allowbreak{}1} 필요. \\
+\texttt{-\allowbreak{}-\allowbreak{}ocrt-\allowbreak{}mie-\allowbreak{}truncation} & 기본 OFF & OCRT 입자 위상의 넓은 전방 피크 절단을 명시적으로 켠다. 항상 \texttt{OCRT\_\allowbreak{}ADVANCED=\allowbreak{}1} 필요. \\
+\texttt{-\allowbreak{}-\allowbreak{}iop-\allowbreak{}mie-\allowbreak{}truncation} & 기본 OFF & 직접 주입한 수중 벡터 위상의 절단을 켠다. 현재 파서는 별도 ADVANCED 환경변수를 요구하지 않는다. \\
+\texttt{-\allowbreak{}-\allowbreak{}ocrt-\allowbreak{}mie-\allowbreak{}ss-\allowbreak{}mode N}, \texttt{-\allowbreak{}-\allowbreak{}iop-\allowbreak{}mie-\allowbreak{}ss-\allowbreak{}mode N} & \texttt{0}, \texttt{1}, \texttt{2}; 기본 \texttt{0} & 절단 후 단일산란 소스 보정. \texttt{0} 없음, \texttt{1} IMS, \texttt{2} NT-TMS. 1 또는 2는 동일 모델의 truncation 플래그와 함께 써야 한다. \\
+\end{longtable}
+}
+
+수중 FR631 과학 기준은 raw 위상, \textbf{truncation OFF}다. 넓은 절단은 단순히 계산 속도만 바꾸는 옵션이 아니며 b, 단일산란알베도, 광학두께와 소스 항을 바꾼다. 상대 모델과 비교할 때 위상뿐 아니라 절단, 물리 수심, 광학량 변환 및 소스 보정도 맞춘다. 자세한 기준은 \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_C/docs/OCRT_MIE_GRID_TRUNCATION_AND_VALIDATION_ARTIFACT_POLICY_2026-08-21.md}{Mie·절단 정책}을 참고한다.
+
+\section{각도 격자·배치·출력}
+\label{sec:auto:03_options:7}
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3000\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2300\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.4700\linewidth-5.33pt\relax}@{}}
+\toprule
+\textbf{옵션} & \textbf{값·기본값} & \textbf{설명과 조건} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{옵션} & \textbf{값·기본값} & \textbf{설명과 조건} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{-\allowbreak{}-\allowbreak{}output-\allowbreak{}full-\allowbreak{}grid FILE} & 기본 자동 \texttt{result<N>.\allowbreak{}csv} & 각도 격자 모드와 파일을 명시한다. 비배치에서는 확장자 생략 시 \texttt{.\allowbreak{}csv} 추가, 소문자 \texttt{.\allowbreak{}csv} 이외 확장자는 오류. 지정한 기존 파일은 덮어쓸 수 있다. 상위 디렉터리를 먼저 만든다. \\
+\texttt{-\allowbreak{}-\allowbreak{}lut-\allowbreak{}vza-\allowbreak{}step DEG}, \texttt{-\allowbreak{}-\allowbreak{}vza-\allowbreak{}gap DEG} & 기본 \texttt{2.\allowbreak{}5\textdegree{}} & 관측 천정각 출력 간격. 해양 격자에서 \texttt{(0,\allowbreak{}90]}, VZA 수 최대 512. 적분 구적 수를 바꾸는 옵션이 아니다. \\
+\texttt{-\allowbreak{}-\allowbreak{}lut-\allowbreak{}raa-\allowbreak{}step DEG}, \texttt{-\allowbreak{}-\allowbreak{}raa-\allowbreak{}gap DEG} & 기본 \texttt{2.\allowbreak{}5\textdegree{}} & 상대방위각 출력 간격. 해양 격자에서 \texttt{(0,\allowbreak{}180]}. 360을 정확히 나누는 값을 권장한다. \\
+\texttt{-\allowbreak{}-\allowbreak{}lut-\allowbreak{}vza-\allowbreak{}max DEG} & 기본 \texttt{85\textdegree{}} & 출력 VZA 상한. 물리적으로 \texttt{0<값<90}. 해양 경로에서는 범위 밖 값이 85로 대체되므로 잘못된 입력이 항상 오류가 되는 것은 아니다. \\
+\texttt{-\allowbreak{}-\allowbreak{}batch FILE} & 기본 없음 & 대기 사례 입력 CSV. \texttt{-\allowbreak{}-\allowbreak{}output} 필수. 수질 CSV를 해석하는 옵션이 아니다. \\
+\texttt{-\allowbreak{}-\allowbreak{}output FILE} & 기본 없음 & \texttt{-\allowbreak{}-\allowbreak{}batch} 또는 진단 비교의 결과 CSV. 일반 단일 결과를 저장하는 플래그가 아니므로 단일 실행은 표준출력을 파일로 리다이렉트한다. \\
+\texttt{-\allowbreak{}-\allowbreak{}batch-\allowbreak{}full-\allowbreak{}grid FILE} & 기본 없음 & 해양 각도 격자 배치. 한 입력 행의 조건으로 하나의 전체 격자 파일을 만든다. 빈 셀은 CLI 기본을 계승한다. \\
+\texttt{-\allowbreak{}-\allowbreak{}output-\allowbreak{}advanced} & 기본 OFF & \texttt{-\allowbreak{}-\allowbreak{}batch} CSV에 기준값 대비 오차, 산란 차수, 수렴·시간 등의 상세 열을 추가한다. 일반 해양 격자의 60열 형식을 바꾸는 옵션은 아니다. \\
+\end{longtable}
+}
+
+현재 균일 해양 격자에서 VZA는 \texttt{0,\allowbreak{} step,\allowbreak{} \ldots{},\allowbreak{} floor(max/\allowbreak{}step)\ensuremath{\times}step}이다. RAA 개수는 \texttt{floor(360/\allowbreak{}step+0.\allowbreak{}5)}이며, 값은 \texttt{0,\allowbreak{} step,\allowbreak{} \ldots{}}로 생성하고 360\textdegree{}를 중복 포함하지 않는다. 예를 들어 VZA 간격 15\textdegree{}, 상한 85\textdegree{}이면 마지막 VZA는 75\textdegree{}다.
+
+\textbf{명시적 파일 지정을 권장하는 이유:} 현재 \texttt{main.\allowbreak{}c}는 \texttt{-\allowbreak{}-\allowbreak{}output-\allowbreak{}full-\allowbreak{}grid}를 파싱했을 때 수중 구적 수를 96으로 높인다. 단지 VZA/RAA를 생략해서 뒤늦게 자동 격자 모드가 된 경우에는 이 승격 단계가 이미 지났을 수 있다. 과학 자료 생성 명령에는 항상 \texttt{-\allowbreak{}-\allowbreak{}output-\allowbreak{}full-\allowbreak{}grid FILE.\allowbreak{}csv}를 넣고, 비교 실행의 수중 구적 수를 기록한다.
+
+\texttt{-\allowbreak{}-\allowbreak{}batch}와 \texttt{-\allowbreak{}-\allowbreak{}output-\allowbreak{}full-\allowbreak{}grid DIR} 조합은 레거시 배치 부가 LUT 경로에서 후자를 \textbf{파일이 아닌 출력 디렉터리}로 해석한다. 일반 파일 출력과 의미가 다르므로 대기 LUT 제작에는 독립 각도 격자 실행을 권장한다.
+
+\section{수치 수렴·표면 실험 옵션}
+\label{sec:auto:03_options:8}
+\input{figures/options_grids.tex}
+
+일반 작업은 기본값부터 사용한다. \texttt{OCRT\_\allowbreak{}ADVANCED=\allowbreak{}1}은 기본 검증 구성 이외의 수치 실험을 허용한다는 뜻이며, 변경한 설정의 정확도를 자동으로 보장하지 않는다. 플래그가 켜졌다고 다른 옵션 값이 자동 변경되지는 않는다.
+
+
+\begin{ManualCode}
+$env:OCRT_ADVANCED = "1"
+\end{ManualCode}
+
+
+\begin{ManualCode}
+export OCRT_ADVANCED=1
+\end{ManualCode}
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3000\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2300\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.4700\linewidth-5.33pt\relax}@{}}
+\toprule
+\textbf{옵션} & \textbf{기본값} & \textbf{실제 적용·게이트} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{옵션} & \textbf{기본값} & \textbf{실제 적용·게이트} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{-\allowbreak{}-\allowbreak{}n-\allowbreak{}mu N} & \texttt{24} & 대기 반구별 Gauss-Legendre 구적 수. 정수 \texttt{N\ensuremath{\geq}2}. 24 이외는 ADVANCED. 출력 VZA 점 개수와 다르다. \\
+\texttt{-\allowbreak{}-\allowbreak{}n-\allowbreak{}layers N} & AOD 0이면 \texttt{40}, AOD>0이면 \texttt{400} & 대기 층 수. 정수 \texttt{N\ensuremath{\geq}2}. 해당 기본값 이외는 ADVANCED. 수중 층 수를 바꾸지 않는다. \\
+\texttt{-\allowbreak{}-\allowbreak{}m-\allowbreak{}max M} & AOD 0이면 \texttt{2}, AOD>0이면 \texttt{16} & 대기 방위 Fourier 최대 모드. 정수 \texttt{0\ensuremath{\leq}M\ensuremath{\leq}32}. 해당 기본값 이외는 ADVANCED. \\
+\texttt{-\allowbreak{}-\allowbreak{}sos-\allowbreak{}max-\allowbreak{}orders N} & \texttt{20} & \textbf{실제 대기 SOS 최대 산란 차수}. \texttt{N\ensuremath{\geq}1}. 20 이외는 ADVANCED. 수중 자동 차수 제한과 별개다. \\
+\texttt{-\allowbreak{}-\allowbreak{}sos-\allowbreak{}tolerance X} & \texttt{1e-\allowbreak{}7} & \textbf{실제 대기 SOS 수렴 허용치}, 양수. 기본값 이외는 ADVANCED. \\
+\texttt{-\allowbreak{}-\allowbreak{}sos-\allowbreak{}acceleration STR\allowbreak{}} & \texttt{plain} & \texttt{plain}만 구현됨. \texttt{geometric}은 명시적 미구현 오류다. \\
+\texttt{-\allowbreak{}-\allowbreak{}integration-\allowbreak{}method STR} & \texttt{linear} & 층 내 소스 선형 적분. \texttt{constant}는 진단용이며 DEBUG 필요. \\
+\texttt{-\allowbreak{}-\allowbreak{}n-\allowbreak{}mu-\allowbreak{}water N} & 일반 수중 \texttt{48}, 명시적 해양 격자 \texttt{96} & 수중 반구별 \ensuremath{\mu} 구적 수. 양의 정수. \textbf{명시하면 항상 ADVANCED}. 수렴 확인 없이 수를 줄여 대량 계산하지 않는다. \\
+\texttt{-\allowbreak{}-\allowbreak{}n-\allowbreak{}mu-\allowbreak{}water-\allowbreak{}sky N} & \texttt{0}=기본 수중 격자 & 대기에서 입사하는 sky beam 결합 경로에 한해 더 작은 수중 구적 수를 선택하는 진단용 수치 옵션. 직접 태양빔 격자와 별개이며 일부 결합 경로에서만 소비된다. 현재 CLI 게이트는 없다. \\
+\texttt{-\allowbreak{}-\allowbreak{}water-\allowbreak{}m-\allowbreak{}max M} & 자동 & 수중 Fourier 모드 상한을 양수로 재지정. 명시하면 항상 ADVANCED. 0은 실제 솔버에서 override하지 않는다. \\
+\texttt{-\allowbreak{}-\allowbreak{}water-\allowbreak{}shared-\allowbreak{}grid} & OFF & 수중 구적 수를 대기의 \texttt{-\allowbreak{}-\allowbreak{}n-\allowbreak{}mu}와 같게 맞춘다. 기본 대기 값 24를 공유하면 독립 수중 기본 48/96보다 작아지므로 비교 목적의 수렴 확인이 필요하다. \texttt{-\allowbreak{}-\allowbreak{}n-\allowbreak{}mu-\allowbreak{}water}와 함께 쓰지 않는다. \\
+\texttt{-\allowbreak{}-\allowbreak{}water-\allowbreak{}view-\allowbreak{}as-\allowbreak{}node} & 현재 CLI ON & 요청한 수중 관측 방향의 노드 추출을 켠다. 도움말의 “default OFF”는 현재 초기값과 다르다. \\
+\texttt{-\allowbreak{}-\allowbreak{}water-\allowbreak{}view-\allowbreak{}as-\allowbreak{}node-\allowbreak{}off} & 기본 OFF & 단일 사례에서 노드 추출을 끄고 연속 재구성/보간 경로를 비교하는 진단용 옵션. 격자 자체의 다중 관측 노드 처리와 구분한다. \\
+\texttt{-\allowbreak{}-\allowbreak{}sigma-\allowbreak{}model STR} & \texttt{ocrt-\allowbreak{}floor} & 해면 경사분산 식. \texttt{ocrt\_\allowbreak{}floor}도 인식. \texttt{nakajima-\allowbreak{}tanaka}/\texttt{nakajima\_\allowbreak{}tanaka}는 ADVANCED 필요. \\
+\texttt{-\allowbreak{}-\allowbreak{}sigma-\allowbreak{}type N} & \texttt{1} & 위 모델의 호환 숫자 선택. \texttt{1} OCRT floor, \texttt{0} Nakajima-Tanaka. 1 이외는 ADVANCED. 새 명령에는 문자열 옵션을 사용한다. \\
+\texttt{-\allowbreak{}-\allowbreak{}q-\allowbreak{}convention N} & \texttt{1} & Fresnel 경계 Q 규약. \texttt{1}: \texttt{(Rp-Rs)/\allowbreak{}2}, \texttt{0}: 과거 \texttt{(Rs-Rp)/\allowbreak{}2}. 1 이외는 ADVANCED. 모든 출력 Q를 단순히 반전시키는 후처리 옵션으로 취급하지 않는다. \\
+\end{longtable}
+}
+
+경사분산 구현은 OCRT floor에서 \texttt{0.\allowbreak{}003+0.\allowbreak{}00512\ensuremath{\times}max(0.\allowbreak{}01,\allowbreak{}U)}, Nakajima--Tanaka에서 \texttt{(0.\allowbreak{}0731\ensuremath{\sqrt{}}max(0,\allowbreak{}U))\textsuperscript{2}}이다. 상위 경로는 풍속 0일 때 평면 Fresnel 분기를 선택하므로, 0풍속 결과를 거친 해면 경사분산 식만으로 해석하지 않는다.
+
+다음 세 옵션은 파서에 남아 있지만 \textbf{현재 실행의 효과가 다른 수치 옵션과 같지 않다}.
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3000\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2300\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.4700\linewidth-5.33pt\relax}@{}}
+\toprule
+\textbf{옵션} & \textbf{기본·게이트} & \textbf{현재 상태} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{옵션} & \textbf{기본·게이트} & \textbf{현재 상태} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{-\allowbreak{}-\allowbreak{}max-\allowbreak{}orders N} & 기본 \texttt{20}, 변경 시 ADVANCED & 레거시 \texttt{opts.\allowbreak{}max\_\allowbreak{}orders} 필드에 저장한다. 현재 대기 솔버의 차수 제한은 \texttt{opts.\allowbreak{}sos.\allowbreak{}max\_\allowbreak{}iterations}를 사용한다. 실제 제어에는 \texttt{-\allowbreak{}-\allowbreak{}sos-\allowbreak{}max-\allowbreak{}orders}를 쓴다. \\
+\texttt{-\allowbreak{}-\allowbreak{}conv-\allowbreak{}tol X} & 기본 \texttt{1e-\allowbreak{}6}, 변경 시 ADVANCED & 레거시 \texttt{opts.\allowbreak{}conv\_\allowbreak{}tol}에 저장한다. 현재 대기 SOS는 \texttt{-\allowbreak{}-\allowbreak{}sos-\allowbreak{}tolerance}를 사용한다. \\
+\texttt{-\allowbreak{}-\allowbreak{}l-\allowbreak{}max auto\textbackslash{}|N} & 기본 \texttt{auto}, 수치 지정 시 ADVANCED & 현재 대기 솔버는 \texttt{opts.\allowbreak{}l\_\allowbreak{}max} 대신 Fourier 상한, Rayleigh 차수 및 에어로졸 L에서 작업 차수를 정한다. \texttt{-\allowbreak{}-\allowbreak{}aer-\allowbreak{}l-\allowbreak{}max}와 혼동하지 않는다. \\
+\end{longtable}
+}
+
+수중 기본 최대 차수는 매질별로 정해진다. 일반 순수수 경로는 20, 구성성분 경로는 최소 140, 직접 IOP 경로는 최소 160으로 시작한다. 입자성 구성성분이 양수이거나 직접 IOP의 \texttt{b>0.\allowbreak{}02 m\textsuperscript{-}\textsuperscript{1}} 또는 \texttt{bb>0.\allowbreak{}0005 m\textsuperscript{-}\textsuperscript{1}}이면 현재 코드의 고입자 안전 하한 \textbf{10000}으로 다시 높인다. 오래된 주석의 100과 실제 상수값이 다르다. 상한까지 반드시 반복하는 것은 아니며 수렴하면 조기 종료한다. 수심과 위상 처리에는 추가 자동 정책이 적용된다. 로그·출력의 실제 \texttt{water\_\allowbreak{}orders}, \texttt{water\_\allowbreak{}converged}를 확인한다. \texttt{-\allowbreak{}-\allowbreak{}sos-\allowbreak{}max-\allowbreak{}orders}만 올려 수중 미수렴이 해결될 것으로 기대하지 않는다.
+
+\section{진단 옵션 전체 목록}
+\label{sec:auto:03_options:9}
+DEBUG 옵션은 \texttt{OCRT\_\allowbreak{}DEBUG=\allowbreak{}1} 환경변수 또는 명령 맨 앞의 \texttt{-\allowbreak{}-\allowbreak{}debug}로 허용한다. \texttt{-\allowbreak{}-\allowbreak{}debug}는 나오는 시점부터 효과가 있으므로 관련 옵션보다 앞에 둔다. DEBUG와 ADVANCED는 별개이므로 두 게이트가 모두 필요한 경우 둘 다 설정한다.
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3000\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2300\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.4700\linewidth-5.33pt\relax}@{}}
+\toprule
+\textbf{옵션} & \textbf{값·기본} & \textbf{용도·조건} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{옵션} & \textbf{값·기본} & \textbf{용도·조건} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{-\allowbreak{}-\allowbreak{}debug} & 플래그 & 프로세스의 \texttt{OCRT\_\allowbreak{}DEBUG=\allowbreak{}1} 설정. 일반 생산 자료 생성 명령에서 생략한다. \\
+\texttt{-\allowbreak{}-\allowbreak{}debug-\allowbreak{}fixed-\allowbreak{}bulk-\allowbreak{}lmax N} & 0=경로별 자동 & IOP 고정 벌크 위상 최대 모멘트 차수. DEBUG, IOP 모델. 자동값은 Mie 계열 200, LUT 계열 30 등이므로 동일 차수라고 가정하지 않는다. \\
+\texttt{-\allowbreak{}-\allowbreak{}debug-\allowbreak{}fixed-\allowbreak{}bulk-\allowbreak{}phase-\allowbreak{}model M} & 내부 \texttt{delta2bb} & IOP 진단 위상 선택. \texttt{delta2bb} 별칭 \texttt{delta}, \texttt{bb2}; \texttt{hg-\allowbreak{}lut} 별칭 \texttt{hg\_\allowbreak{}direct}, \texttt{hg}; \texttt{lut} 별칭 \texttt{table}, \texttt{p11-\allowbreak{}lut}; \texttt{lut-\allowbreak{}deltam} 별칭 \texttt{deltam}, \texttt{delta-\allowbreak{}m}. DEBUG. LUT 선택에는 위상 파일 필요. \\
+\texttt{-\allowbreak{}-\allowbreak{}debug-\allowbreak{}high-\allowbreak{}particle-\allowbreak{}water-\allowbreak{}max-\allowbreak{}orders N} & 미지정 시 현재 안전 하한 \texttt{10000} & 입자 매질의 최소 SOS 차수 제한. 양의 정수, DEBUG. 모델이 이미 140/160을 요구하면 이보다 작은 값으로 낮추지 않는다. \\
+\texttt{-\allowbreak{}-\allowbreak{}debug-\allowbreak{}water-\allowbreak{}max-\allowbreak{}orders N} & 자동 & 수중 SOS 차수 상한을 직접 변경. 양의 정수, DEBUG. 낮춘 경우 미수렴 가능성을 실제 결과로 확인한다. \\
+\texttt{-\allowbreak{}-\allowbreak{}debug-\allowbreak{}water-\allowbreak{}tau-\allowbreak{}max-\allowbreak{}target X} & 매질별 자동 & 기저 수중 총 광학두께 목표. 양수, 무차원, DEBUG. 심수 정책으로 최종 깊이가 추가 조정될 수 있다. \\
+\texttt{-\allowbreak{}-\allowbreak{}debug-\allowbreak{}water-\allowbreak{}max-\allowbreak{}tau X} & 매질별 자동 & 최종 수중 광학두께 상한. 양수, 무차원, DEBUG. \\
+\texttt{-\allowbreak{}-\allowbreak{}debug-\allowbreak{}water-\allowbreak{}max-\allowbreak{}depth X} & 매질별 자동 & 수중 물리 깊이 상한, m, 양수, DEBUG. 일반 수심/해저 반사 모델 입력이 아니다. \\
+\texttt{-\allowbreak{}-\allowbreak{}debug-\allowbreak{}water-\allowbreak{}min-\allowbreak{}depth X} & 위와 같음 & 현재 코드에서는 \texttt{-\allowbreak{}-\allowbreak{}debug-\allowbreak{}water-\allowbreak{}max-\allowbreak{}depth}와 완전히 같은 필드에 저장하는 레거시 별칭. 이름과 달리 최소 깊이를 지정하지 않는다. \\
+\texttt{-\allowbreak{}-\allowbreak{}debug-\allowbreak{}water-\allowbreak{}bottom-\allowbreak{}tol X} & \texttt{1e-\allowbreak{}8} & 바닥까지의 수송 감쇠 목표. \texttt{0<X<1}, DEBUG. \\
+\texttt{-\allowbreak{}-\allowbreak{}debug-\allowbreak{}water-\allowbreak{}layer-\allowbreak{}dtau X} & \texttt{0.\allowbreak{}05} & 층당 광학두께 목표, 양수, DEBUG. \\
+\texttt{-\allowbreak{}-\allowbreak{}debug-\allowbreak{}water-\allowbreak{}n-\allowbreak{}layers N} & 자동 & 수중 층 수를 고정, 양의 정수, DEBUG. 지정하면 \ensuremath{\Delta}\ensuremath{\tau} 기반 자동 층수 증가는 해제된다. \\
+\texttt{-\allowbreak{}-\allowbreak{}ccrr-\allowbreak{}particle-\allowbreak{}phase-\allowbreak{}lut FILE} & 없음 & CCRR 입자 스칼라 위상 LUT 대체. DEBUG. Chl 또는 TSM>0, \texttt{-\allowbreak{}-\allowbreak{}ccrr-\allowbreak{}phase-\allowbreak{}moments}와 배타적. \\
+\texttt{-\allowbreak{}-\allowbreak{}ccrr-\allowbreak{}particle-\allowbreak{}phase-\allowbreak{}case-\allowbreak{}id ID} & 없음 & 위 LUT에서 선택할 사례 ID. DEBUG, LUT 옵션 필수. \\
+\texttt{-\allowbreak{}-\allowbreak{}ccrr-\allowbreak{}particle-\allowbreak{}phase-\allowbreak{}lmax N} & \texttt{10} & 위 LUT의 모멘트 차수, 양수, DEBUG, LUT 옵션 필수. \\
+\texttt{-\allowbreak{}-\allowbreak{}ccrr-\allowbreak{}particle-\allowbreak{}phase-\allowbreak{}nphi N} & \texttt{720} & 위 LUT의 방위 적분 수, 양수, DEBUG, LUT 옵션 필수. \\
+\texttt{-\allowbreak{}-\allowbreak{}trunc-\allowbreak{}aer-\allowbreak{}fit DEG} & OFF & 에어로졸 delta-fit 연구 절단의 경계각, 도. DEBUG, AOD>0. \\
+\texttt{-\allowbreak{}-\allowbreak{}trunc-\allowbreak{}aer-\allowbreak{}m N} & OFF & 에어로졸 delta-M 연구 절단 차수. DEBUG, AOD>0. 위 옵션과 구별된 실험으로 사용한다. \\
+\texttt{-\allowbreak{}-\allowbreak{}nt-\allowbreak{}tau} & OFF & 연구 절단의 NT 광학두께/알베도 변환. DEBUG, AOD>0. 일반 자동 loglin 경로와 동일한 물리라고 가정하지 않는다. \\
+\texttt{-\allowbreak{}-\allowbreak{}sos-\allowbreak{}save-\allowbreak{}orders} & OFF & DEBUG. 현재 파서는 \texttt{save\_\allowbreak{}orders} 필드를 설정하지만 생산 SOS 구현에서 이를 읽어 별도 차수별 파일을 쓰는 경로는 없다. 이 옵션만으로 차수별 출력 파일이 생긴다고 기대하지 않는다. \\
+\texttt{-\allowbreak{}-\allowbreak{}ccrr-\allowbreak{}compare FILE}, \texttt{-\allowbreak{}-\allowbreak{}simple-\allowbreak{}compare FILE} & 없음 & CCRR 참조 CSV 비교 진단. DEBUG. 단일 \texttt{-\allowbreak{}-\allowbreak{}water-\allowbreak{}model} 분기와 혼합 금지. \\
+\texttt{-\allowbreak{}-\allowbreak{}ccrr-\allowbreak{}output FILE}, \texttt{-\allowbreak{}-\allowbreak{}simple-\allowbreak{}output FILE} & 없음 & 위 비교 결과 파일. 미지정하면 \texttt{-\allowbreak{}-\allowbreak{}output} 사용. 두 경로 모두 없으면 오류. \\
+\end{longtable}
+}
+
+\subsection{Fournier--Forand 스칼라 위상 연구 경로}
+\label{sec:auto:03_options:9.1}
+다음은 일반 수질 모델 선택지에 추가되는 독립 모델이 아니라, \texttt{-\allowbreak{}-\allowbreak{}water-\allowbreak{}model iop} 안의 연구용 경로다. a,b는 표에서 읽고 bb는 사용자가 지정한 후방산란비로 계산할 수 있다.
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3000\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2300\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.4700\linewidth-5.33pt\relax}@{}}
+\toprule
+\textbf{옵션 및 모든 별칭} & \textbf{값·기본} & \textbf{설명} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{옵션 및 모든 별칭} & \textbf{값·기본} & \textbf{설명} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{-\allowbreak{}-\allowbreak{}scalar-\allowbreak{}ff-\allowbreak{}iop FILE}, \texttt{-\allowbreak{}-\allowbreak{}ff-\allowbreak{}iop FILE}, \texttt{-\allowbreak{}-\allowbreak{}ff-\allowbreak{}scalar-\allowbreak{}iop FILE} & 없음 & \texttt{wavelength\_\allowbreak{}nm,\allowbreak{}a,\allowbreak{}b} 표. DEBUG. 실행 파장이 표의 범위 안에 있어야 하고 선형 보간하며 외삽하지 않는다. 이 파일을 쓰면 \texttt{-\allowbreak{}-\allowbreak{}iop-\allowbreak{}a/\allowbreak{}b/\allowbreak{}bb} 필수 조건을 대신한다. \\
+\texttt{-\allowbreak{}-\allowbreak{}scalar-\allowbreak{}ff-\allowbreak{}bbfrac X}, \texttt{-\allowbreak{}-\allowbreak{}scalar-\allowbreak{}ff-\allowbreak{}bb-\allowbreak{}over-\allowbreak{}b X}, \texttt{-\allowbreak{}-\allowbreak{}ff-\allowbreak{}bbfrac X} & 미지정 \texttt{0} & \texttt{0<X<0.\allowbreak{}5}의 bb/b. 파일 경로에서 필수. \\
+\texttt{-\allowbreak{}-\allowbreak{}scalar-\allowbreak{}ff-\allowbreak{}n X}, \texttt{-\allowbreak{}-\allowbreak{}ff-\allowbreak{}n X} & \texttt{1.\allowbreak{}18} & FF 입자의 상대 굴절률 \texttt{>1}. \\
+\texttt{-\allowbreak{}-\allowbreak{}scalar-\allowbreak{}ff-\allowbreak{}mu X}, \texttt{-\allowbreak{}-\allowbreak{}ff-\allowbreak{}mu X} & 자동 & Junge 지수. 미지정이면 bb/b로부터 추정; 직접 주는 경우 유효한 FF 지수(\texttt{>3})를 사용한다. \\
+\texttt{-\allowbreak{}-\allowbreak{}scalar-\allowbreak{}ff-\allowbreak{}lmax N}, \texttt{-\allowbreak{}-\allowbreak{}ff-\allowbreak{}lmax N} & 파일 경로에서 \texttt{10} & FF 유지 모멘트 차수. 양의 정수. \\
+\texttt{-\allowbreak{}-\allowbreak{}scalar-\allowbreak{}ff-\allowbreak{}phase-\allowbreak{}nphi N}, \texttt{-\allowbreak{}-\allowbreak{}scalar-\allowbreak{}ff-\allowbreak{}nphi N}, \texttt{-\allowbreak{}-\allowbreak{}ff-\allowbreak{}phase-\allowbreak{}nphi N}, \texttt{-\allowbreak{}-\allowbreak{}ff-\allowbreak{}nphi N} & \texttt{720} & FF 방위 적분 수. 명시하면 항상 ADVANCED. \\
+\end{longtable}
+}
+
+현재 구현은 FF 파일 옵션에 DEBUG를 요구하고 nphi에 ADVANCED를 요구하지만 나머지 FF 파라미터에는 각각의 DEBUG 차단이 없다. 그래도 이 묶음은 진단 경로이며, 부분 플래그만 일반 IOP 계산에 섞어 적용을 기대하지 않는다.
+
+\section{실행 정보와 환경변수}
+\label{sec:auto:03_options:10}
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3400\linewidth-4.00pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.6600\linewidth-4.00pt\relax}@{}}
+\toprule
+\textbf{옵션} & \textbf{동작} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{옵션} & \textbf{동작} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{-\allowbreak{}-\allowbreak{}help}, \texttt{-\allowbreak{}h} & 일반 도움말을 출력하고 종료. 숨겨진 수치·진단 옵션 전부를 열거하지 않는다. \\
+\texttt{-\allowbreak{}-\allowbreak{}examples} & 프로그램에 내장된 과거 검증 실행 예시를 출력하고 종료. 최신 재현 예시는 부록~\ref{chap:04_examples}의 예시를 우선한다. \\
+\texttt{-\allowbreak{}-\allowbreak{}version} & 빌드 문자열을 출력하고 종료. 저장소 릴리스 번호와 문자열의 오래된 \texttt{v1.\allowbreak{}2} 표기가 일치하지 않을 수 있으므로 소스 revision도 함께 기록한다. \\
+\texttt{-\allowbreak{}-\allowbreak{}verbose} & 추가 실행·기본값 선택·에어로졸 진단을 표준오류에 출력. 파일 데이터와 로그를 구분해 저장한다. \\
+\end{longtable}
+}
+
+실제 운영에서 사용할 환경변수는 다음과 같다. 별도 표기 없는 값은 프로그램 시작 전에 설정한다. 같은 셸에 남은 환경변수는 다음 실행에도 영향을 줄 수 있다. 내부 진단 변수 중에는 \texttt{0}이라는 문자열도 “존재함”으로 판단하는 항목이 있으므로 끌 때는 해당 변수를 제거한다.
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3000\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2300\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.4700\linewidth-5.33pt\relax}@{}}
+\toprule
+\textbf{환경변수} & \textbf{값·기본} & \textbf{용도} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{환경변수} & \textbf{값·기본} & \textbf{용도} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{OMP\_\allowbreak{}NUM\_\allowbreak{}THREADS} & 양의 정수, OpenMP 런타임 기본 & OpenMP 작업자 수. 재현성 비교 시작점은 \texttt{1}. 빌드가 OpenMP를 지원해야 한다. \\
+\texttt{OCRT\_\allowbreak{}ADVANCED} & 미지정 OFF, 보통 \texttt{1} & 위 표의 ADVANCED 게이트. \\
+\texttt{OCRT\_\allowbreak{}DEBUG} & 미지정 OFF, 보통 \texttt{1} & 위 표의 DEBUG 게이트. \texttt{-\allowbreak{}-\allowbreak{}debug}로도 설정 가능. \\
+\texttt{OCRT\_\allowbreak{}TSM\_\allowbreak{}DIR} & 미지정 시 배포 TSM 위치 탐색 & Ahn 무기 입자 데이터 디렉터리 대체. 필요한 계수·네 종 위상 파일이 완비되어야 한다. \\
+\texttt{OCRT\_\allowbreak{}ORGANIC\_\allowbreak{}DIR} & 미지정 시 배포 유기 입자 위치 탐색 & 유기 입자 데이터 디렉터리 대체. 공통 식물플랑크톤 흡수 및 detritus 데이터가 필요하다. \\
+\texttt{OCRT\_\allowbreak{}SURFACE\_\allowbreak{}PERSIST\_\allowbreak{}CACHE\_\allowbreak{}MODE} & 기본 \texttt{off} & 해면 커널 디스크 캐시. \texttt{readonly}는 읽되 miss 시 계산, \texttt{required}는 필요한 캐시가 없으면 오류, \texttt{build}는 계산·저장. 별칭: \texttt{0}; \texttt{read-\allowbreak{}only/\allowbreak{}ro/\allowbreak{}optional}; \texttt{require/\allowbreak{}strict}; \texttt{prime/\allowbreak{}prebuild}. \\
+\texttt{OCRT\_\allowbreak{}SURFACE\_\allowbreak{}PERSIST\_\allowbreak{}CACHE\_\allowbreak{}DIR} & 캐시 ON이면 필수 & 캐시 디렉터리. 사용 전에 만들고 쓰기 권한을 확인한다. \\
+\texttt{OCRT\_\allowbreak{}SURFACE\_\allowbreak{}PERSIST\_\allowbreak{}CACHE\_\allowbreak{}TRACE} & 기본 OFF, \texttt{1} & 캐시 hit/miss 및 설정 진단. \\
+\texttt{OCRT\_\allowbreak{}WATER\_\allowbreak{}VALUE\_\allowbreak{}GEOM\_\allowbreak{}CACHE\_\allowbreak{}MAX\_\allowbreak{}MB} & 기본 \texttt{64} MiB, 최대 \texttt{4096} & value 커널 기하 캐시 크기. \texttt{0}은 할당 억제. \\
+\texttt{OCRT\_\allowbreak{}COXMUNK\_\allowbreak{}FOURIER\_\allowbreak{}NPHI} & 기본 \texttt{1024} & 거친 표면 Fourier 적분의 방위 구적 수. \texttt{64.\allowbreak{}.\allowbreak{}4096} 정수 override. 수렴 비교용이다. \\
+\texttt{OCRT\_\allowbreak{}IPSS\_\allowbreak{}NQUAD} & 현재 기본 층 패널당 \texttt{2} & IPSS 경로 적분 수렴 비교. 전체 시선에 2점만 두는 뜻이 아니다. override는 \texttt{8.\allowbreak{}.\allowbreak{}4096} 정수만 수용하며 범위 밖 값은 기본을 유지한다. \\
+\texttt{OCRT\_\allowbreak{}IPSS\_\allowbreak{}TRACE} & 미지정 OFF & IPSS 보정 진단. \\
+\texttt{OCRT\_\allowbreak{}IPSS\_\allowbreak{}DUMP} & 미지정 없음, 출력 파일 경로 & IPSS 격자 진단을 파일 끝에 추가한다. 헤더 없이 \texttt{vza,\allowbreak{}raa,\allowbreak{}kappa,\allowbreak{}i\_\allowbreak{}nadir/\allowbreak{}i\_\allowbreak{}pp,\allowbreak{}i\_\allowbreak{}spherical,\allowbreak{}i\_\allowbreak{}pp} 6열이다. 기존 결과와 섞이지 않도록 실행마다 새 파일명을 쓴다. \\
+\texttt{OCRT\_\allowbreak{}IPSS\_\allowbreak{}PROFILE\_\allowbreak{}DUMP} & 미지정 없음, 출력 파일 경로 & IPSS 대기 프로파일과 위상함수 진단을 지정한 파일에 기록한다. \\
+\end{longtable}
+}
+
+성능·회귀 진단에는 \texttt{OCRT\_\allowbreak{}TRANSPORT\_\allowbreak{}CACHE\_\allowbreak{}OFF}, \texttt{OCRT\_\allowbreak{}SOS\_\allowbreak{}ZERO\_\allowbreak{}COL\_\allowbreak{}SKIP\_\allowbreak{}OFF}, \texttt{OCRT\_\allowbreak{}DISABLE\_\allowbreak{}MIE\_\allowbreak{}MODEL\_\allowbreak{}CACHE}, \texttt{OCRT\_\allowbreak{}DISABLE\_\allowbreak{}WATER\_\allowbreak{}COMPONENT\_\allowbreak{}PHASE\_\allowbreak{}CACHE}, \texttt{OCRT\_\allowbreak{}AIR\_\allowbreak{}SURFACE\_\allowbreak{}CACHE\_\allowbreak{}OFF}, \texttt{OCRT\_\allowbreak{}AIR\_\allowbreak{}FKC\_\allowbreak{}OFF}, \texttt{OCRT\_\allowbreak{}TWA\_\allowbreak{}FKC\_\allowbreak{}OFF}, \texttt{OCRT\_\allowbreak{}NO\_\allowbreak{}PHASE\_\allowbreak{}CACHE}가 있다. 특정 캐시/생략 최적화를 끄고 결과 동등성과 시간을 비교하는 용도다. \texttt{OCRT\_\allowbreak{}MIE\_\allowbreak{}MODEL\_\allowbreak{}CACHE\_\allowbreak{}TRACE}, \texttt{OCRT\_\allowbreak{}DUMP\_\allowbreak{}WATER\_\allowbreak{}COMPONENT\_\allowbreak{}PHASE\_\allowbreak{}CACHE}, \texttt{OCRT\_\allowbreak{}DUMP\_\allowbreak{}SOS\_\allowbreak{}PHASE\_\allowbreak{}CACHE}, \texttt{OCRT\_\allowbreak{}AIR\_\allowbreak{}SURFACE\_\allowbreak{}CACHE\_\allowbreak{}DIAG}, \texttt{OCRT\_\allowbreak{}VALUE\_\allowbreak{}GEOM\_\allowbreak{}CACHE\_\allowbreak{}TRACE}, \texttt{OCRT\_\allowbreak{}VALUE\_\allowbreak{}KERNEL\_\allowbreak{}CACHE\_\allowbreak{}TRACE}, \texttt{OCRT\_\allowbreak{}BATCH\_\allowbreak{}DIAG}는 대응 진단을 출력한다.
+
+그 밖에 소스의 \texttt{OCRT\_\allowbreak{}DUMP\_\allowbreak{}*}, \texttt{OCRT\_\allowbreak{}D3\_\allowbreak{}*}, \texttt{OCRT\_\allowbreak{}TWA\_\allowbreak{}*}, \texttt{OCRT\_\allowbreak{}DTP\_\allowbreak{}*}, \texttt{OCRT\_\allowbreak{}FINAL\_\allowbreak{}MODE\_\allowbreak{}QUEUE\_\allowbreak{}*} 등은 내부 원인 분리·수정 실험용이며 안정된 사용자 옵션이 아니다. 일부는 출력만 늘리는 것이 아니라 솔버 경로·물리 항을 바꾼다. 이전 검증 스크립트의 환경변수를 새로운 생산 명령에 일괄 복사하지 않는다. 모든 내부 변수의 읽기 위치는 \hyperref[chap:03_environment_index]{환경변수 소스 색인}에 정리했다.
+
+\section{삭제된 옵션과 대체 방법}
+\label{sec:auto:03_options:11}
+아래 이름은 현재 파서가 명시적으로 거부한다. 과거 문서의 명령을 재현할 때는 이름 치환뿐 아니라 표면·물리 기본값도 확인한다.
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3400\linewidth-4.00pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.6600\linewidth-4.00pt\relax}@{}}
+\toprule
+\textbf{거부되는 이름} & \textbf{대체 또는 현재 의미} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{거부되는 이름} & \textbf{대체 또는 현재 의미} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{-\allowbreak{}-\allowbreak{}cdom-\allowbreak{}a440}, \texttt{-\allowbreak{}-\allowbreak{}cdom-\allowbreak{}slope}, \texttt{-\allowbreak{}-\allowbreak{}cdom-\allowbreak{}ref-\allowbreak{}lambda} & \texttt{-\allowbreak{}-\allowbreak{}water-\allowbreak{}model ocrt}/\texttt{ccrr}와 \texttt{-\allowbreak{}-\allowbreak{}ocrt-\allowbreak{}adom440}/\texttt{-\allowbreak{}-\allowbreak{}ccrr-\allowbreak{}adom440}, 대응 slope. 기준 파장 440 nm 고정. \\
+\texttt{-\allowbreak{}-\allowbreak{}simple-\allowbreak{}mode}, \texttt{-\allowbreak{}-\allowbreak{}ccrr-\allowbreak{}mode} & \texttt{-\allowbreak{}-\allowbreak{}water-\allowbreak{}model ocrt\textbackslash{}|ccrr\allowbreak{}\textbackslash{}|iop} \\
+\texttt{-\allowbreak{}-\allowbreak{}chl}, \texttt{-\allowbreak{}-\allowbreak{}simple-\allowbreak{}chl}, \texttt{-\allowbreak{}-\allowbreak{}ccrr-\allowbreak{}chl-\allowbreak{}mg-\allowbreak{}m3} & 모델에 맞는 \texttt{-\allowbreak{}-\allowbreak{}ocrt-\allowbreak{}chl} 또는 \texttt{-\allowbreak{}-\allowbreak{}ccrr-\allowbreak{}chl} \\
+\texttt{-\allowbreak{}-\allowbreak{}tsm}, \texttt{-\allowbreak{}-\allowbreak{}simple-\allowbreak{}min}, \texttt{-\allowbreak{}-\allowbreak{}ccrr-\allowbreak{}min}, \texttt{-\allowbreak{}-\allowbreak{}ccrr-\allowbreak{}min-\allowbreak{}g-\allowbreak{}m3} & \texttt{-\allowbreak{}-\allowbreak{}ocrt-\allowbreak{}tsm} 또는 \texttt{-\allowbreak{}-\allowbreak{}ccrr-\allowbreak{}tsm} \\
+\texttt{-\allowbreak{}-\allowbreak{}adom440}, \texttt{-\allowbreak{}-\allowbreak{}simple-\allowbreak{}adom440}, \texttt{-\allowbreak{}-\allowbreak{}ccrr-\allowbreak{}adom-\allowbreak{}440} & \texttt{-\allowbreak{}-\allowbreak{}ocrt-\allowbreak{}adom440} 또는 \texttt{-\allowbreak{}-\allowbreak{}ccrr-\allowbreak{}adom440} \\
+\texttt{-\allowbreak{}-\allowbreak{}adom-\allowbreak{}slope}, \texttt{-\allowbreak{}-\allowbreak{}simple-\allowbreak{}adom-\allowbreak{}s}, \texttt{-\allowbreak{}-\allowbreak{}simple-\allowbreak{}adom-\allowbreak{}slope}, \texttt{-\allowbreak{}-\allowbreak{}ccrr-\allowbreak{}adom-\allowbreak{}s} & \texttt{-\allowbreak{}-\allowbreak{}ocrt-\allowbreak{}adom-\allowbreak{}slope} 또는 \texttt{-\allowbreak{}-\allowbreak{}ccrr-\allowbreak{}adom-\allowbreak{}slope} \\
+\texttt{-\allowbreak{}-\allowbreak{}phyto-\allowbreak{}group}, \texttt{-\allowbreak{}-\allowbreak{}chl-\allowbreak{}group} & 종 선택의 과거 이름. 현재 \texttt{-\allowbreak{}-\allowbreak{}ocrt-\allowbreak{}phyto-\allowbreak{}group}도 생산 경로 비활성이므로 생략. \\
+\texttt{-\allowbreak{}-\allowbreak{}tsm-\allowbreak{}species} & \texttt{-\allowbreak{}-\allowbreak{}ocrt-\allowbreak{}tsm-\allowbreak{}species} \\
+\texttt{-\allowbreak{}-\allowbreak{}detritus-\allowbreak{}a440}, \texttt{-\allowbreak{}-\allowbreak{}detritus-\allowbreak{}slope} & \texttt{-\allowbreak{}-\allowbreak{}ocrt-\allowbreak{}detritus-\allowbreak{}a440}, \texttt{-\allowbreak{}-\allowbreak{}ocrt-\allowbreak{}detritus-\allowbreak{}slope} \\
+\texttt{-\allowbreak{}-\allowbreak{}fixed-\allowbreak{}bulk-\allowbreak{}iop}, \texttt{-\allowbreak{}-\allowbreak{}water-\allowbreak{}fixed-\allowbreak{}bulk-\allowbreak{}iop} & \texttt{-\allowbreak{}-\allowbreak{}water-\allowbreak{}model iop -\allowbreak{}-\allowbreak{}iop-\allowbreak{}a A -\allowbreak{}-\allowbreak{}iop-\allowbreak{}b B -\allowbreak{}-\allowbreak{}iop-\allowbreak{}bb BB} \\
+\texttt{-\allowbreak{}-\allowbreak{}fixed-\allowbreak{}bulk-\allowbreak{}phase-\allowbreak{}lut}, \texttt{-\allowbreak{}-\allowbreak{}fixed-\allowbreak{}bulk-\allowbreak{}phase-\allowbreak{}nphi} & \texttt{-\allowbreak{}-\allowbreak{}iop-\allowbreak{}phase-\allowbreak{}lut}, \texttt{-\allowbreak{}-\allowbreak{}iop-\allowbreak{}phase-\allowbreak{}nphi} \\
+\texttt{-\allowbreak{}-\allowbreak{}water-\allowbreak{}mie-\allowbreak{}phase} & \texttt{-\allowbreak{}-\allowbreak{}iop-\allowbreak{}mie-\allowbreak{}phase} \\
+\texttt{-\allowbreak{}-\allowbreak{}water-\allowbreak{}mie-\allowbreak{}moment-\allowbreak{}mode}, \texttt{-\allowbreak{}-\allowbreak{}water-\allowbreak{}mie-\allowbreak{}moment-\allowbreak{}nmu}, \texttt{-\allowbreak{}-\allowbreak{}water-\allowbreak{}mie-\allowbreak{}truncation}, \texttt{-\allowbreak{}-\allowbreak{}water-\allowbreak{}mie-\allowbreak{}ss-\allowbreak{}mode} & 선택한 모델의 \texttt{-\allowbreak{}-\allowbreak{}ocrt-\allowbreak{}mie-\allowbreak{}*} 또는 \texttt{-\allowbreak{}-\allowbreak{}iop-\allowbreak{}mie-\allowbreak{}*} \\
+\texttt{-\allowbreak{}-\allowbreak{}aod-\allowbreak{}band} & \texttt{-\allowbreak{}-\allowbreak{}aod-\allowbreak{}555}, \texttt{-\allowbreak{}-\allowbreak{}aod-\allowbreak{}865} 또는 명시 기준파장의 \texttt{-\allowbreak{}-\allowbreak{}aod} \\
+\texttt{-\allowbreak{}-\allowbreak{}pssa-\allowbreak{}mode} & 삭제된 Chapman PSSA 선택지. 현재는 \texttt{-\allowbreak{}-\allowbreak{}pssa}로 IPSS를 켠다. \\
+\end{longtable}
+}
+
+다음 과거 이름은 현재 파서에 분기가 없으며 \texttt{unknown argument\allowbreak{}} 오류가 난다.
+
+\begin{itemize}
+\item \texttt{-\allowbreak{}-\allowbreak{}use-\allowbreak{}absorption}, \texttt{-\allowbreak{}-\allowbreak{}afgl-\allowbreak{}dir}, \texttt{-\allowbreak{}-\allowbreak{}xsec-\allowbreak{}dir}: 기체흡수는 일반 실행에서 기본 활성이고 입력 디렉터리는 고정이다.
+\item \texttt{-\allowbreak{}-\allowbreak{}water-\allowbreak{}aw-\allowbreak{}lut}, \texttt{-\allowbreak{}-\allowbreak{}water-\allowbreak{}psi-\allowbreak{}T-\allowbreak{}lut}, \texttt{-\allowbreak{}-\allowbreak{}f-\allowbreak{}sun}: 배포 순수 해수 입력과 내부 태양 정규화 규약을 사용한다.
+\item \texttt{-\allowbreak{}-\allowbreak{}trunc-\allowbreak{}aer-\allowbreak{}loglin}, \texttt{-\allowbreak{}-\allowbreak{}aer-\allowbreak{}phase-\allowbreak{}kernel}, \texttt{-\allowbreak{}-\allowbreak{}no-\allowbreak{}aerosol}: 양수 AOD의 자동 에어로졸 설정을 사용하고, 비활성은 AOD 0이다.
+\item \texttt{-\allowbreak{}-\allowbreak{}output-\allowbreak{}mode}, \texttt{-\allowbreak{}-\allowbreak{}lut}, \texttt{-\allowbreak{}-\allowbreak{}lut-\allowbreak{}output}: 현재 출력 방식은 \texttt{-\allowbreak{}-\allowbreak{}output-\allowbreak{}advanced}, 각도 생략에 의한 격자 선택, \texttt{-\allowbreak{}-\allowbreak{}output-\allowbreak{}full-\allowbreak{}grid}다.
+\item \texttt{-\allowbreak{}-\allowbreak{}tau-\allowbreak{}r}, \texttt{-\allowbreak{}-\allowbreak{}tau-\allowbreak{}r-\allowbreak{}from-\allowbreak{}input}, \texttt{-\allowbreak{}-\allowbreak{}with-\allowbreak{}rayleigh}: Rayleigh 광학두께는 \texttt{-\allowbreak{}-\allowbreak{}pressure}와 내부 모델에서 산출한다. 현재 호환 \texttt{-\allowbreak{}-\allowbreak{}no-\allowbreak{}rayleigh}/\texttt{-\allowbreak{}-\allowbreak{}rayleigh}와 혼동하지 않는다.
+\item \texttt{-\allowbreak{}-\allowbreak{}view-\allowbreak{}as-\allowbreak{}node}, \texttt{-\allowbreak{}-\allowbreak{}vector}, \texttt{-\allowbreak{}-\allowbreak{}no-\allowbreak{}decouple-\allowbreak{}sunglint}: 단일 기하의 관측 노드와 벡터 계산은 기본 동작이며, 일반 경로의 직달 글린트 포함이 기본이다.
+\end{itemize}
+
+\section{이 장의 소스 확인 범위}
+\label{sec:auto:03_options:12}
+옵션 이름은 \texttt{main.\allowbreak{}c}의 인자 루프에서 \texttt{strcmp(a,\allowbreak{}".\allowbreak{}.\allowbreak{}.\allowbreak{}")}로 비교하는 이름을 전수 추출했다. 총 \textbf{168개}이며, 별칭과 명시적으로 거부하는 과거 이름을 포함한다. 위 표는 이 168개를 모두 포함한다. 실행 의미는 \texttt{rt\_\allowbreak{}solver.\allowbreak{}c}, \texttt{rt\_\allowbreak{}water\_\allowbreak{}rt.\allowbreak{}c}, \texttt{rt\_\allowbreak{}absorption.\allowbreak{}c}, \texttt{rt\_\allowbreak{}atm.\allowbreak{}c}, \texttt{rt\_\allowbreak{}ipss.\allowbreak{}c}, \texttt{shared/\allowbreak{}surface.\allowbreak{}c} 등에서 교차 확인했다.
+
+이 문서는 수치 옵션의 모든 조합을 새롭게 과학 검증했다는 뜻은 아니다. 과거 도움말과 실제 코드가 어긋나는 항목은 동작을 숨기지 않고 설명했으며, 재현 가능한 기본 명령과 출력 확인 방법은 부록~\ref{chap:04_examples}를 따른다.
+

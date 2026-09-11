@@ -1,0 +1,7 @@
+case_id,sza,vza,raa,wind,aerosol,aod865,chl,tsm,acdom440,ocrt_adom_slope,ocrt_detritus_a440,ocrt_detritus_slope
+open_ocean,30,20,90,5,C50,0.05,0.2,0.1,0.01,0.014,0,0.0109
+coastal,40,35,90,5,M80C,0.10,1.0,3.0,0.04,0.014,0,0.0109
+coastal_raa270,40,35,270,5,M80C,0.10,1.0,3.0,0.04,0.014,0,0.0109
+turbid,40,35,90,5,M80C,0.10,2.0,10.0,0.08,0.014,0,0.0109
+coastal_highwind,40,35,90,10,M80C,0.10,1.0,3.0,0.04,0.014,0,0.0109
+coastal_absorption,40,35,90,5,M80C,0.10,1.0,3.0,0.04,0.018,0.01,0.013

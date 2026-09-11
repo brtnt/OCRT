@@ -1,0 +1,351 @@
+% Authoritative LaTeX chapter. Edit this file for future revisions.
+% Initially migrated 2026-09-11; no Markdown import occurs during PDF builds.
+\chapter{Input Files and Batch CSV Contracts}
+\label{chap:08_input_formats}
+Manual contents · \hyperref[chap:03_options]{C options} · \hyperref[chap:04_examples]{Run examples} · \hyperref[chap:05_output_formats]{Output formats}
+
+This chapter is based on the C parser at commit \texttt{54861c68e35ec5aa\allowbreak{}a3938fad53e93dc2\allowbreak{}dfa7eb1d}. \texttt{-\allowbreak{}-\allowbreak{}batch-\allowbreak{}full-\allowbreak{}grid} and \texttt{-\allowbreak{}-\allowbreak{}batch} use \textbf{different CSV formats and execution paths}. Do not take a CSV produced by another program and supply it merely by renaming the file or approximating its column names.
+
+\Needspace{12\baselineskip}
+\section{Choosing an Input Method}
+\label{sec:auto:08_input_formats:1}
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3400\linewidth-4.00pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.6600\linewidth-4.00pt\relax}@{}}
+\toprule
+\textbf{Purpose} & \textbf{Input method} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Purpose} & \textbf{Input method} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+Atmospheric/Rayleigh LUT with explicit control of gas absorption, pressure, and aerosols & Repeat the ordinary C grid command in \hyperref[chap:04_examples]{Appendix~\ref*{chap:04_examples}} for each case \\
+Angular grids for multiple ocean water properties, wavelengths, and SZAs under common atmospheric/surface settings & \texttt{-\allowbreak{}-\allowbreak{}batch-\allowbreak{}full-\allowbreak{}grid} in this chapter \\
+Reproduction of parser/output structures for older atmospheric validation CSVs & Legacy \texttt{-\allowbreak{}-\allowbreak{}batch} in this chapter; check its current pressure and gas-absorption limitations \\
+Python model/batch input & Separate API contract in the \hyperref[chap:06_python_batch]{Python appendix (\ref*{chap:06_python_batch})} \\
+\end{longtable}
+}
+
+Save CSVs as UTF-8 \textbf{without a BOM}, using decimal point \texttt{.\allowbreak{}} and comma separators. These OCRT C loaders are not general CSV parsers with Excel-level capabilities. Do not use quoted cells, commas or newlines inside cells, or thousands-separator commas. Units are interpreted as described for the header; do not append units such as \texttt{555 nm} or \texttt{5 m/\allowbreak{}s} to numeric cells.
+
+\Needspace{12\baselineskip}
+\section{Ocean Angular-Grid Batch: \texttt{-\allowbreak{}-\allowbreak{}batch-\allowbreak{}full-\allowbreak{}grid}}
+\label{sec:auto:08_input_formats:2}
+\subsection{Meaning of a Row and CLI Defaults}
+\label{sec:auto:08_input_formats:2.1}
+One row represents a \textbf{complete VZA\ensuremath{\times}RAA grid for one wavelength, one SZA, one water-property set, and one atmosphere/wind condition}. It does not represent one viewing direction. \texttt{out} is the file that stores the entire grid.
+
+The baseline CLI case must be valid before execution. Supply \texttt{-\allowbreak{}-\allowbreak{}surface ocean}, one \texttt{-\allowbreak{}-\allowbreak{}water-\allowbreak{}model}, the model's three required water-property values, \texttt{-\allowbreak{}-\allowbreak{}sza}, and \texttt{-\allowbreak{}-\allowbreak{}wavelength}. Required CLI checks cannot be skipped even if every row specifies wavelength, SZA, and water properties. Specify wind speed with \texttt{-\allowbreak{}-\allowbreak{}wind-\allowbreak{}speed} or each row's \texttt{wind}.
+
+\begin{enumerate}
+\item The executable prepares the baseline CLI case and gas absorption.
+\item Each row copies the baseline case and overrides \textbf{only nonempty cells}.
+\item The grid file for that row is written using the merged conditions.
+\end{enumerate}
+
+An empty cell is neither 0 nor an instruction to reset to default optical properties. It retains the baseline CLI value. Explicitly enter a valid numeric \texttt{0} for a quantity you want to disable. An empty path cell cannot clear an existing CLI phase or Mie file. Branch changes follow the separate rules below.
+
+\subsection{All 26 Supported Columns}
+\label{sec:auto:08_input_formats:2.2}
+Header names must exactly match the spelling and case below. Header order is flexible, but do not repeat a name. Do not put values in columns other than those listed. In particular, \texttt{case\_\allowbreak{}id}, \texttt{pressure}, \texttt{pressure\_\allowbreak{}hpa}, \texttt{aod\_\allowbreak{}555}, \texttt{aod\_\allowbreak{}865}, \texttt{vza\_\allowbreak{}step}, \texttt{vza\_\allowbreak{}max}, \texttt{iop\_\allowbreak{}phase\_\allowbreak{}lut}, and \texttt{gas\_\allowbreak{}column\_\allowbreak{}h2o} are not supported columns in this format.
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.2300\linewidth-6.00pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2400\linewidth-6.00pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2300\linewidth-6.00pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.3000\linewidth-6.00pt\relax}@{}}
+\toprule
+\textbf{Column} & \textbf{Units / allowed input} & \textbf{When empty or omitted} & \textbf{Role / conditions} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Column} & \textbf{Units / allowed input} & \textbf{When empty or omitted} & \textbf{Role / conditions} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{out} & Output file path & \textbf{Not allowed} & Required in every row. Must not duplicate another row's path. \\
+\texttt{wavelength} & nm, 330--1100 & CLI \texttt{-\allowbreak{}-\allowbreak{}wavelength} & Calculation wavelength. The column name is not \texttt{wavelength\_\allowbreak{}nm}. See below for row-specific refractive-index behavior. \\
+\texttt{sza} & Degrees, \texttt{0\ensuremath{\leq}SZA<90} & CLI \texttt{-\allowbreak{}-\allowbreak{}sza} & Solar zenith angle. \\
+\texttt{wind} & m s\textsuperscript{-}\textsuperscript{1}, \texttt{\ensuremath{\geq}0} & CLI \texttt{-\allowbreak{}-\allowbreak{}wind-\allowbreak{}speed} & The row fails if neither is present. 0 is also an explicit input. \\
+\texttt{aod} & Dimensionless, \texttt{\ensuremath{\geq}0} & CLI AOD & AOD at the \textbf{reference wavelength selected by the CLI}. No per-row column changes the reference wavelength. \\
+\texttt{aer\_\allowbreak{}h\_\allowbreak{}km} & km, \texttt{>0} & CLI \texttt{-\allowbreak{}-\allowbreak{}aer-\allowbreak{}h-\allowbreak{}km}, normally 2 & Aerosol exponential-distribution scale height. \\
+\texttt{mie} & Aerosol \texttt{.\allowbreak{}mie} path & CLI \texttt{-\allowbreak{}-\allowbreak{}mie} & Required if AOD>0 after merging. \\
+\texttt{water\_\allowbreak{}model} & \texttt{ocrt}, \texttt{ccrr}, \texttt{iop} & CLI \texttt{-\allowbreak{}-\allowbreak{}water-\allowbreak{}model} & Underwater input branch. Changing it requires complete replacement of the mandatory water properties. \\
+\texttt{ocrt\_\allowbreak{}chl} & mg m\textsuperscript{-}\textsuperscript{3}, \texttt{\ensuremath{\geq}0} & OCRT CLI Chl & Only for \texttt{water\_\allowbreak{}model=\allowbreak{}ocrt}. \\
+\texttt{ocrt\_\allowbreak{}tsm} & g m\textsuperscript{-}\textsuperscript{3}, \texttt{\ensuremath{\geq}0} & OCRT CLI TSM & Inorganic TSM dry mass concentration. \\
+\texttt{ocrt\_\allowbreak{}adom440} & m\textsuperscript{-}\textsuperscript{1}, \texttt{\ensuremath{\geq}0} & OCRT CLI aDOM440 & Dissolved organic matter absorption at 440 nm. \\
+\texttt{ocrt\_\allowbreak{}adom\_\allowbreak{}slope} & nm\textsuperscript{-}\textsuperscript{1}, \texttt{>0} & OCRT CLI slope, normally 0.014 & aDOM exponential slope. \\
+\texttt{ocrt\_\allowbreak{}tsm\_\allowbreak{}species} & \texttt{red\_\allowbreak{}clay}, \texttt{brown\_\allowbreak{}earth}, \texttt{yellow\_\allowbreak{}clay}, \texttt{calcareous\_\allowbreak{}sand} & CLI species, normally \texttt{red\_\allowbreak{}clay} & Explicit use requires TSM>0 after merging. \\
+\texttt{ocrt\_\allowbreak{}phyto\_\allowbreak{}group} & Older \texttt{pico}, \texttt{nano}, \texttt{micro}, and recognized EAP species names & CLI default internal species & \textbf{Do not use currently.} Acceptance by the row parser does not activate production EAP species-specific scattering. Its rejection point also differs from the single CLI. \\
+\texttt{ocrt\_\allowbreak{}detritus\_\allowbreak{}a440} & m\textsuperscript{-}\textsuperscript{1}, \texttt{\ensuremath{\geq}0} & CLI value, normally 0 & Explicit use requires OCRT Chl>0 after merging. 0 sets only absorption to 0; it does not remove detritus scattering determined by Chl. \\
+\texttt{ocrt\_\allowbreak{}detritus\_\allowbreak{}slope} & nm\textsuperscript{-}\textsuperscript{1}, \texttt{>0} & CLI value, normally 0.0109 & Explicit use requires OCRT Chl>0 after merging. \\
+\texttt{ccrr\_\allowbreak{}chl} & mg m\textsuperscript{-}\textsuperscript{3}, \texttt{\ensuremath{\geq}0} & CCRR CLI Chl & Only for \texttt{water\_\allowbreak{}model=\allowbreak{}ccrr}. \\
+\texttt{ccrr\_\allowbreak{}tsm} & g m\textsuperscript{-}\textsuperscript{3}, \texttt{\ensuremath{\geq}0} & CCRR CLI TSM & CCRR constituent TSM input. \\
+\texttt{ccrr\_\allowbreak{}adom440} & m\textsuperscript{-}\textsuperscript{1}, \texttt{\ensuremath{\geq}0} & CCRR CLI aDOM440 & aDOM absorption at 440 nm. \\
+\texttt{ccrr\_\allowbreak{}adom\_\allowbreak{}slope} & nm\textsuperscript{-}\textsuperscript{1}, \texttt{>0} & CCRR CLI slope, normally 0.014 & aDOM exponential slope. \\
+\texttt{iop\_\allowbreak{}a} & m\textsuperscript{-}\textsuperscript{1}, \texttt{a\ensuremath{\geq}0} & IOP CLI a & Total absorption. The b,bb cells below must also be filled in the same row. \\
+\texttt{iop\_\allowbreak{}b} & m\textsuperscript{-}\textsuperscript{1}, \texttt{b>0} & IOP CLI b & Total scattering. \\
+\texttt{iop\_\allowbreak{}bb} & m\textsuperscript{-}\textsuperscript{1}, \texttt{0<bb<0.\allowbreak{}5b} & IOP CLI bb & Total backscattering. Fill all three IOP cells or leave all three empty. \\
+\texttt{iop\_\allowbreak{}mie\_\allowbreak{}phase} & Underwater vector \texttt{.\allowbreak{}mie} path & IOP CLI \texttt{-\allowbreak{}-\allowbreak{}iop-\allowbreak{}mie-\allowbreak{}phase} & Phase shape for the IOP model. a,b,bb come from the three values above. Separate from aerosol \texttt{mie}. \\
+\texttt{n\_\allowbreak{}mu\_\allowbreak{}water} & Positive integer & CLI underwater quadrature setting & Any supplied value always requires \texttt{OCRT\_\allowbreak{}ADVANCED=\allowbreak{}1}. Conflicts with \texttt{-\allowbreak{}-\allowbreak{}water-\allowbreak{}shared-\allowbreak{}grid}. \\
+\texttt{raa\_\allowbreak{}step} & Degrees, \texttt{(0,\allowbreak{}180]} and the grid-size limits below & CLI \texttt{-\allowbreak{}-\allowbreak{}lut-\allowbreak{}raa-\allowbreak{}step}, normally 2.5 & Output RAA spacing. Not the underwater RT quadrature count. \\
+\end{longtable}
+}
+
+Numbers are read through \texttt{atof}/\texttt{atoi}-family functions, so invalid strings may be treated as 0. Check finiteness and actual physical ranges when generating the file. The program does not guarantee the scientific validity of every value that passes format checks.
+
+\subsection{Partial Changes Within a Model and Model Switching}
+\label{sec:auto:08_input_formats:2.3}
+If the baseline CLI uses the OCRT model, a row can change only \texttt{ocrt\_\allowbreak{}adom440} and inherit the remaining water properties. Independent constituent overrides are possible within the same model. Direct IOP a,b,bb, however, cannot be partially overridden.
+
+A row switching to a different model requires all of the following inputs.
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3400\linewidth-4.00pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.6600\linewidth-4.00pt\relax}@{}}
+\toprule
+\textbf{Model change in row} & \textbf{Columns that must be filled in that row} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Model change in row} & \textbf{Columns that must be filled in that row} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+OCRT or IOP \ensuremath{\rightarrow} CCRR & \texttt{water\_\allowbreak{}model=\allowbreak{}ccrr}, \texttt{ccrr\_\allowbreak{}chl}, \texttt{ccrr\_\allowbreak{}tsm}, \texttt{ccrr\_\allowbreak{}adom440} \\
+CCRR or IOP \ensuremath{\rightarrow} OCRT & \texttt{water\_\allowbreak{}model=\allowbreak{}ocrt}, \texttt{ocrt\_\allowbreak{}chl}, \texttt{ocrt\_\allowbreak{}tsm}, \texttt{ocrt\_\allowbreak{}adom440} \\
+OCRT or CCRR \ensuremath{\rightarrow} IOP & \texttt{water\_\allowbreak{}model=\allowbreak{}iop}, \texttt{iop\_\allowbreak{}a}, \texttt{iop\_\allowbreak{}b}, \texttt{iop\_\allowbreak{}bb} \\
+\end{longtable}
+}
+
+On a switch, principal properties such as constituent values, direct IOPs, and phase files are reset to neutral states. Baseline water properties from another model are not simply reused. However, the contract does not reset every low-level numerical/phase-control field, so \textbf{separate CSVs and runs for each model} are easier to reproduce in production work.
+
+All nonempty water-property columns in a row must share the selected model's prefix. For example, even \texttt{ccrr\_\allowbreak{}chl=\allowbreak{}0} is a prohibited mixture in a \texttt{water\_\allowbreak{}model=\allowbreak{}ocrt} row. If the header must accommodate different models, leave every cell for other models completely empty in that row.
+
+\subsection{Three Defaults That Can Differ from a Single Run}
+\label{sec:auto:08_input_formats:2.4}
+\textbf{Refractive index:} If the \texttt{wavelength} cell is filled and the CLI does not specify \texttt{-\allowbreak{}-\allowbreak{}n-\allowbreak{}water}, the wavelength-dependent refractive index is recalculated during row preparation. This differs from the ordinary CLI's default interface index of 1.34. To compare against a single run under the same conditions, \textbf{explicitly specify \texttt{-\allowbreak{}-\allowbreak{}n-\allowbreak{}water 1.\allowbreak{}34}}. Merely duplicating the same wavelength on the CLI and in the cell triggers this recalculation condition.
+
+\textbf{Underwater quadrature count:} Explicit \texttt{-\allowbreak{}-\allowbreak{}output-\allowbreak{}full-\allowbreak{}grid FILE} in an ordinary ocean grid promotes the underwater quadrature count to 96, but each \texttt{out} cell in \texttt{-\allowbreak{}-\allowbreak{}batch-\allowbreak{}full-\allowbreak{}grid} does not activate that option in its place. Without an explicit underwater override, the batch may inherit the default 48. Align comparison conditions with \texttt{OCRT\_\allowbreak{}ADVANCED=\allowbreak{}1 -\allowbreak{}-\allowbreak{}n-\allowbreak{}mu-\allowbreak{}water 96} or \texttt{n\_\allowbreak{}mu\_\allowbreak{}water=\allowbreak{}96} in every row. Do not induce promotion by adding a dummy common output file to \texttt{-\allowbreak{}-\allowbreak{}output-\allowbreak{}full-\allowbreak{}grid}.
+
+\textbf{Aerosol numerical defaults:} After overriding a row's AOD, the program does not reselect atmospheric \texttt{m}, aerosol \texttt{L}, atmospheric layer count, or loglin truncation as a single CLI run would. Starting with CLI AOD=0 and enabling AOD>0 in a row can inherit a configuration different from the automatic defaults of an ordinary positive-AOD command. Separate aerosol-free and aerosol-containing batches; for aerosol batches, also supply a \textbf{positive baseline AOD and Mie file on the CLI}. Override each row's AOD with the actual desired value.
+
+Pressure, gas-absorption profile/columns, refractive index, temperature, salinity, and VZA spacing/maximum have no supported per-row columns and therefore are common CLI settings. To vary them, split the runs into groups or use the \hyperref[chap:04_examples]{iteration tool in Appendix~\ref*{chap:04_examples}}.
+
+\subsection{Grid Size and the 512-RAA Limit}
+\label{sec:auto:08_input_formats:2.5}
+The current ocean grid is generated as follows.
+
+
+\begin{ManualCode}
+n_vza = floor(vza_max / vza_step + 1e-9) + 1
+n_raa = floor(360 / raa_step + 0.5)
+vza[i] = i * vza_step
+raa[j] = j * raa_step
+\end{ManualCode}
+
+At most 512 VZA values are allowed; exceeding this produces an error. \textbf{The current native ocean path also has RAA arrays of size 512, so \texttt{n\_\allowbreak{}raa\ensuremath{\leq}512} is required.} Unlike VZA, preventive checks for exceeding the RAA limit are incomplete. Passing only the \texttt{raa\_\allowbreak{}step>0} check does not make a grid safe.
+
+In practice, use RAA spacings of \textbf{at least 1\textdegree{}} that divide 360 exactly, such as 1, 2, 2.5, 5, 10, 15, 30, 45, 60, 90, or 180\textdegree{}. A 0.5\textdegree{} spacing gives 720 values and exceeds current support. Do not bypass this limit through internal environment variables to obtain a very fine RAA grid. Standard spacings of at least 1\textdegree{} also avoid unnecessary length problems in the internal RAA string buffer.
+
+\subsection{File Paths and CSV-Writing Limits}
+\label{sec:auto:08_input_formats:2.6}
+\begin{itemize}
+\item Relative \texttt{out}, \texttt{mie}, and \texttt{iop\_\allowbreak{}mie\_\allowbreak{}phase} paths are resolved against \textbf{the process's current directory, not the CSV's folder}. Run from \texttt{code/\allowbreak{}OCRT\_\allowbreak{}C} as in the examples.
+\item \texttt{out} is used as the literal filename. Include \texttt{.\allowbreak{}csv}; do not expect the automatic \texttt{.\allowbreak{}csv} addition or extension checks of ordinary \texttt{-\allowbreak{}-\allowbreak{}output-\allowbreak{}full-\allowbreak{}grid}.
+\item Create the parent folder of \texttt{out} in advance. Different rows pointing to the same \texttt{out} cause parallel-write conflicts, and existing files may be overwritten.
+\item The first row must be the header. Do not put comments or explanations before it. Do not add whitespace around cells or headers. Distinguish numeric 0 from an empty cell.
+\item Data rows whose first character is \texttt{\#} are skipped as comments. Remove blank lines in operational files, and match each row's cell count to the header.
+\item The current buffer is 4096 bytes per line, with at most 32 header columns. There are 26 supported columns; an unknown column causes an error \textbf{when a nonempty cell is encountered}. Do not rely on empty unknown columns passing accidentally.
+\item \texttt{out}, \texttt{mie}, and \texttt{iop\_\allowbreak{}mie\_\allowbreak{}phase} are strings of at most 511 bytes each. \texttt{water\_\allowbreak{}model} is limited to 15 bytes, \texttt{ocrt\_\allowbreak{}phyto\_\allowbreak{}group} to 31 bytes, and \texttt{ocrt\_\allowbreak{}tsm\_\allowbreak{}species} to 63 bytes. Shorten long paths.
+\end{itemize}
+
+The batch preloads common TSM and organic-matter data at startup. Therefore, even if every row is pure water or aDOM-only, do not assume it can start with the same minimal data as an ordinary single C Rayleigh run. Complete the data installation in the \hyperref[chap:02_installation]{installation chapter}.
+
+Rows run in parallel with OpenMP, and completion order may differ from input order. Check each row's \texttt{rc} and the failure count in stdout/stderr run logs. Files for other rows may be created even if some rows fail, so check both the final exit code and the expected output-file list. The disk sea-surface cache's \texttt{build} mode is blocked in this batch; prepare required caches separately and read them with \texttt{readonly}/\texttt{required}.
+
+\subsection{Minimal input format}
+\label{sec:auto:08_input_formats:2.7}
+\label{sec:input_batch_sample}
+The following CSV illustrates a minimal structure with \texttt{out} and selected state columns. Relative output paths are interpreted against the \texttt{code/\allowbreak{}OCRT\_\allowbreak{}C} working directory.
+
+\begin{ManualCode}
+out,wavelength,sza,wind,ocrt_adom440
+../../task/manual_examples/adom_443_s30.csv,443,30,3,0.05
+../../task/manual_examples/adom_555_s40.csv,555,40,5,0.10
+\end{ManualCode}
+
+Each data row defines one state. Appendix~\ref{sec:example_input_batch} provides the command and output checks for saving this input and generating its angular grids.
+
+\Needspace{12\baselineskip}
+\section{Legacy Atmospheric Case CSV: \texttt{-\allowbreak{}-\allowbreak{}batch}}
+\label{sec:auto:08_input_formats:3}
+\subsection{Current Usage Limitations}
+\label{sec:auto:08_input_formats:3.1}
+\textbf{Do not treat this path as ordinary single commands grouped for parallel execution.} The current \texttt{rt\_\allowbreak{}io\_\allowbreak{}run\_\allowbreak{}batch()} creates new case structures without copying the CLI pressure field. \texttt{pressure\_\allowbreak{}hpa} remains 0, and 0 is also passed to the Rayleigh optical-thickness calculation. Therefore, even CLI \texttt{-\allowbreak{}-\allowbreak{}pressure 1013.\allowbreak{}25} does not guarantee Rayleigh results for a normal atmosphere. Supplying \texttt{tau\_\allowbreak{}R\_\allowbreak{}ref} cannot fix this: it is a comparison reference value, and the current CLI has no option to inject it as the actual optical thickness.
+
+In addition, \texttt{main.\allowbreak{}c} returns through the \texttt{-\allowbreak{}-\allowbreak{}batch} path before ordinary gas-absorption initialization. Specifying \texttt{-\allowbreak{}-\allowbreak{}atm-\allowbreak{}profile} or \texttt{-\allowbreak{}-\allowbreak{}gas-\allowbreak{}column-\allowbreak{}*} does not justify assuming they apply as in a normal single run. The water model and complete \texttt{-\allowbreak{}-\allowbreak{}surface ocean} properties are also not passed to this batch structure. Use \texttt{-\allowbreak{}-\allowbreak{}batch-\allowbreak{}full-\allowbreak{}grid} for oceans and repeat ordinary single/grid commands for atmospheric/Rayleigh production data.
+
+The exact format is retained below for cases where old files must be read without modifying current code. If results already exist for a paper comparison, verify the source, executable, pressure, and absorption path used at the time before using them.
+
+\subsection{The Header Selects a Position-Based Format}
+\label{sec:auto:08_input_formats:3.2}
+The first row is a header, and \textbf{column order is fixed}. Supported column counts are 5, 6, 7, and 9; 8 is rejected. Every data cell is numeric, and the first \texttt{case\_\allowbreak{}id} is an integer. Empty-cell inheritance is unavailable. Renaming headers does not change the position of each numeric value.
+
+The first five columns are common to all formats.
+
+
+\begin{ManualCode}
+case_id,sza_deg,vza_deg,raa_deg,wavelength_nm
+\end{ManualCode}
+
+Angles are in degrees and wavelength in nm. RAA uses the \hyperref[chap:01_concepts_geometry]{OCRT convention}; entering a reference model's RAA in the CSV does not convert it automatically.
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3400\linewidth-4.00pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.6600\linewidth-4.00pt\relax}@{}}
+\toprule
+\textbf{Column count / selection} & \textbf{Fixed order} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Column count / selection} & \textbf{Fixed order} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+5 columns & \texttt{case\_\allowbreak{}id,\allowbreak{}sza\_\allowbreak{}deg,\allowbreak{}vza\_\allowbreak{}deg,\allowbreak{}raa\_\allowbreak{}deg,\allowbreak{}wavelength\_\allowbreak{}nm} \\
+6 columns, header contains \texttt{rho\_\allowbreak{}I} & Common 5 columns followed by \texttt{rho\_\allowbreak{}I\_\allowbreak{}ref} \\
+6 columns, header does not contain that string & Common 5 columns followed by \texttt{tau\_\allowbreak{}R\_\allowbreak{}ref} \\
+7 columns & Common 5 columns followed by \texttt{tau\_\allowbreak{}R\_\allowbreak{}ref,\allowbreak{}rho\_\allowbreak{}I\_\allowbreak{}ref} \\
+9 columns, non-aerosol format & Common 5 columns followed by \texttt{tau\_\allowbreak{}R\_\allowbreak{}ref,\allowbreak{}rho\_\allowbreak{}I\_\allowbreak{}ref,\allowbreak{}rho\_\allowbreak{}Q\_\allowbreak{}ref,\allowbreak{}rho\_\allowbreak{}U\_\allowbreak{}ref} \\
+9 columns, aerosol format & Common 5 columns followed by \texttt{aod\_\allowbreak{}ref,\allowbreak{}rho\_\allowbreak{}I\_\allowbreak{}ref,\allowbreak{}rho\_\allowbreak{}Q\_\allowbreak{}ref,\allowbreak{}rho\_\allowbreak{}U\_\allowbreak{}ref} \\
+\end{longtable}
+}
+
+With 9 columns, any occurrence of lowercase \texttt{aod}, \texttt{os\_\allowbreak{}I}, \texttt{osoaa}, or \texttt{decoup\_\allowbreak{}I} anywhere in the header selects the \textbf{aerosol format}. This is a case-sensitive string search. A word added like a comment can therefore change the format. Use an unambiguous header exactly as below.
+
+
+\begin{ManualCode}
+case_id,sza_deg,vza_deg,raa_deg,wavelength_nm,aod_555,rho_I_ref,rho_Q_ref,rho_U_ref
+1,40,30,90,555,0.1,0.05,-0.01,0
+\end{ManualCode}
+
+These are \textbf{arbitrary reference values for format illustration}, not validation reference values. Supply substantiated reference calculations for actual comparisons. In the aerosol format, the reference wavelength is 865 nm if the header contains \texttt{aod\_\allowbreak{}865}, otherwise 555 nm. There is no separate column for an arbitrary reference wavelength.
+
+\subsection{Additional Conditions for the Aerosol Format}
+\label{sec:auto:08_input_formats:3.3}
+The 9-column aerosol CSV requires a common \texttt{-\allowbreak{}-\allowbreak{}mie}. To pass batch aerosol settings in the current \texttt{main.\allowbreak{}c}, the \textbf{CLI must also include a positive \texttt{-\allowbreak{}-\allowbreak{}aod-\allowbreak{}555} or \texttt{-\allowbreak{}-\allowbreak{}aod-\allowbreak{}865}}. The actual row AOD is replaced by the CSV value. Putting AOD only in the 9-column CSV while leaving CLI AOD at its default 0 can produce a missing-aerosol-configuration error.
+
+Each row's AOD must also be positive in this format. The contract does not automatically switch AOD 0 rows to the ordinary Rayleigh path, and aerosol preparation may fail. Adding CLI \texttt{-\allowbreak{}-\allowbreak{}mie} to a non-aerosol 5--7-column or other 9-column format does not have the same effect.
+
+One Mie model is shared by the entire batch; only geometry, wavelength, AOD, and reference values vary by row. Columns such as \texttt{wind}, \texttt{pressure}, and \texttt{surface} cannot be added to make a general-purpose job table. Surface and wind copy CLI defaults to a limited extent, but the pressure and absorption defects described above remain.
+
+\subsection{Read Failures and Result Checks}
+\label{sec:auto:08_input_formats:3.4}
+Data rows are read sequentially with \texttt{sscanf}. Quotes, string case IDs, empty intermediate cells, and mismatched column counts are unsupported. Rows beginning with \texttt{\#} and empty rows are skipped. Each line must fit in a 2048-byte buffer.
+
+Malformed rows may be \textbf{skipped after a message}, so check that the output row count equals the number of input cases. Some solver errors may not all be reflected in the process exit code. \texttt{-\allowbreak{}-\allowbreak{}output-\allowbreak{}advanced} adds optical thickness, scattering orders, and comparison errors, but does not write a per-case \texttt{rc} or an explicit convergence flag. Do not infer success of every row solely from exit code 0; compare logs/output values against independent single runs. Do not cite relative errors from rows filled with 0 in the absence of reference values as validation accuracy.
+
+\texttt{-\allowbreak{}-\allowbreak{}batch IN.\allowbreak{}csv -\allowbreak{}-\allowbreak{}output SUMMARY.\allowbreak{}csv -\allowbreak{}-\allowbreak{}output-\allowbreak{}full-\allowbreak{}grid DIR} is an older supplemental grid path. The last argument is a directory, not a filename; each case is written to \texttt{DIR/\allowbreak{}case\_\allowbreak{}<case\_\allowbreak{}id>.\allowbreak{}csv}. Duplicate \texttt{case\_\allowbreak{}id} values cause file collisions. This does not avoid the current pressure and absorption limitations.
+
+\Needspace{12\baselineskip}
+\section{Direct IOP Phase Files}
+\label{sec:auto:08_input_formats:4}
+\subsection{Scalar P11 CSV}
+\label{sec:auto:08_input_formats:4.1}
+Used with \texttt{-\allowbreak{}-\allowbreak{}water-\allowbreak{}model iop -\allowbreak{}-\allowbreak{}iop-\allowbreak{}a A -\allowbreak{}-\allowbreak{}iop-\allowbreak{}b B -\allowbreak{}-\allowbreak{}iop-\allowbreak{}bb BB -\allowbreak{}-\allowbreak{}iop-\allowbreak{}phase-\allowbreak{}lut FILE}. The minimal header is:
+
+
+\begin{ManualCode}
+theta_deg,P11
+\end{ManualCode}
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3400\linewidth-4.00pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.6600\linewidth-4.00pt\relax}@{}}
+\toprule
+\textbf{Column} & \textbf{Meaning} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Column} & \textbf{Meaning} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{theta\_\allowbreak{}deg} & Scattering angle, degrees, 0--180. Alias \texttt{theta}. \\
+\texttt{P11} & Dimensionless phase-function value, 0 or greater. Alias \texttt{p11}. \\
+\texttt{case\_\allowbreak{}id} & Selection string for the low-level/diagnostic loader. Do not expect automatic case selection in the ordinary IOP CLI. \\
+\texttt{wavelength\_\allowbreak{}nm} & Wavelength-selection column for the low-level/diagnostic loader. Note that the ordinary IOP CLI does not automatically select by the run wavelength. \\
+\end{longtable}
+}
+
+The current loader requires at least two valid angle/P11 pairs and sorts them by angle. This does not mean two points can reproduce a real particle's forward peak. Resolve the full angular range sufficiently, remove duplicate angles, and check phase-integral normalization and physical consistency with the input bb/b. Use real phase data; do not fabricate two arbitrary P11 points as scientific input.
+
+\textbf{The public IOP CLI currently does not set wavelength/case filters automatically.} A table containing multiple cases/wavelengths with \texttt{case\_\allowbreak{}id} and \texttt{wavelength\_\allowbreak{}nm} columns may be read as merged curves if supplied directly. Prepare a file with \textbf{the single phase curve to be used extracted in advance}. \texttt{-\allowbreak{}-\allowbreak{}iop-\allowbreak{}phase-\allowbreak{}lut} and \texttt{-\allowbreak{}-\allowbreak{}iop-\allowbreak{}mie-\allowbreak{}phase} are mutually exclusive. The default scalar weak-cap \texttt{lut-\allowbreak{}deltam} processing and diagnostic phase selections are described in the \hyperref[chap:03_options]{options chapter}.
+
+For the source contract, see the \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_C/src/rt_water_rt.c\#L1469}{phase LUT loader}; for optical-property model background, see the \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_C/docs/WATER_INPUT_INTERFACE_v1.19_2026-07-18.md}{water input specification}; for phase angles and representation policy, see the \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_C/docs/PHASE_ANGLE_GRID_FR631_SPEC_KO.md}{FR631 angle specification} and \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_C/docs/PHASE_REPRESENTATION_POLICY_KO.md}{phase representation policy}. The current limitations in this manual take precedence over older specifications on species-specific scattering support.
+
+\subsection{Vector \texttt{.\allowbreak{}mie}}
+\label{sec:auto:08_input_formats:4.2}
+Aerosol \texttt{-\allowbreak{}-\allowbreak{}mie} and underwater \texttt{-\allowbreak{}-\allowbreak{}iop-\allowbreak{}mie-\allowbreak{}phase} both read \texttt{.\allowbreak{}mie} files, but use different properties. The former supplies aerosol extinction, single-scattering albedo, polarized phase functions, and AOD conversion between wavelengths; the latter provides the underwater vector phase shape for directly specified total IOPs.
+
+\texttt{.\allowbreak{}mie} is not an ordinary \texttt{theta,\allowbreak{}P11} CSV. Use the distributed input data, \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_C/src/shared/mie_io.c}{Mie reader source}, and \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_C/docs/PHASE_ANGLE_GRID_FR631_SPEC_KO.md}{FR631 specification} as references. Changing a CSV's extension alone does not make it a \texttt{.\allowbreak{}mie} file. Also check that the calculation wavelength and AOD reference wavelength lie within the actual data range.
+
+\Needspace{12\baselineskip}
+\section{AFGL User Gas Profile}
+\label{sec:auto:08_input_formats:5}
+\texttt{-\allowbreak{}-\allowbreak{}atm-\allowbreak{}profile userdef} reads \texttt{inputs/\allowbreak{}afgl\_\allowbreak{}atm/\allowbreak{}afgl\_\allowbreak{}userdef.\allowbreak{}dat} beneath the current working directory. There is no CLI option for an arbitrary path. The distributed user file may have a history of diagnostic modifications, so do not assume it represents an actual observed atmosphere as supplied. Keep a copy before editing and record the source, conversion method, and hash.
+
+The data consist of \textbf{10 whitespace-separated numbers}, not CSV. One row describes the state at one altitude boundary. Altitude must increase strictly from bottom to top.
+
+
+\begin{ManualCode}
+z_km P_mbar T_K n_cm-3 mr_H2O_ppmv mr_O3_ppmv mr_O2_ppmv mr_CO2_ppmv mr_NO2_ppmv mr_CH4_ppmv
+\end{ManualCode}
+
+Do not add the string above as an uncommented data row. To include a header, make its first character \texttt{\#}.
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3000\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2300\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.4700\linewidth-5.33pt\relax}@{}}
+\toprule
+\textbf{Position} & \textbf{Value} & \textbf{Unit} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Position} & \textbf{Value} & \textbf{Unit} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+1 & Altitude z & km \\
+2 & Pressure P & mbar = hPa \\
+3 & Temperature T & K \\
+4 & Total molecular number density & molecules cm\textsuperscript{-}\textsuperscript{3} \\
+5 & H\textsubscript{2}O volume mixing ratio & ppmv \\
+6 & O\textsubscript{3} volume mixing ratio & ppmv \\
+7 & O\textsubscript{2} volume mixing ratio & ppmv \\
+8 & CO\textsubscript{2} volume mixing ratio & ppmv \\
+9 & NO\textsubscript{2} volume mixing ratio & ppmv \\
+10 & CH\textsubscript{4} volume mixing ratio & ppmv \\
+\end{longtable}
+}
+
+Profile mixing-ratio units (ppmv) differ from total gas-column CLI units (g cm\textsuperscript{-}\textsuperscript{2}, DU, molecules cm\textsuperscript{-}\textsuperscript{2}). Gas number density is formed as \texttt{mr\ensuremath{\times}1e-\allowbreak{}6\ensuremath{\times}n\_\allowbreak{}total}, and the default column is calculated by vertical integration. Overriding a CLI column adjusts that gas's total while preserving the profile shape.
+
+Number density must agree with the ideal-gas relationship \texttt{n\_\allowbreak{}total\ensuremath{\approx}P[mbar]\ensuremath{\times}7.\allowbreak{}2429e18/\allowbreak{}T[K]}. The loader warns about discrepancies of 1\% or more and unphysical P/T, but does not stop on every invalid dataset. Leaving invalid rows uncommented can cause the loader's two-stage row count and actual read to disagree, so make every uncommented row exactly 10 finite numbers.
+
+This is a \textbf{gas-absorption profile}. Do not interpret it as a general interface for replacing the Rayleigh molecular atmosphere's structure with an arbitrary AFGL profile. Detailed sources are the \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_C/inputs/afgl_atm/README.md}{distributed AFGL description} and \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_C/src/rt_absorption.c\#L46}{absorption loader}. Gas cross sections use the fixed \texttt{inputs/\allowbreak{}xsec} location; see the \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_C/inputs/xsec/README.md}{cross-section data description}.
+
+\Needspace{12\baselineskip}
+\section{Input Contract Verification Record}
+\label{sec:auto:08_input_formats:6}
+All 26 \texttt{-\allowbreak{}-\allowbreak{}batch-\allowbreak{}full-\allowbreak{}grid} columns were checked exhaustively against the \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_C/src/main.c\#L685}{\texttt{fg\_\allowbreak{}col} branches in main.c}. \texttt{-\allowbreak{}-\allowbreak{}batch} column-count/string detection and case copying were checked against \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_C/src/rt_io.c\#L60}{rt\_io.c}, and the 512-element RAA arrays against the \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_C/src/main.c\#L1222}{native ocean grid call site}.
+
+This chapter documents current limitations; it does not modify production code. When changing inputs for comparisons, retain the same execution method, source, data, and numerical settings, and preserve the headers, CSVs, CLI commands, and logs used for final results together.
+

@@ -1,0 +1,238 @@
+{
+  "source_commit": "54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d",
+  "verification_date": "2026-09-11",
+  "environment": "Ubuntu/WSL, GCC build documented in the manual, OMP_NUM_THREADS=1",
+  "exe_sha256": "2ca3183cd36694a988e08b4303d84036eeae9331084b55d0ddc3923487e6397a",
+  "batch_comparisons": [
+    {
+      "wavelength_nm": 443,
+      "all_csv_fields_identical": true
+    },
+    {
+      "wavelength_nm": 555,
+      "all_csv_fields_identical": true
+    }
+  ],
+  "scope": "Execution, parsed outputs, finite primary observables, expected grid shapes and applicable convergence flags. Not general scientific accuracy certification.",
+  "selection_date": "2026-09-12",
+  "selection_note": "Selected unchanged commands from the 2026-09-11 execution record; no new solver runs are claimed for 2026-09-12.",
+  "catalog_sha256": "bbc1d3333611e24a9f188ef96852ed670e3ee3e7dabf212ef0e43213aa90d869",
+  "original_catalog_sha256": "a59a237b4f32b35a4e9d2ab214f6fef9ff5e8e6a23c9b25003d92253834de70c",
+  "original_record": "../review/recipes_2026-09-12/verification_40_2026-09-11.json",
+  "recipes": 10,
+  "C_invocations": 13,
+  "passed_basic_checks": 13,
+  "commands": [
+    {
+      "id": "R01",
+      "recipe_id": "R01",
+      "returncode": 0,
+      "basic_checks": "passed",
+      "elapsed_seconds": 0.174,
+      "args_sha256": "371f3fec65389bcb9dce0a8e2842d7c2fc940f47d7ea75dbca37c2b0bd782dfe",
+      "observables": {
+        "TOA_rho_I": 0.039251609571,
+        "TOA_rho_Q": 0.0066709086582,
+        "TOA_rho_U": -0.012524744881
+      },
+      "conv": 1
+    },
+    {
+      "id": "R02",
+      "recipe_id": "R02",
+      "returncode": 0,
+      "basic_checks": "passed",
+      "elapsed_seconds": 0.174,
+      "args_sha256": "bf79752bb85723830b77390961ae53613fb9dc2ddcc8424ff08e2e8d728ecffb",
+      "observables": {
+        "TOA_rho_I": 0.039251609571,
+        "TOA_rho_Q": 0.0066709086582,
+        "TOA_rho_U": 0.012524744881
+      },
+      "conv": 1
+    },
+    {
+      "id": "R07",
+      "recipe_id": "R07",
+      "returncode": 0,
+      "basic_checks": "passed",
+      "elapsed_seconds": 0.278,
+      "args_sha256": "962d9b7fef1548ec78144c830bcfd0ede560eecb2c30f49174c6fc72a876f2de",
+      "observables": {
+        "TOA_rho_I": 0.041798373685,
+        "TOA_rho_Q": 0.007205165675,
+        "TOA_rho_U": -0.012404692357
+      },
+      "conv": 1
+    },
+    {
+      "id": "R21",
+      "recipe_id": "R21",
+      "returncode": 0,
+      "basic_checks": "passed",
+      "elapsed_seconds": 1.53,
+      "args_sha256": "299d4f2452cdeb83a2ecf2cce0fc59247bc57954dfe85964528c7166db472b38",
+      "observables": {
+        "TOA_rho_I": 0.11181793889,
+        "TOA_rho_Q": 0.017020352012,
+        "TOA_rho_U": -0.030190479339
+      },
+      "conv": 1
+    },
+    {
+      "id": "R26",
+      "recipe_id": "R26",
+      "returncode": 0,
+      "basic_checks": "passed",
+      "elapsed_seconds": 1.729,
+      "args_sha256": "b9249902d84e165bbdad03aa8e143c3cd8bd3b3857e5d940cc874bbfc8567b5b",
+      "observables": {
+        "TOA_rho_I": 0.044074678104,
+        "TOA_rho_Q": 0.0073342158394,
+        "TOA_rho_U": -0.012804892827,
+        "Rrs0plus_I": 0.0007978506,
+        "rrs0minus_I": 0.001507508,
+        "a_total": 0.05963466,
+        "b_total": 0.001672631
+      },
+      "conv": 1
+    },
+    {
+      "id": "R28",
+      "recipe_id": "R28",
+      "returncode": 0,
+      "basic_checks": "passed",
+      "elapsed_seconds": 1.73,
+      "args_sha256": "ba3b9de108b873a6c50a21fd3e8a88dc1e3e7d72162a988de3e049d8b35a1832",
+      "observables": {
+        "TOA_rho_I": 0.043515055264,
+        "TOA_rho_Q": 0.0072981124809,
+        "TOA_rho_U": -0.012706393247,
+        "Rrs0plus_I": 0.0005987734,
+        "rrs0minus_I": 0.001132024,
+        "a_total": 0.0796234214,
+        "b_total": 0.001672631
+      },
+      "conv": 1
+    },
+    {
+      "id": "R36",
+      "recipe_id": "R36",
+      "returncode": 0,
+      "basic_checks": "passed",
+      "elapsed_seconds": 1.677,
+      "args_sha256": "6fa4c9d986249e86ae3c122375e434d8d5edb784ed1ee0b4430e85868d0ec7cb",
+      "observables": {
+        "TOA_rho_I": 0.048271970346,
+        "TOA_rho_Q": 0.0072497498679,
+        "TOA_rho_U": -0.012408394271,
+        "Rrs0plus_I": 0.002285716,
+        "rrs0minus_I": 0.004291734,
+        "a_total": 0.1,
+        "b_total": 0.2
+      },
+      "conv": 1
+    },
+    {
+      "id": "R38",
+      "recipe_id": "R38",
+      "returncode": 0,
+      "basic_checks": "passed",
+      "elapsed_seconds": 0.221,
+      "args_sha256": "7a33ece847ac71af616219e188cc4b16956cfa5418d3d4b6063021fc122d4e40",
+      "grids": [
+        {
+          "rows": 12,
+          "columns": 13,
+          "sha256": "8336927adf0614a9fbfa6b160bd90cf3e6242df9deaba08a8d9ec793b3d8727b"
+        }
+      ]
+    },
+    {
+      "id": "R39_single555",
+      "recipe_id": "R39",
+      "returncode": 0,
+      "basic_checks": "passed",
+      "elapsed_seconds": 5.99,
+      "args_sha256": "3eac600850c01a2be1ad308703e91f76fe518e00505844835fdd3fe25d4dccdd",
+      "grids": [
+        {
+          "rows": 12,
+          "columns": 60,
+          "sha256": "34c53af113e57b4ea34ce7f18ebc8db74bd734c1e6d3197b0e1995f3091c4c6b"
+        }
+      ]
+    },
+    {
+      "id": "R39_single443",
+      "recipe_id": "R39",
+      "returncode": 0,
+      "basic_checks": "passed",
+      "elapsed_seconds": 6.152,
+      "args_sha256": "c60a4f83cbe409d66a32ebe4a21ee9d0df749526444df5b0d50665d1de2c3eb2",
+      "grids": [
+        {
+          "rows": 12,
+          "columns": 60,
+          "sha256": "aa6e08cfcdd2f017fe470700db0b5273ba0c7ef63c6877770c45f57dd07d8d9c"
+        }
+      ]
+    },
+    {
+      "id": "R39_batch",
+      "recipe_id": "R39",
+      "returncode": 0,
+      "basic_checks": "passed",
+      "elapsed_seconds": 8.351,
+      "args_sha256": "1e72a33147784090cd535117e1bc6e69603415f83b7ded65cc18f8a18e6afda0",
+      "grids": [
+        {
+          "rows": 12,
+          "columns": 60,
+          "sha256": "34c53af113e57b4ea34ce7f18ebc8db74bd734c1e6d3197b0e1995f3091c4c6b"
+        },
+        {
+          "rows": 12,
+          "columns": 60,
+          "sha256": "aa6e08cfcdd2f017fe470700db0b5273ba0c7ef63c6877770c45f57dd07d8d9c"
+        }
+      ]
+    },
+    {
+      "id": "R40_atmos32",
+      "recipe_id": "R40",
+      "returncode": 0,
+      "basic_checks": "passed",
+      "elapsed_seconds": 0.322,
+      "args_sha256": "f9f347c2dbfdce718b1df4bdb5f5db0e3c2c2c9f44e430a9418bb645cc379036",
+      "observables": {
+        "TOA_rho_I": 0.041834058394,
+        "TOA_rho_Q": 0.0072095341485,
+        "TOA_rho_U": -0.012413814848
+      },
+      "conv": 1
+    },
+    {
+      "id": "R40_water96",
+      "recipe_id": "R40",
+      "returncode": 0,
+      "basic_checks": "passed",
+      "elapsed_seconds": 4.238,
+      "args_sha256": "efd91314824451e88dad1d7a4bc75886ee904b4dbb84e5df25c225f247a60de9",
+      "observables": {
+        "TOA_rho_I": 0.044085126605,
+        "TOA_rho_Q": 0.0073355093337,
+        "TOA_rho_U": -0.012807741236,
+        "Rrs0plus_I": 0.0007978598,
+        "rrs0minus_I": 0.00150751,
+        "a_total": 0.05963466,
+        "b_total": 0.001672631
+      },
+      "conv": 1
+    }
+  ],
+  "scientific_limitations": [
+    "Basic execution checks are not a scientific accuracy certificate; verify resolution convergence for the intended physical state.",
+    "CPU/compiler differences can affect final numerical digits."
+  ]
+}

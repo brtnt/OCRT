@@ -1,0 +1,39 @@
+% Curves use actual OCRT C output, not illustrative fitted functions.
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+ width=15.3cm,height=6.5cm,
+ xmin=0,xmax=360,ymin=0,
+ xtick={0,90,180,270,360},
+ xlabel={\FigLang{OCRT RAA (도)}{OCRT RAA (degrees)}},ylabel={$\rho_I$},
+ grid=major,grid style={ocrtLine!65},axis line style={ocrtGray},
+ ticklabel style={font=\sffamily\footnotesize},label style={font=\sffamily\small},
+ legend style={font=\sffamily\footnotesize,at={(0.02,0.98)},anchor=north west,
+   draw=none,fill=white,fill opacity=0.93,text opacity=1,cells={anchor=west}},
+ clip=true]
+\addplot[very thick,orange!85!black] table[x=raa_deg,y=rho_I_w1,col sep=comma]{figures/data/rayleigh_azimuth.csv};
+\addlegendentry{\FigLang{직달 글린트 포함: 바람 1 m/s}{Direct glint included: wind 1 m/s}}
+\addplot[very thick,ocrtTeal] table[x=raa_deg,y=rho_I_w5,col sep=comma]{figures/data/rayleigh_azimuth.csv};
+\addlegendentry{\FigLang{직달 글린트 포함: 바람 5 m/s}{Direct glint included: wind 5 m/s}}
+\addplot[thick,ocrtNavy,dashed] table[x=raa_deg,y=rho_I_decoupled,col sep=comma]{figures/data/rayleigh_azimuth.csv};
+\addlegendentry{\FigLang{직달 글린트 제외: 바람 5 m/s}{Direct glint excluded: wind 5 m/s}}
+\end{axis}
+\end{tikzpicture}
+
+\vspace{2mm}
+\begin{tikzpicture}
+\begin{axis}[
+ width=15.3cm,height=5.2cm,
+ xmin=0,xmax=360,xtick={0,90,180,270,360},
+ xlabel={\FigLang{OCRT RAA (도)}{OCRT RAA (degrees)}},ylabel={$\rho_U$},
+ grid=major,grid style={ocrtLine!65},axis line style={ocrtGray},
+ ticklabel style={font=\sffamily\footnotesize},label style={font=\sffamily\small},
+ scaled y ticks=false,yticklabel style={/pgf/number format/fixed,/pgf/number format/precision=3}]
+\addplot[thick,ocrtGray,dotted,forget plot] coordinates {(0,0) (360,0)};
+\addplot[very thick,ocrtTeal] table[x=raa_deg,y=rho_U_decoupled,col sep=comma]{figures/data/rayleigh_azimuth.csv};
+\end{axis}
+\end{tikzpicture}
+\caption{\FigLang{실제 OCRT 계산으로 본 글린트 방향과 U의 거울 대칭. 555 nm, SZA=VZA=40도, 1013.25 hPa, \texttt{black\_fresnel\_ocean}, 에어로졸·6기체 흡수 없음, IPSS 끔이다. 위: 직달 글린트가 포함된 두 곡선의 최대값은 RAA=180도에 있다. 바람은 표면 경사 분포와 곡선 폭을 바꾼다. \texttt{--decouple-sunglint}는 직달 단일반사 항을 제외하며 해면의 모든 기여를 없애지는 않는다. 아래: 방위를 $\phi$에서 $360^\circ-\phi$로 바꾸면 U의 부호가 바뀐다. 360도 점은 그림을 닫기 위해 0도 값을 복사한 점이며 원래 LUT에는 없다.}{Glint direction and U mirror symmetry in actual OCRT calculations. Conditions: 555 nm, SZA=VZA=40 degrees, 1013.25 hPa, \texttt{black\_fresnel\_ocean}, no aerosol or six-gas absorption, IPSS off. Top: both curves including direct glint peak at RAA=180 degrees. Wind changes the surface-slope distribution and angular width. \texttt{--decouple-sunglint} removes the direct single-reflection term, while other surface contributions remain. Bottom: mirroring azimuth from $\phi$ to $360^\circ-\phi$ changes the sign of U. The plotted 360-degree endpoint repeats the 0-degree value for closure; it is absent from the native LUT.}}
+\label{fig:measured-azimuth}
+\end{figure}

@@ -1,0 +1,147 @@
+% Authoritative LaTeX chapter. Edit this file for future revisions.
+% Initially migrated 2026-09-11; no Markdown import occurs during PDF builds.
+\chapter{Validation, Troubleshooting, and Documentation Sources}
+\label{chap:07_validation_notes}
+Contents · \hyperref[chap:03_options]{All options} · \hyperref[chap:03_environment_index]{Environment-variable source index}
+
+\section{Scope checked for this manual}
+\label{sec:auto:07_validation_notes:1}
+On 2026-09-11, the code at reference commit \texttt{54861c68e35ec5aa\allowbreak{}a3938fad53e93dc2\allowbreak{}dfa7eb1d} was read and checked against the options and output statements. The C documentation release is v1.11.1, but \texttt{-\allowbreak{}-\allowbreak{}version} retains the old string \texttt{OCRT-\allowbreak{}v1.\allowbreak{}2-\allowbreak{}2026-\allowbreak{}08-\allowbreak{}16-\allowbreak{}KST-\allowbreak{}mie-\allowbreak{}fr631-\allowbreak{}direct-\allowbreak{}truncation}.
+
+The current C source was freshly built on Ubuntu/WSL with GCC 15.2.0, \texttt{-\allowbreak{}march=\allowbreak{}x86-\allowbreak{}64-\allowbreak{}v3}, and the repository's optimization and OpenMP options. The following small cases were run with \texttt{OMP\_\allowbreak{}NUM\_\allowbreak{}THREADS=\allowbreak{}1}, and exit code 0 was confirmed. Only documentation and example utilities were added; the source was not changed.
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3000\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2300\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.4700\linewidth-5.33pt\relax}@{}}
+\toprule
+\textbf{Case} & \textbf{Key conditions} & \textbf{Check} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Case} & \textbf{Key conditions} & \textbf{Check} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+Black-boundary Rayleigh, single geometry & 555 nm, SZA40/VZA30/RAA90, P1013.25, all 6 gases 0 & Successful execution \\
+Rayleigh LUT including the sea surface & 555 nm, SZA40, wind speed 5, direct glint excluded, VZA0/\allowbreak{}30/\allowbreak{}60\ensuremath{\times}\allowbreak{}RAA0/\allowbreak{}90/\allowbreak{}180/\allowbreak{}270 & 12 rows, 13 columns, finite values \\
+The preceding Rayleigh LUT with IPSS & Same conditions, \texttt{-\allowbreak{}-\allowbreak{}pssa} & 12 rows, 13 columns, finite values \\
+Aerosol, single geometry & 555 nm, M80C, AOD555=0.1, wind speed 5, all 6 gases 0 & Successful execution \\
+OCRT CDOM, single geometry & 555 nm, aDOM440=0.1, Chl/TSM0, wind speed 3, default gases & Successful execution \\
+OCRT CDOM LUT & Preceding state, 12 directions & 12 rows, 60 columns, finite values; \texttt{Rrs=\allowbreak{}Lu/\allowbreak{}Ed} and sum of downward transfer quantities checked \\
+CCRR, single geometry & 555 nm, Chl1, TSM0, aDOM440=0.02, wind speed 3 & Successful execution \\
+Direct IOP, single geometry & 555 nm, a0.1/b0.2/bb0.005 m\textsuperscript{-}\textsuperscript{1}, wind speed 3 & Successful execution \\
+Gas-absorption example & 760 nm, tropical, H\textsubscript{2}O 3 g/cm\textsuperscript{2}, O\textsubscript{3} 300 DU & Successful execution \\
+Pure seawater & 555 nm, all OCRT constituents 0, wind speed 3, default gases & Successful execution \\
+Chl, TSM, and detritus & 555 nm, Chl1/TSM0.5/aDOM0.02, red\_clay, detritus a440=0.01 & Successful execution \\
+C full-grid batch & Two rows at 443/555 nm, CDOM0.1, refractive index explicitly 1.34, 12 directions each & Successful execution \\
+Manual's C LUT utility & One state each for Rayleigh and CDOM simulation & Plan generation and actual 12-row calculations checked \\
+Python R2, single geometry & 555 nm, SZA30/VZA20/RAA90, wind speed 5, P1013.25, 400 layers, gases off & Executed on Windows/NumPy 2.3.5; \texttt{rho\_\allowbreak{}R\_\allowbreak{}I=\allowbreak{}0.\allowbreak{}038982239255} \\
+\end{longtable}
+}
+
+An extracted list was used to verify that \hyperref[chap:03_options]{Chapter~\ref*{chap:03_options}} includes all \textbf{168} names recognized by the C parser. This count includes aliases, compatibility names, and diagnostic names in addition to normal options. The \textbf{149} C environment variables are documented in a separate source index. Options for the main Python calculation and campaign CLIs were also checked against their parsers, and the six rows of the example state table were confirmed to parse in both input readers.
+
+These checks validate installation, examples, and documentation format. They do not mean that the physical effects of every option were executed in all combinations. Nor do they constitute production validation of complete sensor grids, every Mie model, every wavelength, or high-concentration states. Other wavelengths, concentrations, and angles in the examples, native Windows rebuilding, and execution of the complete IPSS regression script during this documentation work are outside the scope of the table above. Numerical execution of the Python constituent batch could not be checked because of the EAP data limitation described below.
+
+\section{Differences between existing help and the current implementation}
+\label{sec:auto:07_validation_notes:2}
+The new usage guidance is based on the current parser and actual execution paths. Outdated help text was not copied directly into runnable examples.
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3400\linewidth-4.00pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.6600\linewidth-4.00pt\relax}@{}}
+\toprule
+\textbf{Item} & \textbf{Currently confirmed behavior and usage guidance} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Item} & \textbf{Currently confirmed behavior and usage guidance} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+RAA & 180\textdegree{} is the sunglint branch. The scattering-angle descriptions in some unused helpers conflict with the production Fourier/IPSS paths. Follow \hyperref[chap:01_concepts_geometry]{Chapter~\ref*{chap:01_concepts_geometry}}. \\
+\texttt{-\allowbreak{}-\allowbreak{}pssa} & One IPSS algorithm. \texttt{-\allowbreak{}-\allowbreak{}pssa-\allowbreak{}mode} has been removed; coupled ocean is unsupported. \\
+Gas-column units & O\textsubscript{2}/CO\textsubscript{2}/CH\textsubscript{4} use molecules/cm\textsuperscript{2}. Do not interpret the help text's mol/cm\textsuperscript{2} as the chemical mole unit. \\
+Normal \texttt{-\allowbreak{}-\allowbreak{}batch} & Branches before gas initialization; some inputs, including pressure, have limited row-level propagation. Do not assume equivalence with normal single/grid execution. \\
+Ocean-grid defaults & The underwater node count at initialization can depend on whether \texttt{-\allowbreak{}-\allowbreak{}output-\allowbreak{}full-\allowbreak{}grid} is explicitly specified. Use an explicit output-file option. \\
+Ocean sunglint & Default ocean TOA excludes the direct-glint contribution. Single output supplies separate glint-on keys, but ocean-grid CSV does not contain those keys. \\
+Non-ocean glint U diagnostic & The diagnostic key has a different sign from the term added to the total. Verify separation with a separate decouple run. \\
+Incident-light scale & Underwater paths use either \texttt{F\_\allowbreak{}sun=\allowbreak{}1} or \ensuremath{\pi}. Do not compare raw Lu/Ed numbers between modes without checking normalization. \\
+Numerical controls & Some historical fields are recognized but have no effect in the current solver. See Chapter~\ref{chap:03_options} for the distinction from actual SOS controls. \\
+Phytoplankton scattering & C's EAP constituent scattering is disabled. Check the output IOPs to establish the full optical meaning of a Chl input. \\
+Python installation & The current public data manifest lacks EAP files, causing initialization of certain constituent constructors to fail. A successful Rayleigh single-geometry path does not establish success in all modes. \\
+Python/C equivalence & Python has no IPSS CLI, and even within Python the single/batch paths select kernels differently. Separate output comparisons under matching conditions are required. \\
+\end{longtable}
+}
+
+These are current limitations explained to users by the manual, not changes made to the code.
+
+\section{Errors and remedies}
+\label{sec:auto:07_validation_notes:3}
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3400\linewidth-4.00pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.6600\linewidth-4.00pt\relax}@{}}
+\toprule
+\textbf{Symptom} & \textbf{What to check} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Symptom} & \textbf{What to check} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+Input file not found & Verify that the current directory is \texttt{code/\allowbreak{}OCRT\_\allowbreak{}C}, that small input files and Mie data are installed, and that file-name case is correct. \\
+\texttt{Illegal instruct\allowbreak{}ion} or immediate exit & Rebuild with a \texttt{-\allowbreak{}march} supported by the CPU; verify that you did not invoke a separate old executable. \\
+\texttt{-\allowbreak{}-\allowbreak{}surface is requi\allowbreak{}red} & Explicitly specify one of black/flat/black\_fresnel\_ocean/ocean. \\
+Error requiring wind & Specify \texttt{-\allowbreak{}-\allowbreak{}wind-\allowbreak{}speed} for ocean/black\_fresnel\_ocean; explicitly specify 0 for calm conditions too. \\
+Single-geometry/grid conflict & Specify both VZA/RAA or omit both; do not add LUT-spacing options to single mode. \\
+unknown argument & Use \texttt{-\allowbreak{}-\allowbreak{}key value}; check for removed names or use of the \texttt{-\allowbreak{}-\allowbreak{}key=\allowbreak{}value} syntax. \\
+ADVANCED/DEBUG required & Check the purpose and effect in the \hyperref[chap:03_options]{option tables} and use only the necessary environment variables. \\
+Rayleigh reference unexpectedly includes absorption & Confirm that all 6 gas columns are 0; pressure 0 is not gas-off. \\
+\texttt{water-\allowbreak{}model} or branch-prefix error & Select exactly one of ocrt/ccrr/iop once and supply all 3 required values. \\
+AOD/file combination error & Mie data are required when AOD>0; remove aerosol-only options when AOD0. \\
+Missing Python EAP file & See the data limitation in \hyperref[chap:06_python_batch]{Appendix~\ref*{chap:06_python_batch}}; do not substitute fabricated files or data for another particle type. \\
+Duplicate \texttt{Rrs\_\allowbreak{}I} column error & Use a case-sensitive Python CSV reader; do not merge Rrs and rrs. \\
+NaN in CSV & Check the definition of the quantity and \texttt{T\_\allowbreak{}up\_\allowbreak{}rt\_\allowbreak{}valid}. Distinguish NaN where an upward transfer quantity is undefined from failure to calculate a primary observable. \\
+Nonconvergence or unusual polarization & Check the exit code, stderr, convergence flags, SZA/VZA/RAA, coordinate system, and numerical settings; do not overwrite values with 0. \\
+\end{longtable}
+}
+
+Do not discard standard error. Retain diagnostics about input data, gases, models, and convergence, in addition to the final error line, so that causes can be distinguished.
+
+\section{Input-file contracts and long-term retention}
+\label{sec:auto:07_validation_notes:4}
+FR631 Mie, AFGL, gas cross-section, and user IOP LUT files are not necessarily compatible merely because they share an extension. Match wavelength units and ranges, angle order and normalization, phase-matrix components, and columns to the existing readers. Keep user data in separate files without overwriting the distributed originals.
+
+\begin{itemize}
+\item \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_C/docs/OCRT_330_1100_FR631_INTEGRATION_GUIDE_KO.md}{Spectral input integration guide}
+\item \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_C/docs/OCRT_330_1100_FR631_SPECTRAL_DATA_TECHNICAL_NOTE_KO.md}{Spectral data technical note}
+\item \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_C/docs/OCRT_MIE_GRID_TRUNCATION_AND_VALIDATION_ARTIFACT_POLICY_2026-08-21.md}{FR631 truncation policy}
+\item \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_C/docs/OCRT_AOD_REFERENCE_WAVELENGTH_KO.md}{AOD reference-wavelength explanation}
+\end{itemize}
+
+Minimum LUT metadata comprise the source/executable/data versions; wavelength, geometry, pressure, wind-speed, and water-quality axes; AOD reference wavelength; gas profiles and columns; surface and glint definitions; IPSS status; RAA/polarization coordinates; numerical options; units; validity flags; and generation command. Also retain state variables absent from individual CSV files in the case table.
+
+\section{Sources for updating the manual}
+\label{sec:auto:07_validation_notes:5}
+Starting points for implementation checks:
+
+\begin{itemize}
+\item \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_C/src/main.c}{main.c: CLI, branching, and ocean CSV}
+\item \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_C/src/rt_io.c}{rt\_io.c: single/batch output}
+\item \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_C/src/rt_solver.c}{rt\_solver.c: atmosphere--ocean coupling and normalization}
+\item \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_C/src/rt_fourier.c}{rt\_fourier.c: azimuthal reconstruction}
+\item \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_C/src/rt_ipss.c}{rt\_ipss.c: spherical geometry and correction}
+\item \href{https://github.com/brtnt/OCRT/tree/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_Python}{Python code}
+\end{itemize}
+
+For a new option, update its name, default, unit, allowed range, modes, gates, and actual effect together. When output headers change, update the column lists and reading examples in Chapter~\ref{chap:05_output_formats}. Changes to RAA, polarization, normalization, or sunglint handling require coordinated updates to the concepts, examples, and outputs chapters. Preserve the original validation conditions in historical experiment documents and link to them from the current explanation.
+
+\section{Verification record for figures and core examples}
+\label{sec:auto:07_validation_notes:6}
+Appendix~\ref{chap:09_cookbook} contains 10 core examples and 13 C invocations, selected without command changes from the execution record dated September 11, 2026. Checks covered output structure, finite primary values and the relevant convergence flag. R39 matched every CSV field between individual and batch runs at both wavelengths. The current summary is \path{examples/verification_core_examples.json}; the actual C azimuth figure data are in \path{latex/figures/data/}.
+
+These checks do not establish physical accuracy for all conditions. Historical strong-absorption tests were sensitive to atmospheric layer count even when the reported convergence flag was 1. The original 40 examples and historical diagnostics are stored under \path{review/}. Perform separate resolution convergence and reference comparisons for the intended application.

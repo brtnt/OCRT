@@ -1,0 +1,54 @@
+% Equal 30-degree zenith angles. Solar-look and propagation vectors differ.
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[x=1cm,y=1cm,font=\sffamily\fontsize{9}{11}\selectfont,
+  ray/.style={line width=1.15pt,-{Latex[length=2.2mm]}},
+  note/.style={align=center,text width=6.9cm}]
+\path[use as bounding box] (0,-3.15) rectangle (15.8,4.25);
+\begin{scope}[shift={(3.6,0)}]
+  \node[anchor=north,font=\sffamily\bfseries] at (0,4.25)
+    {(a) RAA $=0^\circ$};
+  \fill[ocrtTeal!8] (-3.3,-.4) rectangle (3.3,0);
+  \draw[ocrtTeal,line width=.8pt] (-3.3,0)--(3.3,0);
+  \draw[ocrtGray,dashed] (0,0)--(0,2.45);
+  \draw[ocrtGray,dashed] (0,0)--(120:3.0);
+  \draw[ray,orange!85!black] (120:2.65)--(120:1.7);
+  \draw[ray,ocrtTeal] (120:.15)--(120:1.35);
+  \node[anchor=south,align=center,text width=4.8cm] at (-.9,2.75)
+    {\FigLang{태양과 센서의 look 방향 일치}{Solar and sensor look directions coincide}};
+  \draw[ocrtNavy] (90:.8) arc[start angle=90,end angle=120,radius=.8];
+  \node[anchor=west,align=left] at (.3,1.25)
+    {SZA $=$ VZA $=30^\circ$};
+  \fill[ocrtNavy] (0,0) circle (2pt);
+  \node[anchor=north] at (0,-.12) {\FigLang{화소}{Pixel}};
+  \node[note,anchor=north] at (0,-.79)
+    {\FigLang{평탄면의 직접 글린트 가지가 아님}{Outside the flat-surface direct-glint branch}};
+  \node[note,anchor=north] at (0,-1.88)
+    {$\Theta=180^\circ$\\\FigLang{대기 입자의 정확 후방산란 기하}{Exact atmospheric backscattering geometry}};
+\end{scope}
+\draw[ocrtLine] (7.8,-2.95)--(7.8,3.85);
+\begin{scope}[shift={(11.8,0)}]
+  \node[anchor=north,font=\sffamily\bfseries] at (0,4.25)
+    {(b) RAA $=180^\circ$};
+  \fill[ocrtTeal!8] (-3.3,-.4) rectangle (3.3,0);
+  \draw[ocrtTeal,line width=.8pt] (-3.3,0)--(3.3,0);
+  \draw[ocrtGray,dashed] (0,0)--(0,2.85);
+  \draw[ray,orange!85!black] (120:2.95)--(0,0);
+  \draw[ray,ocrtTeal] (0,0)--(60:2.95);
+  \node[anchor=south] at (-1.5,2.7) {\FigLang{태양}{Sun}};
+  \node[anchor=south] at (1.5,2.7) {\FigLang{센서}{Sensor}};
+  \draw[ocrtNavy] (90:.9) arc[start angle=90,end angle=120,radius=.9];
+  \draw[ocrtNavy] (60:.9) arc[start angle=60,end angle=90,radius=.9];
+  \node[ocrtNavy] at (-.55,1.16) {SZA};
+  \node[ocrtNavy] at (.55,1.16) {VZA};
+  \fill[ocrtNavy] (0,0) circle (2pt);
+  \node[anchor=north] at (0,-.12) {\FigLang{화소}{Pixel}};
+  \node[note,anchor=north] at (0,-.79)
+    {SZA $=$ VZA $=30^\circ$\\\FigLang{평탄면 정반사}{Flat-surface specular reflection}};
+  \node[note,anchor=north] at (0,-1.88)
+    {$\Theta=120^\circ$\\\FigLang{수면 정반사와 입자 후방산란은 구별}{Surface specular reflection differs from particle backscatter}};
+\end{scope}
+\end{tikzpicture}
+\caption{\FigLang{두 주평면 가지를 같은 천정각으로 비교한 단면도. 주황 화살표는 입사광, 청록 화살표는 센서 방향으로 나가는 빛이다. (a)의 두 화살표는 같은 직선 위에서 서로 반대 방향을 가리킨다. $\Theta$는 입사 태양광의 진행 방향과 상향 관측 방향 사이의 대기 산란각이며 수면 법선에서 잰 각도가 아니다. 바람이 있는 해수면의 글린트는 (b)의 중심 주변으로 넓어질 수 있다.}{Cross-sections comparing the two principal-plane branches at equal zenith angles. Orange arrows show incoming photons and teal arrows show light toward the sensor. The arrows in (a) point in opposite directions on the same line. $\Theta$ is the atmospheric scattering angle between incoming solar propagation and upward viewing, not an angle measured from the surface normal. A wind-roughened surface can broaden glint around the center shown in (b).}}
+\label{fig:geometry-glint-branches}
+\end{figure}

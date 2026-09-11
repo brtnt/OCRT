@@ -1,0 +1,529 @@
+% Authoritative LaTeX chapter. Edit this file for future revisions.
+% Initially migrated 2026-09-11; no Markdown import occurs during PDF builds.
+\chapter{Output Formats and Interpretation}
+\label{chap:05_output_formats}
+Manual contents · \hyperref[chap:01_concepts_geometry]{Basic concepts and RAA}
+
+This chapter is based on the headers and output statements actually used by the C executable at Git commit \texttt{54861c68e35ec5aa\allowbreak{}a3938fad53e93dc2\allowbreak{}dfa7eb1d}. Older files may use different column names for the same quantities. Read columns by their \textbf{actual header names}, rather than by position.
+
+\section{Outputs by execution mode}
+\label{sec:auto:05_output_formats:1}
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3000\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2300\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.4700\linewidth-5.33pt\relax}@{}}
+\toprule
+\textbf{Mode} & \textbf{Main output} & \textbf{Destination} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Mode} & \textbf{Main output} & \textbf{Destination} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+Single geometry: both \texttt{-\allowbreak{}-\allowbreak{}vza} and \texttt{-\allowbreak{}-\allowbreak{}raa} specified & One line beginning with three I/Q/U numbers, followed by \texttt{key=\allowbreak{}value} entries & Standard output (stdout); redirect to a file if needed \\
+Non-ocean angular grid: \texttt{black}, \texttt{flat}, \texttt{black\_\allowbreak{}fresnel\_\allowbreak{}ocean} & Atmosphere--surface LUT CSV & \texttt{-\allowbreak{}-\allowbreak{}output-\allowbreak{}full-\allowbreak{}grid FILE.\allowbreak{}csv}; if omitted, \texttt{result<N>.\allowbreak{}csv} in the current directory \\
+Ocean angular grid: \texttt{ocean} & CSV containing \texttt{Rrs}, \texttt{rrs}, TOA, irradiance, transmittance, and IOPs & The same file option \\
+\texttt{-\allowbreak{}-\allowbreak{}batch CSV -\allowbreak{}-\allowbreak{}output FILE.\allowbreak{}csv} & Specified-geometry results in input order, as CSV & \texttt{-\allowbreak{}-\allowbreak{}output} \\
+\texttt{-\allowbreak{}-\allowbreak{}batch} requested together with grid output & Summary CSV and one \texttt{case\_\allowbreak{}<case\_\allowbreak{}id>.\allowbreak{}csv} per row & \texttt{-\allowbreak{}-\allowbreak{}output} and the directory specified by \texttt{-\allowbreak{}-\allowbreak{}output-\allowbreak{}full-\allowbreak{}grid} \\
+\texttt{-\allowbreak{}-\allowbreak{}batch-\allowbreak{}full-\allowbreak{}grid JOBS.\allowbreak{}csv} & Ocean grid CSV for each job & Each job's \texttt{out} column \\
+\texttt{-\allowbreak{}-\allowbreak{}ccrr-\allowbreak{}compare} & CSV containing OCRT values, reference values, and relative errors & \texttt{-\allowbreak{}-\allowbreak{}ccrr-\allowbreak{}output} or \texttt{-\allowbreak{}-\allowbreak{}output} for that comparison \\
+\end{longtable}
+}
+
+The public C executable writes CSV files or single-geometry text. JSON, NetCDF, and HDF5 are not native formats of this output writer. Validation JSON files in the repository and consolidated files created by tools are separate outputs of those tools.
+
+A CSV has a header on the first line and one result per subsequent line. The delimiter is a comma, the decimal separator is \texttt{.\allowbreak{}}, and small values use scientific notation such as \texttt{1.\allowbreak{}234e-\allowbreak{}05}. \texttt{nan} may indicate an uncomputable or undefined value. Check the column definition and validity flags before replacing missing values with zero. Most diagnostic and progress messages go to stderr, independently of file output. Batch summaries also appear on stdout, so do not treat the entire batch stdout stream as CSV.
+
+\textbf{Preserve the case of column names.} Ocean CSV fields \texttt{Rrs\_\allowbreak{}I} and \texttt{rrs\_\allowbreak{}I} are different physical quantities. Do not convert all column names to lowercase. Reader selection and a Python example are provided in Appendix~\ref{sec:example_csv_reader}.
+
+Grid CSV files use \textbf{VZA as the outer loop and RAA as the inner loop}. RAA increases at a fixed VZA before the next VZA is processed. There is no duplicate RAA endpoint at \texttt{360\textdegree{}}. If the spacing does not divide 360 or the VZA upper limit exactly, the final output coordinate may differ from the requested upper limit; use the coordinates recorded in the file. Angular output spacing and the number of Gauss nodes used for SOS integration are separate settings.
+
+\Needspace{0.60\textheight}
+\section{Units and incident-light normalization}
+\label{sec:auto:05_output_formats:2}
+Use Figure~\ref{fig:output-levels} to identify the output level and the denominator of each ratio.
+\input{figures/output_levels}
+\FloatBarrier
+Let \texttt{F0} denote the TOA spectral incident flux on a plane perpendicular to the solar propagation direction, and let \texttt{mu\_\allowbreak{}s=\allowbreak{}cos(SZA)}. The incident flux on a horizontal plane is then \texttt{F0*mu\_\allowbreak{}s}.
+
+
+\begin{ManualCode}
+rho_X = pi * L_TOA_X / (F0 * mu_s)          X = I, Q, U
+Rrs_X = Lu_X(0+) / Ed(0+)                  [sr^-1]
+rrs_X = Lu_X(0-) / Ed(0-)                  [sr^-1]
+BRF0plus_X  = pi * Rrs_X                   [dimensionless]
+BRF0minus_X = pi * rrs_X                   [dimensionless]
+\end{ManualCode}
+
+The atmospheric SOS solver includes \texttt{F0=\allowbreak{}\ensuremath{\pi}} in its source normalization, so it converts internal TOA intensity using \texttt{rho=\allowbreak{}I\_\allowbreak{}TOA/\allowbreak{}mu\_\allowbreak{}s}. Do not multiply the output \texttt{rho} by \ensuremath{\pi} or \texttt{1/\allowbreak{}mu\_\allowbreak{}s} again.
+
+The underwater quantities \texttt{Lu/\allowbreak{}Qu/\allowbreak{}Uu} and \texttt{Ed/\allowbreak{}Eu} have radiance and irradiance dimensions, respectively, but \textbf{they are not absolute radiometric values obtained by reading a solar spectrum for an actual date or sensor.} The incident-light scales in the current C source are:
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3400\linewidth-4.00pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.6600\linewidth-4.00pt\relax}@{}}
+\toprule
+\textbf{Water calculation path} & \textbf{Internal \texttt{F\_\allowbreak{}sun}} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Water calculation path} & \textbf{Internal \texttt{F\_\allowbreak{}sun}} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+Original pure-seawater path; path switched to pure seawater by setting all OCRT/CCRR constituents to 0 & \ensuremath{\pi} \\
+OCRT/CCRR path with nonzero constituents & 1 \\
+Direct IOP path & 1 \\
+Dedicated CCRR reference comparison & 1 \\
+\end{longtable}
+}
+
+Direct comparison of raw \texttt{Lu/\allowbreak{}Ed} values from different paths can therefore include normalization differences. \texttt{Rrs}, \texttt{rrs}, and \texttt{rho} are normalized by their respective incident fluxes. To scale raw water radiance and irradiance to an actual \texttt{F0\_\allowbreak{}actual}, identify the \texttt{F\_\allowbreak{}sun} used and apply the factor \texttt{F0\_\allowbreak{}actual/\allowbreak{}F\_\allowbreak{}sun} in consistent physical units. Recover absolute TOA radiance from normalized \texttt{rho} using \texttt{L\_\allowbreak{}TOA=\allowbreak{}rho*F0\_\allowbreak{}actual*cos(SZA)/\allowbreak{}\ensuremath{\pi}}. The historical CLI option \texttt{-\allowbreak{}-\allowbreak{}f-\allowbreak{}sun} has been removed.
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3400\linewidth-4.00pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.6600\linewidth-4.00pt\relax}@{}}
+\toprule
+\textbf{Quantity} & \textbf{Units and interpretation} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Quantity} & \textbf{Units and interpretation} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{rho}, \texttt{BRF}, \texttt{omega}, AOD, \texttt{tau\_\allowbreak{}R}, \texttt{T\_\allowbreak{}*} & Dimensionless; directional reflectances and transfer ratios are not energy probabilities necessarily bounded by 0--1 \\
+\texttt{Rrs}, \texttt{rrs} & sr\textsuperscript{-}\textsuperscript{1} \\
+\texttt{Lu}, \texttt{Qu}, \texttt{Uu}, \texttt{TOA\_\allowbreak{}water\_\allowbreak{}signal\_\allowbreak{}I} & Spectral radiance at the incident-light scale above; W m\textsuperscript{-}\textsuperscript{2} sr\textsuperscript{-}\textsuperscript{1} nm\textsuperscript{-}\textsuperscript{1} when given an actual physical scale \\
+\texttt{Ed}, \texttt{Eu} & Spectral irradiance at the incident-light scale above; W m\textsuperscript{-}\textsuperscript{2} nm\textsuperscript{-}\textsuperscript{1} when given an actual physical scale \\
+\texttt{a}, \texttt{b}, \texttt{bb}, \texttt{Kd}, \texttt{Ku} & m\textsuperscript{-}\textsuperscript{1} \\
+Geometry & Degrees; \texttt{mu\_\allowbreak{}view} is dimensionless because it is \texttt{cos(VZA)} \\
+\texttt{wavelength\_\allowbreak{}nm}, \texttt{AOD\_\allowbreak{}ref\_\allowbreak{}nm} & nm \\
+\texttt{wind\_\allowbreak{}speed\_\allowbreak{}ms} & m s\textsuperscript{-}\textsuperscript{1} \\
+\end{longtable}
+}
+
+\section{Distinguishing sunglint from TOA components}
+\label{sec:auto:05_output_formats:3}
+Single-geometry output for \texttt{ocean} provides both a base TOA quantity with direct sunglint separated out and a TOA quantity with direct sunglint added. \texttt{X} denotes each of \texttt{I/\allowbreak{}Q/\allowbreak{}U}.
+
+
+\begin{ManualCode}
+TOA_rho_water_total_X = TOA_rho_water_direct_X + TOA_rho_water_sky_X
+TOA_rho_X = TOA_rho_atm_X + TOA_rho_water_total_X
+TOA_rho_glint_on_X = TOA_rho_X + TOA_rho_glint_direct_X
+\end{ManualCode}
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3400\linewidth-4.00pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.6600\linewidth-4.00pt\relax}@{}}
+\toprule
+\textbf{Column or key} & \textbf{Meaning} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Column or key} & \textbf{Meaning} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{TOA\_\allowbreak{}rho\_\allowbreak{}atm\_\allowbreak{}I/\allowbreak{}Q/\allowbreak{}U} & Component calculated through a separate atmosphere--surface path in the coupled calculation; does not mean pure Rayleigh alone \\
+\texttt{TOA\_\allowbreak{}rho\_\allowbreak{}water\_\allowbreak{}direct\_\allowbreak{}I/\allowbreak{}Q/\allowbreak{}U} & Underwater signal originating from direct sunlight, emerging through the surface and propagating through the atmosphere to TOA \\
+\texttt{TOA\_\allowbreak{}rho\_\allowbreak{}water\_\allowbreak{}sky\_\allowbreak{}I/\allowbreak{}Q/\allowbreak{}U} & TOA component of the underwater signal originating from atmospheric downward diffuse light \\
+\texttt{TOA\_\allowbreak{}rho\_\allowbreak{}water\_\allowbreak{}total\_\allowbreak{}I/\allowbreak{}Q/\allowbreak{}U} & Sum of the two water-origin components above \\
+\texttt{TOA\_\allowbreak{}rho\_\allowbreak{}glint\_\allowbreak{}direct\_\allowbreak{}I/\allowbreak{}Q/\allowbreak{}U} & Direct-sunlight specular-reflection term at the water surface \\
+\texttt{TOA\_\allowbreak{}rho\_\allowbreak{}glint\_\allowbreak{}on\_\allowbreak{}I/\allowbreak{}Q/\allowbreak{}U} & Base TOA plus direct sunglint \\
+\end{longtable}
+}
+
+The word direct in \texttt{water\_\allowbreak{}direct} describes the \textbf{origin of the incident light}. It does not mean that the water signal has never scattered underwater or in the atmosphere. In contrast, direct in \texttt{Ed0plus\_\allowbreak{}direct} and \texttt{Ed0minus\_\allowbreak{}direct} below means \textbf{the unscattered parallel solar beam at that location}.
+
+The ocean grid CSV columns \texttt{TOA\_\allowbreak{}rho\_\allowbreak{}I/\allowbreak{}Q/\allowbreak{}U} also represent this base ocean TOA. However, the current grid writer does not write \texttt{TOA\_\allowbreak{}rho\_\allowbreak{}glint\_\allowbreak{}on\_\allowbreak{}*} or the TOA decomposition columns above. For simulated datasets requiring these components, collect the named keys from single-geometry output.
+
+For non-ocean \texttt{black\_\allowbreak{}fresnel\_\allowbreak{}ocean}, whether \texttt{rho\_\allowbreak{}I/\allowbreak{}Q/\allowbreak{}U} includes direct sunglint depends on \texttt{-\allowbreak{}-\allowbreak{}decouple-\allowbreak{}sunglint}. Do not confuse this with the corresponding ocean CSV \texttt{rho} definition. Specular reflection from a perfectly flat surface at wind speed 0 differs from finite-width Cox--Munk glint; a value at the exact specular direction cannot be interpreted in the same way as a case with wind.
+
+\textbf{Caution about current non-ocean U diagnostics:} \texttt{rt\_\allowbreak{}solver.\allowbreak{}c} adds direct glint as \texttt{-U\_\allowbreak{}kernel} to the non-ocean total but records \texttt{+U\_\allowbreak{}kernel} in non-ocean \texttt{TOA\_\allowbreak{}rho\_\allowbreak{}glint\_\allowbreak{}direct\_\allowbreak{}U}. For \texttt{ocean}, the same-named key has the sign actually added to the total. Therefore, do not obtain glint-free U by directly subtracting the non-ocean diagnostic key from the total. Verify non-ocean polarization separation using a run with \texttt{-\allowbreak{}-\allowbreak{}decouple-\allowbreak{}sunglint}. This document records the output-sign inconsistency; it does not modify the code.
+
+\section{Single-geometry text}
+\label{sec:auto:05_output_formats:4}
+The format is shown below. This is a format example, not a numerical prediction.
+
+
+\begin{ManualCode}
+<rho_I> <rho_Q> <rho_U>  TOA_rho_I=<value> ... sza=<value> vza=<value> raa=<value> wl=<value> orders=<integer> conv=<0-or-1>
+\end{ManualCode}
+
+The first three numbers equal the named \texttt{TOA\_\allowbreak{}rho\_\allowbreak{}I/\allowbreak{}Q/\allowbreak{}U} values. New analysis code should parse \texttt{key=\allowbreak{}value} entries instead of positional indices. \texttt{-\allowbreak{}-\allowbreak{}output-\allowbreak{}advanced} adds columns to batch CSV output; it does not change this single-geometry format.
+
+\subsection{Keys common to all surfaces}
+\label{sec:auto:05_output_formats:4.1}
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3400\linewidth-4.00pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.6600\linewidth-4.00pt\relax}@{}}
+\toprule
+\textbf{Key} & \textbf{Meaning} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Key} & \textbf{Meaning} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{TOA\_\allowbreak{}rho\_\allowbreak{}I}, \texttt{TOA\_\allowbreak{}rho\_\allowbreak{}Q}, \texttt{TOA\_\allowbreak{}rho\_\allowbreak{}U} & TOA directional Stokes reflectance; see Section~\ref{sec:auto:05_output_formats:3} for glint inclusion \\
+\texttt{TOA\_\allowbreak{}rho\_\allowbreak{}glint\_\allowbreak{}direct\_\allowbreak{}I/\allowbreak{}Q/\allowbreak{}U} & Direct-sunglint diagnostic; observe the non-ocean U-sign caution \\
+\texttt{T\_\allowbreak{}dir\_\allowbreak{}dn}, \texttt{T\_\allowbreak{}diff\_\allowbreak{}dn\_\allowbreak{}hemi}, \texttt{T\_\allowbreak{}total\_\allowbreak{}dn\_\allowbreak{}hemi}, \texttt{T\_\allowbreak{}diff\_\allowbreak{}dn\_\allowbreak{}dir} & Downward transmittance definitions below \\
+\texttt{T\_\allowbreak{}dir\_\allowbreak{}up\_\allowbreak{}view}, \texttt{T\_\allowbreak{}diff\_\allowbreak{}up\_\allowbreak{}view}, \texttt{T\_\allowbreak{}total\_\allowbreak{}up\_\allowbreak{}view} & Upward transmittance definitions below \\
+\texttt{TOA\_\allowbreak{}water\_\allowbreak{}signal\_\allowbreak{}I}, \texttt{T\_\allowbreak{}up\_\allowbreak{}rt\_\allowbreak{}valid} & Water-origin TOA radiance and validity of the upward-transfer calculation \\
+\texttt{AOD\_\allowbreak{}ref} & Aerosol optical depth at the specified reference wavelength \\
+\texttt{AOD\_\allowbreak{}ref\_\allowbreak{}nm} & AOD reference wavelength, 555 or 865 nm \\
+\texttt{AOD\_\allowbreak{}band} & AOD at the execution wavelength, calculated using the \texttt{.\allowbreak{}mie} extinction ratio \\
+\texttt{AOD\_\allowbreak{}ext\_\allowbreak{}ratio} & Extinction at the execution wavelength divided by extinction at the reference wavelength; \texttt{AOD\_\allowbreak{}band=\allowbreak{}AOD\_\allowbreak{}ref*AOD\_\allowbreak{}ext\_\allowbreak{}ratio} \\
+\texttt{sza}, \texttt{vza}, \texttt{raa}, \texttt{wl} & Execution geometry and wavelength; RAA follows the OCRT convention \\
+\texttt{orders} & Non-ocean: maximum SOS order used across atmospheric Fourier modes; ocean: maximum order used by the underwater solution \\
+\texttt{conv} & Non-ocean: logical AND of atmospheric-mode convergence; ocean: the underwater solution's \texttt{all\_\allowbreak{}converged} value \\
+\end{longtable}
+}
+
+\texttt{conv=\allowbreak{}1} means that the applicable convergence criterion in the code was met. It does not establish spatial or angular grid independence, accuracy against other models, or independent validation of every atmospheric and underwater path in the full ocean calculation.
+
+\subsection{Additional non-ocean keys}
+\label{sec:auto:05_output_formats:4.2}
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3400\linewidth-4.00pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.6600\linewidth-4.00pt\relax}@{}}
+\toprule
+\textbf{Key} & \textbf{Meaning} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Key} & \textbf{Meaning} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{tau\_\allowbreak{}R} & Total vertical Rayleigh optical depth used in the calculation \\
+\texttt{diag\_\allowbreak{}sunglint\_\allowbreak{}up\_\allowbreak{}flux\_\allowbreak{}ratio} & Direct-glint diagnostic \texttt{rho\_\allowbreak{}I*cos(SZA)} \\
+\texttt{diag\_\allowbreak{}TOA\_\allowbreak{}up\_\allowbreak{}flux\_\allowbreak{}ratio} & Base-TOA diagnostic \texttt{rho\_\allowbreak{}I*cos(SZA)} \\
+\end{longtable}
+}
+
+Non-ocean calculations do not separately propagate an upward source supplied from the water. It is therefore normal for \texttt{T\_\allowbreak{}diff\_\allowbreak{}up\_\allowbreak{}view}, \texttt{T\_\allowbreak{}total\_\allowbreak{}up\_\allowbreak{}view}, and \texttt{TOA\_\allowbreak{}water\_\allowbreak{}signal\_\allowbreak{}I} to be \texttt{nan}, with \texttt{T\_\allowbreak{}up\_\allowbreak{}rt\_\allowbreak{}valid=\allowbreak{}0}.
+
+\subsection{Additional ocean keys}
+\label{sec:auto:05_output_formats:4.3}
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3400\linewidth-4.00pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.6600\linewidth-4.00pt\relax}@{}}
+\toprule
+\textbf{Key} & \textbf{Meaning} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Key} & \textbf{Meaning} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{TOA\_\allowbreak{}rho\_\allowbreak{}atm\_\allowbreak{}I/\allowbreak{}Q/\allowbreak{}U}, \texttt{TOA\_\allowbreak{}rho\_\allowbreak{}water\_\allowbreak{}direct\_\allowbreak{}I/\allowbreak{}Q/\allowbreak{}U}, \texttt{TOA\_\allowbreak{}rho\_\allowbreak{}water\_\allowbreak{}sky\_\allowbreak{}I/\allowbreak{}Q/\allowbreak{}U}, \texttt{TOA\_\allowbreak{}rho\_\allowbreak{}water\_\allowbreak{}total\_\allowbreak{}I/\allowbreak{}Q/\allowbreak{}U}, \texttt{TOA\_\allowbreak{}rho\_\allowbreak{}glint\_\allowbreak{}on\_\allowbreak{}I/\allowbreak{}Q/\allowbreak{}U} & TOA decomposition in Section~\ref{sec:auto:05_output_formats:3} \\
+\texttt{Lu0plus}, \texttt{Qu0plus}, \texttt{Uu0plus} & Water-origin Stokes radiance emerging into air at the surface \\
+\texttt{Ed0plus} & Total downward irradiance on the air side of the surface \\
+\texttt{Ed0plus\_\allowbreak{}direct}, \texttt{Ed0plus\_\allowbreak{}diffuse} & Decomposition of that irradiance into unscattered sunlight and the remaining hemispherically integrated contribution \\
+\texttt{Rrs0plus\_\allowbreak{}I}, \texttt{Rrs0plus\_\allowbreak{}Q}, \texttt{Rrs0plus\_\allowbreak{}U} & The above radiances divided by \texttt{Ed0plus} \\
+\texttt{BRF0plus\_\allowbreak{}I}, \texttt{BRF0plus\_\allowbreak{}Q}, \texttt{BRF0plus\_\allowbreak{}U} & \texttt{\ensuremath{\pi}*Rrs0plus\_\allowbreak{}X} for each component \\
+\texttt{Lu0minus}, \texttt{Qu0minus}, \texttt{Uu0minus} & Upward Stokes radiance immediately below the surface \\
+\texttt{Ed0minus}, \texttt{Eu0minus} & Total downward and upward irradiance immediately below the surface \\
+\texttt{Ed0minus\_\allowbreak{}direct}, \texttt{Ed0minus\_\allowbreak{}diffuse} & Decomposition of underwater downward irradiance \\
+\texttt{Eu0minus\_\allowbreak{}direct}, \texttt{Eu0minus\_\allowbreak{}diffuse} & Decomposition of underwater upward irradiance; in the current deep-water/black-bottom model, direct=0 and diffuse=Eu0minus \\
+\texttt{rrs0minus\_\allowbreak{}I}, \texttt{rrs0minus\_\allowbreak{}Q}, \texttt{rrs0minus\_\allowbreak{}U} & Underwater upward Stokes radiance divided by \texttt{Ed0minus} \\
+\texttt{BRF0minus\_\allowbreak{}I}, \texttt{BRF0minus\_\allowbreak{}Q}, \texttt{BRF0minus\_\allowbreak{}U} & \texttt{\ensuremath{\pi}*rrs0minus\_\allowbreak{}X} for each component \\
+\texttt{Kd0minus}, \texttt{Ku0minus} & Near-surface logarithmic attenuation diagnostics for downward/upward irradiance, m\textsuperscript{-}\textsuperscript{1} \\
+\texttt{a\_\allowbreak{}w}, \texttt{b\_\allowbreak{}w}, \texttt{bb\_\allowbreak{}w}, \texttt{a\_\allowbreak{}dom}, \texttt{a\_\allowbreak{}chl}, \texttt{a\_\allowbreak{}pig}, \texttt{b\_\allowbreak{}pig}, \texttt{bb\_\allowbreak{}pig}, \texttt{a\_\allowbreak{}min}, \texttt{b\_\allowbreak{}min}, \texttt{bb\_\allowbreak{}min}, \texttt{a\_\allowbreak{}total}, \texttt{b\_\allowbreak{}total}, \texttt{bb\_\allowbreak{}total}, \texttt{omega\_\allowbreak{}total} & IOP mapping in Section~\ref{sec:auto:05_output_formats:7} \\
+\end{longtable}
+}
+
+\texttt{Kd/\allowbreak{}Ku} are near-surface diagnostics obtained from the finite difference \texttt{-ln(E(z1)/\allowbreak{}E(0))/\allowbreak{}z1} between the surface and the first calculation depth. In particular, \texttt{Ku} can be small or negative because of the near-surface irradiance gradient. Do not treat these as intrinsic attenuation coefficients constant at arbitrary depths or as validated satellite Kd products.
+
+Ocean single-geometry output has no \texttt{tau\_\allowbreak{}R} key, and ocean grid output has no \texttt{Ku0minus}. Distinguish values present as internal object fields from values actually stored in public output files.
+
+\section{Transmittance columns: what is divided by what?}
+\label{sec:auto:05_output_formats:5}
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3400\linewidth-4.00pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.6600\linewidth-4.00pt\relax}@{}}
+\toprule
+\textbf{Name} & \textbf{Definition and interpretation} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Name} & \textbf{Definition and interpretation} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{T\_\allowbreak{}dir\_\allowbreak{}dn} / \texttt{direct\_\allowbreak{}transmittance} & Attenuation of downward unscattered direct light. In plane-parallel geometry, \texttt{exp(-tau\_\allowbreak{}total/\allowbreak{}mu\_\allowbreak{}s)}; with IPSS, the corresponding spherical-path integral for direct light is applied \\
+\texttt{T\_\allowbreak{}diff\_\allowbreak{}dn\_\allowbreak{}hemi} / \texttt{diffuse\_\allowbreak{}dn\_\allowbreak{}hemi} & Downward diffuse irradiance on the air side of the surface divided by TOA horizontal incident flux \\
+\texttt{T\_\allowbreak{}total\_\allowbreak{}dn\_\allowbreak{}hemi} / \texttt{irradiance\_\allowbreak{}transmittance} & \texttt{T\_\allowbreak{}dir\_\allowbreak{}dn+T\_\allowbreak{}diff\_\allowbreak{}dn\_\allowbreak{}hemi}; total downward irradiance above the surface divided by TOA horizontal incident flux \\
+\texttt{T\_\allowbreak{}diff\_\allowbreak{}dn\_\allowbreak{}dir} / \texttt{diffuse\_\allowbreak{}dn\_\allowbreak{}dir} & Directional diagnostic defined using downward diffuse radiance in the requested direction: \texttt{2*pi*mu\_\allowbreak{}v*L\_\allowbreak{}dn\_\allowbreak{}diff/\allowbreak{}(F0*mu\_\allowbreak{}s)} \\
+\texttt{T\_\allowbreak{}dir\_\allowbreak{}up\_\allowbreak{}view} & Upward unscattered attenuation at the requested VZA, \texttt{exp(-tau\_\allowbreak{}total/\allowbreak{}mu\_\allowbreak{}v)} \\
+\texttt{T\_\allowbreak{}total\_\allowbreak{}up\_\allowbreak{}view} & Result of transferring the actual angular distribution of water-leaving light through the atmosphere, \texttt{TOA\_\allowbreak{}water\_\allowbreak{}signal\_\allowbreak{}I/\allowbreak{}Lu(0+)} \\
+\texttt{T\_\allowbreak{}diff\_\allowbreak{}up\_\allowbreak{}view} & \texttt{T\_\allowbreak{}total\_\allowbreak{}up\_\allowbreak{}view-T\_\allowbreak{}dir\_\allowbreak{}up\_\allowbreak{}view} \\
+\texttt{TOA\_\allowbreak{}water\_\allowbreak{}signal\_\allowbreak{}I} & TOA radiance from the water signal alone; numerator of the upward transfer ratio \\
+\texttt{T\_\allowbreak{}up\_\allowbreak{}rt\_\allowbreak{}valid} & 1 when the required atmospheric bottom-source SOS propagation of water-origin light has completed, or the atmosphere is absent, and the denominator is valid; otherwise 0 \\
+\end{longtable}
+}
+
+\texttt{T\_\allowbreak{}diff\_\allowbreak{}dn\_\allowbreak{}dir} is not a hemispheric integral. Simply summing RAA samples does not produce \texttt{T\_\allowbreak{}diff\_\allowbreak{}dn\_\allowbreak{}hemi}; directions and integration weights must be included. \texttt{T\_\allowbreak{}total\_\allowbreak{}up\_\allowbreak{}view} depends on the scene's angular distribution of water-leaving light. Do not reuse it as an “atmosphere-only upward-transmittance LUT” independent of water IOPs and geometry. Do not automatically clip directional transfer ratios greater than 1.
+
+When \texttt{T\_\allowbreak{}up\_\allowbreak{}rt\_\allowbreak{}valid=\allowbreak{}0}, do not apply corrections using the upward diffuse or total transfer ratio. Do not automatically substitute \texttt{T\_\allowbreak{}diff\_\allowbreak{}dn\_\allowbreak{}hemi} as an up/down symmetry approximation simply because a numerical value is needed.
+
+The following quantities are not transmittances.
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3000\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2300\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.4700\linewidth-5.33pt\relax}@{}}
+\toprule
+\textbf{LUT column} & \textbf{Single-geometry key} & \textbf{Definition} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{LUT column} & \textbf{Single-geometry key} & \textbf{Definition} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{sunglint\_\allowbreak{}up\_\allowbreak{}flux\_\allowbreak{}ratio\_\allowbreak{}diag} & \texttt{diag\_\allowbreak{}sunglint\_\allowbreak{}up\_\allowbreak{}flux\_\allowbreak{}ratio} & \texttt{rho\_\allowbreak{}glint\_\allowbreak{}I*mu\_\allowbreak{}s} \\
+\texttt{toa\_\allowbreak{}up\_\allowbreak{}flux\_\allowbreak{}ratio\_\allowbreak{}diag} & \texttt{diag\_\allowbreak{}TOA\_\allowbreak{}up\_\allowbreak{}flux\_\allowbreak{}ratio} & \texttt{rho\_\allowbreak{}TOA\_\allowbreak{}I*mu\_\allowbreak{}s} \\
+\end{longtable}
+}
+
+Although their names contain flux, these are \textbf{legacy diagnostics based on directional radiance}, not integrals of upward flux over the full hemisphere. Do not interpret them as \texttt{T\_\allowbreak{}total\_\allowbreak{}up\_\allowbreak{}view}.
+
+\section{Non-ocean LUT CSV: 13 columns}
+\label{sec:auto:05_output_formats:6}
+The actual header is:
+
+
+\begin{ManualCode}
+sza_deg,wavelength_nm,vza_deg,raa_deg,rho_I,rho_Q,rho_U,direct_transmittance,irradiance_transmittance,diffuse_dn_hemi,diffuse_dn_dir,sunglint_up_flux_ratio_diag,toa_up_flux_ratio_diag
+\end{ManualCode}
+
+The first four columns are coordinates; \texttt{rho\_\allowbreak{}I/\allowbreak{}Q/\allowbreak{}U} are TOA reflectances. The remaining columns follow the definitions in Section~\ref{sec:auto:05_output_formats:5}. \texttt{direct\_\allowbreak{}transmittance}, \texttt{irradiance\_\allowbreak{}transmittance}, and \texttt{diffuse\_\allowbreak{}dn\_\allowbreak{}hemi} are scalars repeated for every direction in a case with the same SZA, wavelength, atmosphere, and surface. \texttt{rho}, \texttt{diffuse\_\allowbreak{}dn\_\allowbreak{}dir}, and the two \texttt{*\_\allowbreak{}diag} quantities are directional values.
+
+This CSV represents the atmospheric calculation on the \texttt{0+} side. It does not provide \texttt{Rrs}, \texttt{rrs}, water IOPs, or the validity of upward water-signal propagation. Interpreting \texttt{rho} also requires settings absent from the file: \texttt{surface}, \texttt{pressure}, AOD, \texttt{.\allowbreak{}mie}, absorption, and glint separation. Retain the execution command with the file.
+
+\section{Ocean full-grid CSV}
+\label{sec:auto:05_output_formats:7}
+The actual header, in order, is:
+
+
+\begin{ManualCode}
+case_kind,sza_deg,wavelength_nm,wind_speed_ms,n_mu,mu_index,mu_view,vza_deg,raa_deg,Ed0plus_air,Ed0plus_direct,Ed0plus_diffuse,Lu0plus_I,Lu0plus_Q,Lu0plus_U,Rrs_I,Rrs_Q,Rrs_U,Ed0minus_water,Ed0minus_direct,Ed0minus_diffuse,Eu0minus_water,Eu0minus_direct,Eu0minus_diffuse,Lu0minus_I,Lu0minus_Q,Lu0minus_U,rrs_I,rrs_Q,rrs_U,TOA_rho_I,TOA_rho_Q,TOA_rho_U,T_dir_dn,T_diff_dn_hemi,T_total_dn_hemi,T_diff_dn_dir,T_dir_up_view,T_diff_up_view,T_total_up_view,TOA_water_signal_I,T_up_rt_valid,a_total,b_total,bb_total,omega_water,water_orders,water_converged,a_w,b_w,bb_w,a_chl,a_phyto_detritus,b_phyto_detritus,bb_phyto_detritus,a_dom,a_min,b_min,bb_min,Kd0minus
+\end{ManualCode}
+
+\subsection{Coordinates, identifiers, and convergence}
+\label{sec:auto:05_output_formats:7.1}
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3400\linewidth-4.00pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.6600\linewidth-4.00pt\relax}@{}}
+\toprule
+\textbf{Column} & \textbf{Meaning} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Column} & \textbf{Meaning} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{case\_\allowbreak{}kind} & Fixed string \texttt{ocean\_\allowbreak{}rrs\_\allowbreak{}grid} \\
+\texttt{sza\_\allowbreak{}deg}, \texttt{wavelength\_\allowbreak{}nm}, \texttt{wind\_\allowbreak{}speed\_\allowbreak{}ms} & Case SZA, wavelength, and wind speed \\
+\texttt{n\_\allowbreak{}mu} & Number of positive atmospheric Gauss integration nodes; not the number of output VZAs or underwater nodes \\
+\texttt{mu\_\allowbreak{}index} & Zero-based group index for the output VZA; not a Gauss-node index \\
+\texttt{mu\_\allowbreak{}view}, \texttt{vza\_\allowbreak{}deg}, \texttt{raa\_\allowbreak{}deg} & \texttt{cos(VZA)}, VZA in air, and OCRT RAA \\
+\texttt{water\_\allowbreak{}orders}, \texttt{water\_\allowbreak{}converged} & Maximum underwater SOS order and underwater convergence flag \\
+\end{longtable}
+}
+
+\subsection{Radiometric quantities, transmittance, and reflectance}
+\label{sec:auto:05_output_formats:7.2}
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3400\linewidth-4.00pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.6600\linewidth-4.00pt\relax}@{}}
+\toprule
+\textbf{Column} & \textbf{Corresponding single-geometry key or definition} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Column} & \textbf{Corresponding single-geometry key or definition} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{Ed0plus\_\allowbreak{}air} & \texttt{Ed0plus} \\
+\texttt{Ed0plus\_\allowbreak{}direct}, \texttt{Ed0plus\_\allowbreak{}diffuse} & Same names; their sum is \texttt{Ed0plus\_\allowbreak{}air} \\
+\texttt{Lu0plus\_\allowbreak{}I}, \texttt{Lu0plus\_\allowbreak{}Q}, \texttt{Lu0plus\_\allowbreak{}U} & \texttt{Lu0plus}, \texttt{Qu0plus}, \texttt{Uu0plus}, respectively \\
+\texttt{Rrs\_\allowbreak{}I}, \texttt{Rrs\_\allowbreak{}Q}, \texttt{Rrs\_\allowbreak{}U} & \texttt{Rrs0plus\_\allowbreak{}I/\allowbreak{}Q/\allowbreak{}U}, respectively \\
+\texttt{Ed0minus\_\allowbreak{}water} & \texttt{Ed0minus} \\
+\texttt{Ed0minus\_\allowbreak{}direct}, \texttt{Ed0minus\_\allowbreak{}diffuse} & Same names; their sum is \texttt{Ed0minus\_\allowbreak{}water} \\
+\texttt{Eu0minus\_\allowbreak{}water} & \texttt{Eu0minus} \\
+\texttt{Eu0minus\_\allowbreak{}direct}, \texttt{Eu0minus\_\allowbreak{}diffuse} & Same names; their sum is \texttt{Eu0minus\_\allowbreak{}water} \\
+\texttt{Lu0minus\_\allowbreak{}I}, \texttt{Lu0minus\_\allowbreak{}Q}, \texttt{Lu0minus\_\allowbreak{}U} & \texttt{Lu0minus}, \texttt{Qu0minus}, \texttt{Uu0minus}, respectively \\
+\texttt{rrs\_\allowbreak{}I}, \texttt{rrs\_\allowbreak{}Q}, \texttt{rrs\_\allowbreak{}U} & \texttt{rrs0minus\_\allowbreak{}I/\allowbreak{}Q/\allowbreak{}U}, respectively \\
+\texttt{TOA\_\allowbreak{}rho\_\allowbreak{}I}, \texttt{TOA\_\allowbreak{}rho\_\allowbreak{}Q}, \texttt{TOA\_\allowbreak{}rho\_\allowbreak{}U} & Base ocean TOA reflectance \\
+\texttt{T\_\allowbreak{}dir\_\allowbreak{}dn}, \texttt{T\_\allowbreak{}diff\_\allowbreak{}dn\_\allowbreak{}hemi}, \texttt{T\_\allowbreak{}total\_\allowbreak{}dn\_\allowbreak{}hemi}, \texttt{T\_\allowbreak{}diff\_\allowbreak{}dn\_\allowbreak{}dir} & Downward transfer quantities in Section~\ref{sec:auto:05_output_formats:5} \\
+\texttt{T\_\allowbreak{}dir\_\allowbreak{}up\_\allowbreak{}view}, \texttt{T\_\allowbreak{}diff\_\allowbreak{}up\_\allowbreak{}view}, \texttt{T\_\allowbreak{}total\_\allowbreak{}up\_\allowbreak{}view} & Upward transfer quantities in Section~\ref{sec:auto:05_output_formats:5} \\
+\texttt{TOA\_\allowbreak{}water\_\allowbreak{}signal\_\allowbreak{}I}, \texttt{T\_\allowbreak{}up\_\allowbreak{}rt\_\allowbreak{}valid} & Upward water signal and validity in Section~\ref{sec:auto:05_output_formats:5} \\
+\texttt{Kd0minus} & Near-surface downward-irradiance attenuation diagnostic \\
+\end{longtable}
+}
+
+\subsection{IOP metadata}
+\label{sec:auto:05_output_formats:7.3}
+These coefficients are the values \textbf{actually used} in the calculation. In direct IOP input mode, do not infer a biological decomposition from component values. Use \texttt{a\_\allowbreak{}total}, \texttt{b\_\allowbreak{}total}, and \texttt{bb\_\allowbreak{}total} for totals.
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3000\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2300\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.4700\linewidth-5.33pt\relax}@{}}
+\toprule
+\textbf{Grid column} & \textbf{Single-geometry key} & \textbf{Meaning} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Grid column} & \textbf{Single-geometry key} & \textbf{Meaning} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{a\_\allowbreak{}total}, \texttt{b\_\allowbreak{}total}, \texttt{bb\_\allowbreak{}total} & Same & Total absorption, scattering, and backscattering, m\textsuperscript{-}\textsuperscript{1} \\
+\texttt{omega\_\allowbreak{}water} & \texttt{omega\_\allowbreak{}total} & Underwater single-scattering albedo \texttt{b\_\allowbreak{}total/\allowbreak{}(a\_\allowbreak{}total+b\_\allowbreak{}total)} \\
+\texttt{a\_\allowbreak{}w}, \texttt{b\_\allowbreak{}w}, \texttt{bb\_\allowbreak{}w} & Same & Pure-seawater components \\
+\texttt{a\_\allowbreak{}chl} & Same & Phytoplankton absorption component alone; not chlorophyll concentration itself \\
+\texttt{a\_\allowbreak{}phyto\_\allowbreak{}detritus}, \texttt{b\_\allowbreak{}phyto\_\allowbreak{}detritus}, \texttt{bb\_\allowbreak{}phyto\_\allowbreak{}detritus} & \texttt{a\_\allowbreak{}pig}, \texttt{b\_\allowbreak{}pig}, \texttt{bb\_\allowbreak{}pig} & Phytoplankton and organic detrital particle components used in the code \\
+\texttt{a\_\allowbreak{}dom} & Same & Dissolved-organic-matter absorption component \\
+\texttt{a\_\allowbreak{}min}, \texttt{b\_\allowbreak{}min}, \texttt{bb\_\allowbreak{}min} & Same & Mineral-particle components \\
+\end{longtable}
+}
+
+\texttt{a\_\allowbreak{}chl} is the phytoplankton-absorption portion of \texttt{a\_\allowbreak{}phyto\_\allowbreak{}detritus}; do not add both again as independent components when summing total absorption. Component pathways differ between models, so validate against the reported totals rather than reconstructed sums.
+
+\section{Specified-geometry batch CSV}
+\label{sec:auto:05_output_formats:8}
+The current basic header is:
+
+
+\begin{ManualCode}
+case_id,sza_deg,vza_deg,raa_deg,wavelength_nm,rho_I_v2,rho_Q_v2,rho_U_v2
+\end{ManualCode}
+
+For the nine-column aerosol input layout, \texttt{aod\_\allowbreak{}ref} is inserted after \texttt{wavelength\_\allowbreak{}nm}. This is AOD at the reference wavelength, not at the execution wavelength. Retain the input header and command to record whether the reference wavelength is 555 or 865. \texttt{\_\allowbreak{}v2} is a column-name suffix retained for compatibility with existing files; it is not a separate physical definition or executable version number.
+
+With \texttt{-\allowbreak{}-\allowbreak{}output-\allowbreak{}advanced}, the following columns follow the coordinates:
+
+
+\begin{ManualCode}
+rho_I_v2,rho_I_ref,delta_abs,delta_rel_pct,delta_rel_abs_pct,tau_R_v2,tau_R_ref,n_orders_m0,n_orders_m1,n_orders_m2,walltime_ms
+\end{ManualCode}
+
+If reference Q/U values are absent, \texttt{rho\_\allowbreak{}Q\_\allowbreak{}v2,\allowbreak{}rho\_\allowbreak{}U\_\allowbreak{}v2} are appended. If both reference Q and U are present, the following columns are appended instead:
+
+
+\begin{ManualCode}
+rho_Q_v2,rho_Q_ref,delta_abs_Q,delta_rel_pct_Q,delta_rel_abs_pct_Q,rho_U_v2,rho_U_ref,delta_abs_U,delta_rel_pct_U,delta_rel_abs_pct_U
+\end{ManualCode}
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3400\linewidth-4.00pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.6600\linewidth-4.00pt\relax}@{}}
+\toprule
+\textbf{Column} & \textbf{Definition and caution} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Column} & \textbf{Definition and caution} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{case\_\allowbreak{}id} & Input integer identifier; also used in per-row grid filenames \\
+\texttt{rho\_\allowbreak{}I\_\allowbreak{}v2}, \texttt{rho\_\allowbreak{}Q\_\allowbreak{}v2}, \texttt{rho\_\allowbreak{}U\_\allowbreak{}v2} & Calculated TOA reflectance \\
+\texttt{rho\_\allowbreak{}I\_\allowbreak{}ref}, \texttt{rho\_\allowbreak{}Q\_\allowbreak{}ref}, \texttt{rho\_\allowbreak{}U\_\allowbreak{}ref} & Input reference reflectance \\
+\texttt{delta\_\allowbreak{}abs} & \texttt{rho\_\allowbreak{}I\_\allowbreak{}v2-rho\_\allowbreak{}I\_\allowbreak{}ref}; despite abs in its name, this is a \textbf{signed difference} \\
+\texttt{delta\_\allowbreak{}rel\_\allowbreak{}pct} & \texttt{100*(rho\_\allowbreak{}I\_\allowbreak{}v2-rho\_\allowbreak{}I\_\allowbreak{}ref)/\allowbreak{}rho\_\allowbreak{}I\_\allowbreak{}ref} \\
+\texttt{delta\_\allowbreak{}rel\_\allowbreak{}abs\_\allowbreak{}pct} & \texttt{abs(delta\_\allowbreak{}rel\_\allowbreak{}pct)} \\
+\texttt{delta\_\allowbreak{}abs\_\allowbreak{}Q}, \texttt{delta\_\allowbreak{}abs\_\allowbreak{}U} & Calculated Q/U minus reference Q/U, respectively; signed differences \\
+\texttt{delta\_\allowbreak{}rel\_\allowbreak{}pct\_\allowbreak{}Q}, \texttt{delta\_\allowbreak{}rel\_\allowbreak{}pct\_\allowbreak{}U} & \texttt{100*delta\_\allowbreak{}Q\_\allowbreak{}or\_\allowbreak{}U/\allowbreak{}abs(rho\_\allowbreak{}I\_\allowbreak{}ref)}; the denominator is \textbf{the absolute value of reference I}, not the Q/U reference \\
+\texttt{delta\_\allowbreak{}rel\_\allowbreak{}abs\_\allowbreak{}pct\_\allowbreak{}Q}, \texttt{delta\_\allowbreak{}rel\_\allowbreak{}abs\_\allowbreak{}pct\_\allowbreak{}U} & Absolute values of the percentage differences above \\
+\texttt{tau\_\allowbreak{}R\_\allowbreak{}v2}, \texttt{tau\_\allowbreak{}R\_\allowbreak{}ref} & Calculated and input Rayleigh optical depths \\
+\texttt{n\_\allowbreak{}orders\_\allowbreak{}m0}, \texttt{n\_\allowbreak{}orders\_\allowbreak{}m1}, \texttt{n\_\allowbreak{}orders\_\allowbreak{}m2} & SOS orders recorded only for Fourier modes 0/1/2; do not represent the maximum order of higher modes \\
+\texttt{walltime\_\allowbreak{}ms} & Elapsed time for the row calculation and associated processing, in milliseconds; the simple sum does not equal total parallel-batch time \\
+\end{longtable}
+}
+
+If reference I is absent, reference and error columns are empty. If reference I is 0, this batch writer records relative error as 0. Do not interpret this as “no error”; reclassify it as undefined relative error. Failed-row return codes have no separate CSV column, so also check the process exit code, stderr, and finiteness of the values.
+
+This \texttt{-\allowbreak{}-\allowbreak{}batch} is the atmospheric specified-geometry path in \texttt{rt\_\allowbreak{}io\_\allowbreak{}run\_\allowbreak{}batch()}. Do not use it as a general batch interface for ocean constituents or IOPs. In current \texttt{main.\allowbreak{}c}, this path returns before gas-absorption initialization, so gas options are not actually applied. Case-template copying is also limited: this is not a path that passes every CLI setting, such as continuous atmospheric-pressure values, to each row. For scientific LUTs varying gas and pressure, repeat single-case grid runs. For ocean work, use \texttt{-\allowbreak{}-\allowbreak{}batch-\allowbreak{}full-\allowbreak{}grid} or repeated single-geometry runs.
+
+When \texttt{case\_\allowbreak{}<id>.\allowbreak{}csv} files are also written, their contents use the non-ocean 13-column format in Section~\ref{sec:auto:05_output_formats:6}. Repeated \texttt{case\_\allowbreak{}id} values produce the same filename, so make input identifiers unique. Failure to open a per-row LUT file may not be fully reflected in the summary success status; also check file counts and row counts.
+
+\section{CCRR comparison CSV}
+\label{sec:auto:05_output_formats:9}
+This format is intended for reference comparisons rather than general production simulations. The header consists of the following groups; names within each group are the actual column names.
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3400\linewidth-4.00pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.6600\linewidth-4.00pt\relax}@{}}
+\toprule
+\textbf{Column group} & \textbf{Definition} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Column group} & \textbf{Definition} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{case\_\allowbreak{}id,\allowbreak{}wavelength\_\allowbreak{}nm,\allowbreak{}chl\_\allowbreak{}mg\_\allowbreak{}m3,\allowbreak{}min\_\allowbreak{}g\_\allowbreak{}m3,\allowbreak{}adom\_\allowbreak{}440\_\allowbreak{}m-\allowbreak{}1,\allowbreak{}adom\_\allowbreak{}s\_\allowbreak{}nm-\allowbreak{}1} & Input case ID, wavelength, Chl (mg m\textsuperscript{-}\textsuperscript{3}), mineral concentration (g m\textsuperscript{-}\textsuperscript{3}), organic-matter absorption at 440 nm (m\textsuperscript{-}\textsuperscript{1}), and spectral slope (nm\textsuperscript{-}\textsuperscript{1}) \\
+\texttt{sza\_\allowbreak{}air\_\allowbreak{}deg,\allowbreak{}vza\_\allowbreak{}air\_\allowbreak{}deg,\allowbreak{}raa\_\allowbreak{}ccrr\_\allowbreak{}deg,\allowbreak{}raa\_\allowbreak{}ocrt\_\allowbreak{}deg,\allowbreak{}raa\_\allowbreak{}mapping} & Geometry in air and RAA before/after conversion; mapping string is \texttt{180-\allowbreak{}minus-\allowbreak{}ccrr} \\
+\texttt{wind\_\allowbreak{}speed\_\allowbreak{}ms,\allowbreak{}sunglint\_\allowbreak{}decoupled} & Wind speed 0 and glint separation 1, fixed by the comparison path \\
+\texttt{OCRT\_\allowbreak{}Ed0minus,\allowbreak{}OCRT\_\allowbreak{}Lu0minus,\allowbreak{}OCRT\_\allowbreak{}rrs,\allowbreak{}OCRT\_\allowbreak{}Ed0plus,\allowbreak{}OCRT\_\allowbreak{}Lu0plus\_\allowbreak{}no\_\allowbreak{}sky,\allowbreak{}OCRT\_\allowbreak{}Rrs} & Calculated irradiance, radiance, and reflectance \\
+\texttt{OCRT\_\allowbreak{}a\_\allowbreak{}total,\allowbreak{}OCRT\_\allowbreak{}b\_\allowbreak{}total,\allowbreak{}OCRT\_\allowbreak{}bb\_\allowbreak{}total} & Calculated total IOPs \\
+\texttt{OCRT\_\allowbreak{}a\_\allowbreak{}w,\allowbreak{}OCRT\_\allowbreak{}b\_\allowbreak{}w,\allowbreak{}OCRT\_\allowbreak{}bb\_\allowbreak{}w,\allowbreak{}OCRT\_\allowbreak{}a\_\allowbreak{}dom,\allowbreak{}OCRT\_\allowbreak{}a\_\allowbreak{}pig,\allowbreak{}OCRT\_\allowbreak{}b\_\allowbreak{}pig,\allowbreak{}OCRT\_\allowbreak{}bb\_\allowbreak{}pig,\allowbreak{}OCRT\_\allowbreak{}a\_\allowbreak{}min,\allowbreak{}OCRT\_\allowbreak{}b\_\allowbreak{}min,\allowbreak{}OCRT\_\allowbreak{}bb\_\allowbreak{}min} & Calculated component IOPs; same meanings as in Section~\ref{sec:auto:05_output_formats:7} \\
+\texttt{OCRT\_\allowbreak{}orders,\allowbreak{}OCRT\_\allowbreak{}conv} & Underwater order and convergence flag \\
+\texttt{ref\_\allowbreak{}Ed0minus,\allowbreak{}ref\_\allowbreak{}Lu0minus,\allowbreak{}ref\_\allowbreak{}rrs,\allowbreak{}ref\_\allowbreak{}Ed0plus,\allowbreak{}ref\_\allowbreak{}Lu0plus\_\allowbreak{}no\_\allowbreak{}sky,\allowbreak{}ref\_\allowbreak{}Rrs,\allowbreak{}ref\_\allowbreak{}a\_\allowbreak{}total,\allowbreak{}ref\_\allowbreak{}b\_\allowbreak{}total,\allowbreak{}ref\_\allowbreak{}bb\_\allowbreak{}total} & Corresponding reference values from the input file \\
+\texttt{rel\_\allowbreak{}Ed0minus\_\allowbreak{}pct,\allowbreak{}rel\_\allowbreak{}Lu0minus\_\allowbreak{}pct,\allowbreak{}rel\_\allowbreak{}rrs\_\allowbreak{}pct,\allowbreak{}rel\_\allowbreak{}Ed0plus\_\allowbreak{}pct,\allowbreak{}rel\_\allowbreak{}Lu0plus\_\allowbreak{}no\_\allowbreak{}sky\_\allowbreak{}pct,\allowbreak{}rel\_\allowbreak{}Rrs\_\allowbreak{}pct,\allowbreak{}rel\_\allowbreak{}a\_\allowbreak{}total\_\allowbreak{}pct,\allowbreak{}rel\_\allowbreak{}b\_\allowbreak{}total\_\allowbreak{}pct,\allowbreak{}rel\_\allowbreak{}bb\_\allowbreak{}total\_\allowbreak{}pct} & \texttt{100*(OCRT/\allowbreak{}ref-1)} for each quantity; \texttt{nan} if the reference is missing, 0, or nonfinite \\
+\end{longtable}
+}
+
+\texttt{OCRT\_\allowbreak{}Lu0plus\_\allowbreak{}no\_\allowbreak{}sky} actually records \texttt{res.\allowbreak{}Lu\_\allowbreak{}0plus\_\allowbreak{}view}. Do not infer from the column name alone that it also excludes the contribution created by atmospheric downward diffuse light entering the water. Match the reference definition of \texttt{no\_\allowbreak{}sky}: it may mean exclusion of surface-reflected skylight, or it may additionally exclude diffuse light incident into the water.
+
+This comparison path fixes \texttt{F\_\allowbreak{}sun=\allowbreak{}1}. Check that reference \texttt{Lu/\allowbreak{}Ed} values use the same incident-flux normalization. This path also runs before general gas-absorption initialization; do not treat it as a general-purpose validation batch that includes gas options.
+
+\section{Minimum metadata for saved datasets}
+\label{sec:auto:05_output_formats:10}
+The basic CSV alone cannot reconstruct all execution conditions. Retain the following with LUTs and simulated training data:
+
+\begin{itemize}
+\item Git commit and executable identifier, execution command, and environment variables used.
+\item RAA definition and SAA/VAA conversion formulas, whether 0--360\textdegree{} is preserved, the Stokes reference plane, and U-sign handling.
+\item Surface mode, glint separation, water model, and all constituent/IOP inputs.
+\item Wavelength, atmospheric pressure, AOD reference wavelength and value, aerosol \texttt{.\allowbreak{}mie}, gas-absorption conditions, water temperature, salinity, and wind speed.
+\item Optical LUT and phase-function files used, numerical settings, exit code, and error logs.
+\item For raw \texttt{Lu/\allowbreak{}Ed}, the internal \texttt{F\_\allowbreak{}sun} scale and whether conversion to actual incident light was applied.
+\end{itemize}
+
+For each sample, you can check \texttt{Rrs=\allowbreak{}Lu0plus\_\allowbreak{}I/\allowbreak{}Ed0plus\_\allowbreak{}air}, \texttt{rrs=\allowbreak{}Lu0minus\_\allowbreak{}I/\allowbreak{}Ed0minus\_\allowbreak{}water}, \texttt{T\_\allowbreak{}total\_\allowbreak{}dn\_\allowbreak{}hemi=\allowbreak{}T\_\allowbreak{}dir\_\allowbreak{}dn+T\_\allowbreak{}diff\_\allowbreak{}dn\_\allowbreak{}hemi}, and each direct+diffuse irradiance sum. These internal-consistency checks do not validate the RAA convention or accuracy against an external reference.
+
+\subsection{Implementation references}
+\label{sec:auto:05_output_formats:10.1}
+\begin{itemize}
+\item \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_C/src/rt_io.c}{Single-geometry and batch writers}: \texttt{rt\_\allowbreak{}io\_\allowbreak{}print\_\allowbreak{}single()}, \texttt{rt\_\allowbreak{}io\_\allowbreak{}run\_\allowbreak{}batch()}.
+\item \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_C/src/main.c}{Angular-grid and CCRR CSV writers}: \texttt{run\_\allowbreak{}ocean\_\allowbreak{}rrs\_\allowbreak{}full\_\allowbreak{}grid\_\allowbreak{}csv()}, \texttt{run\_\allowbreak{}ccrr\_\allowbreak{}compare\_\allowbreak{}csv()}, and the final non-ocean LUT output path.
+\item \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_C/src/rt_types.h}{Result-field definitions}: \texttt{rt\_\allowbreak{}result\_\allowbreak{}t}.
+\item \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_C/src/rt_solver.c}{Actual ocean-component, transfer, and normalization calculations}.
+\item \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_C/src/rt_water_rt.c}{Underwater Kd/Ku finite differences}.
+\end{itemize}
+

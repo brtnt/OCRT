@@ -1,0 +1,101 @@
+% Authoritative LaTeX quick start. Keep commands aligned with the Korean edition.
+\chapter*{Quick start}
+\addcontentsline{toc}{chapter}{Quick start}
+\label{chap:quick_start}
+\markboth{Quick start}{}
+\begingroup
+\setlength{\parskip}{3pt}
+\textbf{Goal: calculate one viewing direction with the C executable, then create a 12-row Rayleigh LUT.}
+These examples use no aerosols or underwater particles, so you can start without downloading the large Mie datasets. Choose the preparation commands for your operating system, then continue in the same terminal. If already built, change to the execution directory and start at Step 2. See \hyperref[chap:02_installation]{Chapter~\ref*{chap:02_installation}} for detailed installation instructions.
+
+\section*{1. Prepare to run}
+\textbf{Linux / Ubuntu WSL:} GCC 11 or later, Make, and Git are required. If these tools are missing on Ubuntu, first run \texttt{sudo apt-get update} and \texttt{sudo apt-get install build-essential git}. The build below targets x86-64 AVX2 CPUs. For older x86-64 CPUs, replace \texttt{-march=x86-64-v3} with \texttt{-march=x86-64}. Skip \texttt{git clone} if you have already cloned the repository.
+
+\begin{ManualCode}
+git clone https://github.com/brtnt/OCRT.git
+cd OCRT/code/OCRT_C
+BUILD_FLAGS='-std=c11 -O3 -march=x86-64-v3 -ffp-contract=fast'
+BUILD_FLAGS+=' -fassociative-math -fno-signed-zeros -fno-trapping-math'
+BUILD_FLAGS+=' -DOCRT_FAST_KERNELS -fopenmp -Isrc'
+make CFLAGS="$BUILD_FLAGS"
+./build/ocrt --version
+export OMP_NUM_THREADS=1
+GAS_OFF=(--gas-column-h2o 0 --gas-column-o3 0 --gas-column-no2 0
+         --gas-column-o2 0 --gas-column-co2 0 --gas-column-ch4 0)
+mkdir -p ../../task/quick_start
+\end{ManualCode}
+
+\textbf{Windows PowerShell:} Assumes Git and MSYS2 UCRT64 GCC are installed. If GCC is missing, first run \texttt{pacman -S mingw-w64-ucrt-x86\_64-gcc} in the UCRT64 terminal. The PATH below assumes the default MSYS2 installation location. The execution checks for this manual were performed on Linux/WSL.
+
+\begin{ManualCode}
+git clone https://github.com/brtnt/OCRT.git
+Set-Location OCRT\code\OCRT_C
+$env:Path = 'C:\msys64\ucrt64\bin;' + $env:Path
+.\build_win.bat
+.\build\ocrt_x86-64-v3.exe --version
+$env:OMP_NUM_THREADS = '1'
+$gasOff = @('--gas-column-h2o','0','--gas-column-o3','0',
+  '--gas-column-no2','0','--gas-column-o2','0',
+  '--gas-column-co2','0','--gas-column-ch4','0')
+New-Item -ItemType Directory -Force ..\..\task\quick_start | Out-Null
+\end{ManualCode}
+
+\textbf{Ready when:} The build finishes without errors and \texttt{--version} prints a version. The version string may retain older wording, so also record the commit to identify the source version. Keep the working directory at \texttt{code/OCRT\_C}; \texttt{inputs/} is resolved relative to this directory.
+
+\textbf{Reading guide:} In OCRT, \textbf{RAA=180 degrees is the sunglint branch}. See \hyperref[chap:01_concepts_geometry]{Chapter~\ref*{chap:01_concepts_geometry}} for satellite-azimuth conversion. This small grid checks operation; it is not a grid validated for production accuracy. Continue to \hyperref[chap:04_examples]{Appendix~\ref*{chap:04_examples}} for LUTs across wavelengths, pressures, and wind speeds, and for ocean simulations; see \hyperref[chap:05_output_formats]{Chapter~\ref*{chap:05_output_formats}} for output units and column definitions. Running again with the same filenames updates the example results, so save results you wish to retain in a new directory.
+
+\clearpage
+\section*{2. Calculate one direction}
+Calculate molecular scattering at 555 nm, SZA 40 degrees, VZA 30 degrees, RAA 90 degrees, and pressure 1013.25 hPa. Gas absorption is disabled. The black boundary excludes sea-surface reflection.
+
+\textbf{Linux / WSL:}
+\begin{ManualCode}
+./build/ocrt --surface black --sza 40 --vza 30 --raa 90 \
+  --wavelength 555 --pressure 1013.25 "${GAS_OFF[@]}" \
+  > ../../task/quick_start/single.txt 2> ../../task/quick_start/single.log
+echo "exit=$?"
+head -n 5 ../../task/quick_start/single.txt
+\end{ManualCode}
+
+\textbf{Windows PowerShell:}
+\begin{ManualCode}
+& .\build\ocrt_x86-64-v3.exe --surface black --sza 40 --vza 30 --raa 90 `
+  --wavelength 555 --pressure 1013.25 @gasOff `
+  > ..\..\task\quick_start\single.txt 2> ..\..\task\quick_start\single.log
+if ($LASTEXITCODE -ne 0) { throw 'OCRT failed; inspect single.log' }
+Get-Content ..\..\task\quick_start\single.txt -TotalCount 5
+\end{ManualCode}
+
+\textbf{Check the run:} The exit code must be 0 and \texttt{single.txt} must be nonempty. The first three values are I/Q/U, followed by \texttt{key=value} results. The verified Linux/WSL run produced I/Q/U of approximately \texttt{0.03925161}, \texttt{0.00667091}, and \texttt{-0.01252474}; the last digits may vary with the CPU and build. If I/Q/U are NaN/Inf or the process exits with an error, inspect \texttt{single.log}. In this atmosphere-only example, additional water diagnostics may be NaN with a validity flag of 0. Diagnostic messages on standard error do not by themselves indicate failure.
+
+\section*{3. Create a small Rayleigh LUT}
+Include a rough Fresnel sea surface and exclude the direct-sunglint term. \textbf{Do not add the single-direction options \texttt{--vza} or \texttt{--raa} to this command.}
+
+\textbf{Linux / WSL:}
+\begin{ManualCode}
+./build/ocrt --surface black_fresnel_ocean --wind-speed 5 \
+  --sza 40 --wavelength 555 --pressure 1013.25 \
+  --decouple-sunglint "${GAS_OFF[@]}" \
+  --lut-vza-step 30 --lut-vza-max 60 --lut-raa-step 90 \
+  --output-full-grid ../../task/quick_start/rayleigh.csv \
+  2> ../../task/quick_start/rayleigh.log
+echo "exit=$?"
+wc -l ../../task/quick_start/rayleigh.csv
+head -n 2 ../../task/quick_start/rayleigh.csv
+\end{ManualCode}
+
+\textbf{Windows PowerShell:}
+\begin{ManualCode}
+& .\build\ocrt_x86-64-v3.exe --surface black_fresnel_ocean --wind-speed 5 `
+  --sza 40 --wavelength 555 --pressure 1013.25 --decouple-sunglint @gasOff `
+  --lut-vza-step 30 --lut-vza-max 60 --lut-raa-step 90 `
+  --output-full-grid ..\..\task\quick_start\rayleigh.csv `
+  2> ..\..\task\quick_start\rayleigh.log
+if ($LASTEXITCODE -ne 0) { throw 'OCRT failed; inspect rayleigh.log' }
+(Import-Csv ..\..\task\quick_start\rayleigh.csv | Measure-Object).Count
+Get-Content ..\..\task\quick_start\rayleigh.csv -TotalCount 2
+\end{ManualCode}
+
+\textbf{Check the run:} Combining VZA 0/30/60 degrees with RAA 0/90/180/270 degrees produces \textbf{12 data rows and 13 columns}. Bash \texttt{wc -l} should report 13 including the header; the PowerShell data-row count should be 12. Check \texttt{rho\_I}, \texttt{rho\_Q}, and \texttt{rho\_U}. Q/U can be negative.
+
+\endgroup

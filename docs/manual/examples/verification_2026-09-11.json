@@ -1,0 +1,780 @@
+{
+  "source_commit": "54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d",
+  "verification_date": "2026-09-11",
+  "environment": "Ubuntu/WSL, GCC build documented in the manual, OMP_NUM_THREADS=1",
+  "exe_sha256": "2ca3183cd36694a988e08b4303d84036eeae9331084b55d0ddc3923487e6397a",
+  "catalog_sha256": "a59a237b4f32b35a4e9d2ab214f6fef9ff5e8e6a23c9b25003d92253834de70c",
+  "recipes": 40,
+  "C_invocations": 49,
+  "passed_basic_checks": 49,
+  "commands": [
+    {
+      "id": "R01",
+      "recipe_id": "R01",
+      "returncode": 0,
+      "basic_checks": "passed",
+      "elapsed_seconds": 0.174,
+      "args_sha256": "371f3fec65389bcb9dce0a8e2842d7c2fc940f47d7ea75dbca37c2b0bd782dfe",
+      "observables": {
+        "TOA_rho_I": 0.039251609571,
+        "TOA_rho_Q": 0.0066709086582,
+        "TOA_rho_U": -0.012524744881
+      },
+      "conv": 1
+    },
+    {
+      "id": "R02",
+      "recipe_id": "R02",
+      "returncode": 0,
+      "basic_checks": "passed",
+      "elapsed_seconds": 0.174,
+      "args_sha256": "bf79752bb85723830b77390961ae53613fb9dc2ddcc8424ff08e2e8d728ecffb",
+      "observables": {
+        "TOA_rho_I": 0.039251609571,
+        "TOA_rho_Q": 0.0066709086582,
+        "TOA_rho_U": 0.012524744881
+      },
+      "conv": 1
+    },
+    {
+      "id": "R03",
+      "recipe_id": "R03",
+      "returncode": 0,
+      "basic_checks": "passed",
+      "elapsed_seconds": 0.172,
+      "args_sha256": "4080b72b72158810aa5f010579d278877ebcb9ba2a11ddac353299a37b420c88",
+      "observables": {
+        "TOA_rho_I": 0.052626625913,
+        "TOA_rho_Q": -0.00018022778907,
+        "TOA_rho_U": -6.1129680937e-19
+      },
+      "conv": 1
+    },
+    {
+      "id": "R04",
+      "recipe_id": "R04",
+      "returncode": 0,
+      "basic_checks": "passed",
+      "elapsed_seconds": 0.174,
+      "args_sha256": "8e79d31813c018ba1438f6543c40a37ca7abbdc6c387a4bd797dcbeed9265d30",
+      "observables": {
+        "TOA_rho_I": 0.030933131427,
+        "TOA_rho_Q": -0.021873722275,
+        "TOA_rho_U": -7.3579491103e-18
+      },
+      "conv": 1
+    },
+    {
+      "id": "R05",
+      "recipe_id": "R05",
+      "returncode": 0,
+      "basic_checks": "passed",
+      "elapsed_seconds": 0.176,
+      "args_sha256": "9eeb90912e7c2478af10c164ea5a6aefeaaddf92e413ad4b06b3e7ea6596c307",
+      "observables": {
+        "TOA_rho_I": 0.037233030781,
+        "TOA_rho_Q": 0.0088195033337,
+        "TOA_rho_U": 3.2402329583e-18
+      },
+      "conv": 1
+    },
+    {
+      "id": "R06",
+      "recipe_id": "R06",
+      "returncode": 0,
+      "basic_checks": "passed",
+      "elapsed_seconds": 0.175,
+      "args_sha256": "8e63e5a092d158fec27790066798176f33d6b07d30e43ae189c3ef5a20787400",
+      "observables": {
+        "TOA_rho_I": 0.053977974211,
+        "TOA_rho_Q": -0.00035644038117,
+        "TOA_rho_U": -0.036178910723
+      },
+      "conv": 1
+    },
+    {
+      "id": "R07",
+      "recipe_id": "R07",
+      "returncode": 0,
+      "basic_checks": "passed",
+      "elapsed_seconds": 0.278,
+      "args_sha256": "962d9b7fef1548ec78144c830bcfd0ede560eecb2c30f49174c6fc72a876f2de",
+      "observables": {
+        "TOA_rho_I": 0.041798373685,
+        "TOA_rho_Q": 0.007205165675,
+        "TOA_rho_U": -0.012404692357
+      },
+      "conv": 1
+    },
+    {
+      "id": "R08",
+      "recipe_id": "R08",
+      "returncode": 0,
+      "basic_checks": "passed",
+      "elapsed_seconds": 0.173,
+      "args_sha256": "76a8ff1c603487f1d3144c1d79411987295f9f147eece8fde77eb146013b1f9f",
+      "observables": {
+        "TOA_rho_I": 0.042073341266,
+        "TOA_rho_Q": 0.0071811842202,
+        "TOA_rho_U": -0.012451856413
+      },
+      "conv": 1
+    },
+    {
+      "id": "R09",
+      "recipe_id": "R09",
+      "returncode": 0,
+      "basic_checks": "passed",
+      "elapsed_seconds": 0.223,
+      "args_sha256": "8a7fef37aede39c32118d728bb040f49ce5ec3ac0487a75686fe228ad995f3bf",
+      "observables": {
+        "TOA_rho_I": 0.041970656527,
+        "TOA_rho_Q": 0.0072645657567,
+        "TOA_rho_U": -0.012456546529
+      },
+      "conv": 1
+    },
+    {
+      "id": "R10",
+      "recipe_id": "R10",
+      "returncode": 0,
+      "basic_checks": "passed",
+      "elapsed_seconds": 0.273,
+      "args_sha256": "36d3830bbebbf01f812a047f42f94498c7aea5118eca66e5cee855802e1b23ce",
+      "observables": {
+        "TOA_rho_I": 0.33164045249,
+        "TOA_rho_Q": -0.25347560753,
+        "TOA_rho_U": -9.2055015024e-18
+      },
+      "conv": 1
+    },
+    {
+      "id": "R11",
+      "recipe_id": "R11",
+      "returncode": 0,
+      "basic_checks": "passed",
+      "elapsed_seconds": 0.272,
+      "args_sha256": "b76f6fe3e62056da8fa15456d77dc0850777cb6b5c153211508698770f17fb02",
+      "observables": {
+        "TOA_rho_I": 0.036147025616,
+        "TOA_rho_Q": -0.029502310349,
+        "TOA_rho_U": -9.2055015024e-18
+      },
+      "conv": 1
+    },
+    {
+      "id": "R12",
+      "recipe_id": "R12",
+      "returncode": 0,
+      "basic_checks": "passed",
+      "elapsed_seconds": 0.324,
+      "args_sha256": "ca9b190b36128ae59449f6062e05aafd2c83b0fbbcc704eb4f799bae7b7d9e26",
+      "observables": {
+        "TOA_rho_I": 0.037074219287,
+        "TOA_rho_Q": 0.0064296157093,
+        "TOA_rho_U": -0.011034886703
+      },
+      "conv": 1
+    },
+    {
+      "id": "R13",
+      "recipe_id": "R13",
+      "returncode": 0,
+      "basic_checks": "passed",
+      "elapsed_seconds": 0.223,
+      "args_sha256": "0e8a569deb151702878ae179090154f225d4954d8788e4a0ba8f537b49352d99",
+      "observables": {
+        "TOA_rho_I": 0.10444808037,
+        "TOA_rho_Q": 0.016866246129,
+        "TOA_rho_U": -0.029858755032
+      },
+      "conv": 1
+    },
+    {
+      "id": "R14",
+      "recipe_id": "R14",
+      "returncode": 0,
+      "basic_checks": "passed",
+      "elapsed_seconds": 0.225,
+      "args_sha256": "3b76e0964d3a4d3c5bc492a1d687aa97bea15eb6159e9e6e297751fb53a370d0",
+      "observables": {
+        "TOA_rho_I": 0.22044909107,
+        "TOA_rho_Q": 0.16298942418,
+        "TOA_rho_U": -0.078009811712
+      },
+      "conv": 1
+    },
+    {
+      "id": "R15",
+      "recipe_id": "R15",
+      "returncode": 0,
+      "basic_checks": "passed",
+      "elapsed_seconds": 0.276,
+      "args_sha256": "2f8856054040c20bd0179576b4902bc25dcc54d5e372f03ff4fd3766cc2ae5c3",
+      "observables": {
+        "TOA_rho_I": 0.21912709743,
+        "TOA_rho_Q": 0.16201200585,
+        "TOA_rho_U": -0.077542000872
+      },
+      "conv": 1
+    },
+    {
+      "id": "R16",
+      "recipe_id": "R16",
+      "returncode": 0,
+      "basic_checks": "passed",
+      "elapsed_seconds": 0.274,
+      "args_sha256": "402e48552ede605a44e72dc86e8dea0421dc11f78c83445d7e2ad468ba0cf1ea",
+      "observables": {
+        "TOA_rho_I": 0.040862292589,
+        "TOA_rho_Q": 0.0070454514073,
+        "TOA_rho_U": -0.012142007534
+      },
+      "conv": 1
+    },
+    {
+      "id": "R17",
+      "recipe_id": "R17",
+      "returncode": 0,
+      "basic_checks": "passed",
+      "elapsed_seconds": 0.273,
+      "args_sha256": "b4f7cd1fbdac7b911189adbea1c9a60f79718181653761ef06373b136351a7d7",
+      "observables": {
+        "TOA_rho_I": 0.040898535225,
+        "TOA_rho_Q": 0.0070517327251,
+        "TOA_rho_U": -0.012150176336
+      },
+      "conv": 1
+    },
+    {
+      "id": "R18_dry",
+      "recipe_id": "R18",
+      "returncode": 0,
+      "basic_checks": "passed",
+      "elapsed_seconds": 0.274,
+      "args_sha256": "cd4de7febcf38ed54c966f915e5720f5bea8ab9ae9dd8c71b5b439330a445755",
+      "observables": {
+        "TOA_rho_I": 0.0047939507604,
+        "TOA_rho_Q": 0.0008768708162,
+        "TOA_rho_U": -0.0014591433517
+      },
+      "conv": 1
+    },
+    {
+      "id": "R18_wet",
+      "recipe_id": "R18",
+      "returncode": 0,
+      "basic_checks": "passed",
+      "elapsed_seconds": 0.272,
+      "args_sha256": "e3302da9424920e073c52c8afccee668f0e387372cb6953f899bf3eb8783f9b6",
+      "observables": {
+        "TOA_rho_I": 0.0030296384695,
+        "TOA_rho_Q": 0.00053739488373,
+        "TOA_rho_U": -0.00099265879737
+      },
+      "conv": 1
+    },
+    {
+      "id": "R19_off",
+      "recipe_id": "R19",
+      "returncode": 0,
+      "basic_checks": "passed",
+      "elapsed_seconds": 0.223,
+      "args_sha256": "817119975d751ef707e74b96b520f6a4ce8f8220188eef772acc679dbd01c72c",
+      "observables": {
+        "TOA_rho_I": 0.011423037428,
+        "TOA_rho_Q": 0.0020613338838,
+        "TOA_rho_U": -0.0034589881995
+      },
+      "conv": 1
+    },
+    {
+      "id": "R19_on",
+      "recipe_id": "R19",
+      "returncode": 0,
+      "basic_checks": "passed",
+      "elapsed_seconds": 0.225,
+      "args_sha256": "2c247f5911b037868ed655ad2ce2a31961a048f21a2868f41644df9de7aed98b",
+      "observables": {
+        "TOA_rho_I": 0.054052674204,
+        "TOA_rho_Q": 0.009181881201,
+        "TOA_rho_U": -0.017199639097
+      },
+      "conv": 1
+    },
+    {
+      "id": "R20_std",
+      "recipe_id": "R20",
+      "returncode": 0,
+      "basic_checks": "passed",
+      "elapsed_seconds": 0.226,
+      "args_sha256": "47c87d60b79552d7f9b19625814c15d2590af0a5df75f67cf771ef7ab7dadf28",
+      "observables": {
+        "TOA_rho_I": 0.055543518432,
+        "TOA_rho_Q": 0.009426781167,
+        "TOA_rho_U": -0.017660471077
+      },
+      "conv": 1
+    },
+    {
+      "id": "R20_tropical",
+      "recipe_id": "R20",
+      "returncode": 0,
+      "basic_checks": "passed",
+      "elapsed_seconds": 0.224,
+      "args_sha256": "d43b76234175b747cf344f2e8877333fa1f75f1a17f5c786123f54fa1e994568",
+      "observables": {
+        "TOA_rho_I": 0.054887209922,
+        "TOA_rho_Q": 0.0093189584651,
+        "TOA_rho_U": -0.017457657028
+      },
+      "conv": 1
+    },
+    {
+      "id": "R21",
+      "recipe_id": "R21",
+      "returncode": 0,
+      "basic_checks": "passed",
+      "elapsed_seconds": 1.53,
+      "args_sha256": "299d4f2452cdeb83a2ecf2cce0fc59247bc57954dfe85964528c7166db472b38",
+      "observables": {
+        "TOA_rho_I": 0.11181793889,
+        "TOA_rho_Q": 0.017020352012,
+        "TOA_rho_U": -0.030190479339
+      },
+      "conv": 1
+    },
+    {
+      "id": "R22",
+      "recipe_id": "R22",
+      "returncode": 0,
+      "basic_checks": "passed",
+      "elapsed_seconds": 1.582,
+      "args_sha256": "6af9d9d7e84237038f079ee3c0550a7ce7ec63a8dc889002843706811dc24ecb",
+      "observables": {
+        "TOA_rho_I": 0.11233348099,
+        "TOA_rho_Q": 0.017027269566,
+        "TOA_rho_U": -0.030211976806
+      },
+      "conv": 1
+    },
+    {
+      "id": "R23",
+      "recipe_id": "R23",
+      "returncode": 0,
+      "basic_checks": "passed",
+      "elapsed_seconds": 1.528,
+      "args_sha256": "d10a9377ef9678b4f46c25817417026af5413ddbde1afd868a4da1f0cade75f3",
+      "observables": {
+        "TOA_rho_I": 0.1136203159,
+        "TOA_rho_Q": 0.016635303054,
+        "TOA_rho_U": -0.029586548984
+      },
+      "conv": 1
+    },
+    {
+      "id": "R24_ref",
+      "recipe_id": "R24",
+      "returncode": 0,
+      "basic_checks": "passed",
+      "elapsed_seconds": 1.527,
+      "args_sha256": "f6f100ea67b71c58d65f545dc2ae4e15fb46d70ff3226abf82e8ba5d8ffcdffe",
+      "observables": {
+        "TOA_rho_I": 0.11181793889,
+        "TOA_rho_Q": 0.017020352012,
+        "TOA_rho_U": -0.030190479339
+      },
+      "conv": 1
+    },
+    {
+      "id": "R24_double",
+      "recipe_id": "R24",
+      "returncode": 0,
+      "basic_checks": "passed",
+      "elapsed_seconds": 1.531,
+      "args_sha256": "c37bae8a27566357afe0505a3d48b134045f651c1b62eb8a47ca81ff0124e6bf",
+      "observables": {
+        "TOA_rho_I": 0.11935546268,
+        "TOA_rho_Q": 0.01708583146,
+        "TOA_rho_U": -0.030484271986
+      },
+      "conv": 1
+    },
+    {
+      "id": "R25_h2",
+      "recipe_id": "R25",
+      "returncode": 0,
+      "basic_checks": "passed",
+      "elapsed_seconds": 1.581,
+      "args_sha256": "716d7a603b339f94aabef67311d942f56b1ee38bd02d05865c9d1fc413d671ac",
+      "observables": {
+        "TOA_rho_I": 0.2720756756,
+        "TOA_rho_Q": 0.15866579079,
+        "TOA_rho_U": -0.077357415063
+      },
+      "conv": 1
+    },
+    {
+      "id": "R25_h1",
+      "recipe_id": "R25",
+      "returncode": 0,
+      "basic_checks": "passed",
+      "elapsed_seconds": 1.528,
+      "args_sha256": "3e627b0d076e67a5be87fc936fefb8c3173b68af95f5ffba10b6a8ba2ac16de2",
+      "observables": {
+        "TOA_rho_I": 0.2732711549,
+        "TOA_rho_Q": 0.16098056402,
+        "TOA_rho_U": -0.078497481035
+      },
+      "conv": 1
+    },
+    {
+      "id": "R26",
+      "recipe_id": "R26",
+      "returncode": 0,
+      "basic_checks": "passed",
+      "elapsed_seconds": 1.729,
+      "args_sha256": "b9249902d84e165bbdad03aa8e143c3cd8bd3b3857e5d940cc874bbfc8567b5b",
+      "observables": {
+        "TOA_rho_I": 0.044074678104,
+        "TOA_rho_Q": 0.0073342158394,
+        "TOA_rho_U": -0.012804892827,
+        "Rrs0plus_I": 0.0007978506,
+        "rrs0minus_I": 0.001507508,
+        "a_total": 0.05963466,
+        "b_total": 0.001672631
+      },
+      "conv": 1
+    },
+    {
+      "id": "R27",
+      "recipe_id": "R27",
+      "returncode": 0,
+      "basic_checks": "passed",
+      "elapsed_seconds": 0.325,
+      "args_sha256": "f3d23cab4d3abfc95583af847497de072a620c14c4d5db22dafa9868e749e3f5",
+      "observables": {
+        "TOA_rho_I": 0.0025182248705,
+        "TOA_rho_Q": 0.00015509711515,
+        "TOA_rho_U": -0.0004607404678,
+        "Rrs0plus_I": 0.0008015759,
+        "rrs0minus_I": 0.0015078,
+        "a_total": 0.05963466,
+        "b_total": 0.001672631
+      },
+      "conv": 1
+    },
+    {
+      "id": "R28",
+      "recipe_id": "R28",
+      "returncode": 0,
+      "basic_checks": "passed",
+      "elapsed_seconds": 1.73,
+      "args_sha256": "ba3b9de108b873a6c50a21fd3e8a88dc1e3e7d72162a988de3e049d8b35a1832",
+      "observables": {
+        "TOA_rho_I": 0.043515055264,
+        "TOA_rho_Q": 0.0072981124809,
+        "TOA_rho_U": -0.012706393247,
+        "Rrs0plus_I": 0.0005987734,
+        "rrs0minus_I": 0.001132024,
+        "a_total": 0.0796234214,
+        "b_total": 0.001672631
+      },
+      "conv": 1
+    },
+    {
+      "id": "R29_s014",
+      "recipe_id": "R29",
+      "returncode": 0,
+      "basic_checks": "passed",
+      "elapsed_seconds": 1.728,
+      "args_sha256": "c41578aa67f4597c434681e9465182cf150b2c362e974e16f03250c162828cd7",
+      "observables": {
+        "TOA_rho_I": 0.043515055264,
+        "TOA_rho_Q": 0.0072981124809,
+        "TOA_rho_U": -0.012706393247,
+        "Rrs0plus_I": 0.0005987734,
+        "rrs0minus_I": 0.001132024,
+        "a_total": 0.0796234214,
+        "b_total": 0.001672631
+      },
+      "conv": 1
+    },
+    {
+      "id": "R29_s020",
+      "recipe_id": "R29",
+      "returncode": 0,
+      "basic_checks": "passed",
+      "elapsed_seconds": 1.732,
+      "args_sha256": "346aec8414dc1be3dbcaf05fa83e5b6f0bd9e9ec509651309c1150235e6d5501",
+      "observables": {
+        "TOA_rho_I": 0.043754116613,
+        "TOA_rho_Q": 0.0073135504449,
+        "TOA_rho_U": -0.012748505786,
+        "Rrs0plus_I": 0.0006838158,
+        "rrs0minus_I": 0.001292478,
+        "a_total": 0.0696605444,
+        "b_total": 0.001672631
+      },
+      "conv": 1
+    },
+    {
+      "id": "R30",
+      "recipe_id": "R30",
+      "returncode": 0,
+      "basic_checks": "passed",
+      "elapsed_seconds": 20.688,
+      "args_sha256": "53f9f366a881383ea30ccf339c928fccbc10be42385a85cdc8912e9823e4ef54",
+      "observables": {
+        "TOA_rho_I": 0.084032914058,
+        "TOA_rho_Q": 0.0088897015991,
+        "TOA_rho_U": -0.017059025458,
+        "Rrs0plus_I": 0.01499625,
+        "rrs0minus_I": 0.02703633,
+        "a_total": 0.0648703744,
+        "b_total": 0.40040476
+      },
+      "conv": 1
+    },
+    {
+      "id": "R31",
+      "recipe_id": "R31",
+      "returncode": 0,
+      "basic_checks": "passed",
+      "elapsed_seconds": 6.845,
+      "args_sha256": "56c4dd7a5afcfba6fdad1225cdc20256e7ccb40a59215ae25291c04f136663f7",
+      "observables": {
+        "TOA_rho_I": 0.054633542688,
+        "TOA_rho_Q": 0.0080058745981,
+        "TOA_rho_U": -0.014463090218,
+        "Rrs0plus_I": 0.004513537,
+        "rrs0minus_I": 0.008351581,
+        "a_total": 0.07353966,
+        "b_total": 0.384052631
+      },
+      "conv": 1
+    },
+    {
+      "id": "R32",
+      "recipe_id": "R32",
+      "returncode": 0,
+      "basic_checks": "passed",
+      "elapsed_seconds": 9.801,
+      "args_sha256": "62d631a9a00c2c50c7326e7695edcbe5e92230d064c6789295b3c8b545aaa9f9",
+      "observables": {
+        "TOA_rho_I": 0.046603233743,
+        "TOA_rho_Q": 0.0075405197681,
+        "TOA_rho_U": -0.013352059396,
+        "Rrs0plus_I": 0.001678514,
+        "rrs0minus_I": 0.003144444,
+        "a_total": 0.08174966,
+        "b_total": 0.418607631
+      },
+      "conv": 1
+    },
+    {
+      "id": "R33",
+      "recipe_id": "R33",
+      "returncode": 0,
+      "basic_checks": "passed",
+      "elapsed_seconds": 19.935,
+      "args_sha256": "6b2fd7033f230e54820645eee29b5f1d140422dd669d53827a57265dd96ef857",
+      "observables": {
+        "TOA_rho_I": 0.075538398326,
+        "TOA_rho_Q": 0.0086629817065,
+        "TOA_rho_U": -0.016464040854,
+        "Rrs0plus_I": 0.0119711,
+        "rrs0minus_I": 0.02175125,
+        "a_total": 0.0677254122,
+        "b_total": 0.40040476
+      },
+      "conv": 1
+    },
+    {
+      "id": "R34",
+      "recipe_id": "R34",
+      "returncode": 0,
+      "basic_checks": "passed",
+      "elapsed_seconds": 1.729,
+      "args_sha256": "daf958c26221c431cefdfcb5a6f9d96dcfcec956fae750049b7a7ffab6f5b375",
+      "observables": {
+        "TOA_rho_I": 0.044053358049,
+        "TOA_rho_Q": 0.0073328426804,
+        "TOA_rho_U": -0.01280114554,
+        "Rrs0plus_I": 0.0007902663,
+        "rrs0minus_I": 0.001493211,
+        "a_total": 0.0602116472,
+        "b_total": 0.001672631
+      },
+      "conv": 1
+    },
+    {
+      "id": "R35",
+      "recipe_id": "R35",
+      "returncode": 0,
+      "basic_checks": "passed",
+      "elapsed_seconds": 5.235,
+      "args_sha256": "8950a84dba75aa3926d29d58e5c7676aaf7df727a3d851a020279cf0a33798b4",
+      "observables": {
+        "TOA_rho_I": 0.048954764926,
+        "TOA_rho_Q": 0.0073024696466,
+        "TOA_rho_U": -0.012524191726,
+        "Rrs0plus_I": 0.002523422,
+        "rrs0minus_I": 0.004725474,
+        "a_total": 0.07206066,
+        "b_total": 0.413924883
+      },
+      "conv": 1
+    },
+    {
+      "id": "R36",
+      "recipe_id": "R36",
+      "returncode": 0,
+      "basic_checks": "passed",
+      "elapsed_seconds": 1.677,
+      "args_sha256": "6fa4c9d986249e86ae3c122375e434d8d5edb784ed1ee0b4430e85868d0ec7cb",
+      "observables": {
+        "TOA_rho_I": 0.048271970346,
+        "TOA_rho_Q": 0.0072497498679,
+        "TOA_rho_U": -0.012408394271,
+        "Rrs0plus_I": 0.002285716,
+        "rrs0minus_I": 0.004291734,
+        "a_total": 0.1,
+        "b_total": 0.2
+      },
+      "conv": 1
+    },
+    {
+      "id": "R37",
+      "recipe_id": "R37",
+      "returncode": 0,
+      "basic_checks": "passed",
+      "elapsed_seconds": 1.676,
+      "args_sha256": "98dfc01d60d81c1ac7f2226195a9996b8e0b8d3019dcf34963edf9276f57afe8",
+      "observables": {
+        "TOA_rho_I": 0.054457836128,
+        "TOA_rho_Q": 0.0073082722958,
+        "TOA_rho_U": -0.012408394271,
+        "Rrs0plus_I": 0.004481458,
+        "rrs0minus_I": 0.008347268,
+        "a_total": 0.1,
+        "b_total": 0.2
+      },
+      "conv": 1
+    },
+    {
+      "id": "R38",
+      "recipe_id": "R38",
+      "returncode": 0,
+      "basic_checks": "passed",
+      "elapsed_seconds": 0.221,
+      "args_sha256": "7a33ece847ac71af616219e188cc4b16956cfa5418d3d4b6063021fc122d4e40",
+      "grids": [
+        {
+          "rows": 12,
+          "columns": 13,
+          "sha256": "8336927adf0614a9fbfa6b160bd90cf3e6242df9deaba08a8d9ec793b3d8727b"
+        }
+      ]
+    },
+    {
+      "id": "R39_single555",
+      "recipe_id": "R39",
+      "returncode": 0,
+      "basic_checks": "passed",
+      "elapsed_seconds": 5.99,
+      "args_sha256": "3eac600850c01a2be1ad308703e91f76fe518e00505844835fdd3fe25d4dccdd",
+      "grids": [
+        {
+          "rows": 12,
+          "columns": 60,
+          "sha256": "34c53af113e57b4ea34ce7f18ebc8db74bd734c1e6d3197b0e1995f3091c4c6b"
+        }
+      ]
+    },
+    {
+      "id": "R39_single443",
+      "recipe_id": "R39",
+      "returncode": 0,
+      "basic_checks": "passed",
+      "elapsed_seconds": 6.152,
+      "args_sha256": "c60a4f83cbe409d66a32ebe4a21ee9d0df749526444df5b0d50665d1de2c3eb2",
+      "grids": [
+        {
+          "rows": 12,
+          "columns": 60,
+          "sha256": "aa6e08cfcdd2f017fe470700db0b5273ba0c7ef63c6877770c45f57dd07d8d9c"
+        }
+      ]
+    },
+    {
+      "id": "R39_batch",
+      "recipe_id": "R39",
+      "returncode": 0,
+      "basic_checks": "passed",
+      "elapsed_seconds": 8.351,
+      "args_sha256": "1e72a33147784090cd535117e1bc6e69603415f83b7ded65cc18f8a18e6afda0",
+      "grids": [
+        {
+          "rows": 12,
+          "columns": 60,
+          "sha256": "34c53af113e57b4ea34ce7f18ebc8db74bd734c1e6d3197b0e1995f3091c4c6b"
+        },
+        {
+          "rows": 12,
+          "columns": 60,
+          "sha256": "aa6e08cfcdd2f017fe470700db0b5273ba0c7ef63c6877770c45f57dd07d8d9c"
+        }
+      ]
+    },
+    {
+      "id": "R40_atmos32",
+      "recipe_id": "R40",
+      "returncode": 0,
+      "basic_checks": "passed",
+      "elapsed_seconds": 0.322,
+      "args_sha256": "f9f347c2dbfdce718b1df4bdb5f5db0e3c2c2c9f44e430a9418bb645cc379036",
+      "observables": {
+        "TOA_rho_I": 0.041834058394,
+        "TOA_rho_Q": 0.0072095341485,
+        "TOA_rho_U": -0.012413814848
+      },
+      "conv": 1
+    },
+    {
+      "id": "R40_water96",
+      "recipe_id": "R40",
+      "returncode": 0,
+      "basic_checks": "passed",
+      "elapsed_seconds": 4.238,
+      "args_sha256": "efd91314824451e88dad1d7a4bc75886ee904b4dbb84e5df25c225f247a60de9",
+      "observables": {
+        "TOA_rho_I": 0.044085126605,
+        "TOA_rho_Q": 0.0073355093337,
+        "TOA_rho_U": -0.012807741236,
+        "Rrs0plus_I": 0.0007978598,
+        "rrs0minus_I": 0.00150751,
+        "a_total": 0.05963466,
+        "b_total": 0.001672631
+      },
+      "conv": 1
+    }
+  ],
+  "batch_comparisons": [
+    {
+      "wavelength_nm": 443,
+      "all_csv_fields_identical": true
+    },
+    {
+      "wavelength_nm": 555,
+      "all_csv_fields_identical": true
+    }
+  ],
+  "scope": "Execution, parsed outputs, finite primary observables, expected grid shapes and applicable convergence flags. Not general scientific accuracy certification.",
+  "scientific_limitations": [
+    "R19/R20 are strong-absorption numerical diagnostics; SOS conv=1 does not establish vertical-grid convergence.",
+    "R19 O2-on at 760 nm: TOA rho_I 0.0540526742/0.0056113750/0.0010982740 for 40/400/4000 layers in independent diagnostic checks.",
+    "R24 initially failed conv at the 20-order limit; the final paired recipes both use an explicit 40-order limit and pass conv.",
+    "CPU/compiler differences can affect final numerical digits."
+  ]
+}

@@ -1,0 +1,61 @@
+% Clockwise is an explicitly declared illustrative coordinate convention.
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[x=1cm,y=1cm,font=\sffamily\fontsize{9}{11}\selectfont,
+  ray/.style={line width=1pt,-{Latex[length=2mm]}},
+  arcarr/.style={line width=.85pt,-{Latex[length=1.7mm]}},
+  note/.style={align=center,text width=6.9cm}]
+\path[use as bounding box] (0,-3.1) rectangle (15.8,3.7);
+\begin{scope}[shift={(3.6,0)}]
+  \node[anchor=north,font=\sffamily\bfseries] at (0,3.7)
+    {\FigLang{(a) 위에서 본 SAA, VAA, RAA}{(a) SAA, VAA, RAA viewed from above}};
+  \draw[ocrtLine] (0,0) circle (2.05);
+  \draw[ocrtGray,dashed,-{Latex[length=2mm]}] (0,0)--(0,2.65);
+  \node[anchor=south,align=center] at (0,2.68)
+    {\FigLang{공통 방위 영점}{Shared azimuth zero}};
+  \draw[ray,orange!85!black] (0,0)--(60:2.45);
+  \draw[ray,ocrtTeal] (0,0)--(-30:2.45);
+  \node[anchor=west,align=left] at (1.4,2.15)
+    {\FigLang{태양 look}{Solar look}\\SAA $=30^\circ$};
+  \node[anchor=north,align=center] at (2.0,-1.47)
+    {\FigLang{센서 look}{Sensor look}\\VAA $=120^\circ$};
+  \draw[arcarr,orange!85!black] (90:.7) arc[start angle=90,end angle=60,radius=.7];
+  \node[anchor=east,orange!85!black] at (-.16,.95) {SAA};
+  \draw[arcarr,ocrtTeal] (90:1.03) arc[start angle=90,end angle=-30,radius=1.03];
+  \node[ocrtTeal,fill=white,inner sep=1pt] at (.96,.75) {VAA};
+  \draw[arcarr,ocrtNavy] (60:1.65) arc[start angle=60,end angle=-30,radius=1.65];
+  \node[ocrtNavy,fill=white,inner sep=1.5pt] at (2.14,.24) {RAA $=90^\circ$};
+  \fill[ocrtNavy] (0,0) circle (2pt);
+  \node[anchor=north east] at (-.1,-.1) {\FigLang{화소}{Pixel}};
+  \node[note,anchor=north] at (0,-2.28)
+    {$\mathrm{RAA}=(\mathrm{VAA}-\mathrm{SAA})\bmod 360^\circ$};
+  \node[note,anchor=north] at (0,-2.83)
+    {\FigLang{이 그림의 양의 회전: 시계 방향}{Positive rotation in this figure: clockwise}};
+\end{scope}
+\draw[ocrtLine] (7.8,-2.95)--(7.8,3.35);
+\begin{scope}[shift={(11.8,0)}]
+  \node[anchor=north,font=\sffamily\bfseries] at (0,3.7)
+    {\FigLang{(b) 태양 look을 위쪽으로 맞춘 좌표}{(b) Rotate the solar look to the top}};
+  \draw[ocrtLine] (0,0) circle (1.72);
+  \draw[ray,orange!85!black] (0,0)--(0,2.02);
+  \draw[ray,ocrtTeal] (0,0)--(1.92,0);
+  \draw[ray,ocrtTeal] (0,0)--(0,-1.87);
+  \draw[ray,ocrtTeal] (0,0)--(-1.92,0);
+  \draw[purple!70!black,dashed,line width=.8pt] (0,0)--(70:1.72);
+  \draw[purple!70!black,dashed,line width=.8pt] (0,0)--(110:1.72);
+  \node[purple!70!black,anchor=west] at (.7,1.69) {$20^\circ$};
+  \node[purple!70!black,anchor=east] at (-.7,1.69) {$340^\circ$};
+  \node[anchor=south,align=center] at (0,2.1)
+    {$0^\circ\;(=360^\circ)$\\\FigLang{태양 look}{Solar look}};
+  \node[anchor=west] at (2.05,0) {$90^\circ$};
+  \node[anchor=east] at (-2.05,0) {$270^\circ$};
+  \node[anchor=north,align=center] at (0,-1.98)
+    {$180^\circ$\quad\FigLang{직접 글린트 가지}{Direct-glint branch}};
+  \fill[ocrtNavy] (0,0) circle (2pt);
+  \node[note,anchor=north] at (0,-2.6)
+    {\FigLang{거울 방위 $20^\circ\leftrightarrow340^\circ$: 같은 $I,Q$, 반대 $U$}{Mirror pair $20^\circ\leftrightarrow340^\circ$: same $I,Q$, opposite $U$}};
+\end{scope}
+\end{tikzpicture}
+\caption{\FigLang{위에서 본 수평 look 방위의 차이로 RAA를 정한다. 영점과 시계 방향은 이 그림에서 선택한 규약이다. 제품의 SAA/VAA를 같은 영점·회전 방향으로 맞춘 후 변환한다. 축대칭 조건에서 $20^\circ$와 $340^\circ$를 모두 $20^\circ$로 접으면 signed $U$에 필요한 거울 방향 정보가 사라진다. 실제 편광 비교에는 Stokes 기준면도 맞춘다.}{RAA is the difference between horizontal look azimuths viewed from above. The zero reference and clockwise rotation are choices declared for this figure. Align the product's SAA/VAA origins and rotation directions before conversion. Under axisymmetric conditions, folding both $20^\circ$ and $340^\circ$ to $20^\circ$ discards the mirror-direction information needed for signed $U$. Polarization comparisons also require aligned Stokes reference planes.}}
+\label{fig:geometry-azimuth}
+\end{figure}

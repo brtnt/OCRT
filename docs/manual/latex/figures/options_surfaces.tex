@@ -1,0 +1,45 @@
+% Conceptual boundary/path schematic; dimensions are not physical scales.
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[x=1cm,y=1cm,font=\sffamily\fontsize{9}{11}\selectfont,>=Latex]
+\foreach \x in {0,3.95,7.9,11.85}{
+  \fill[ocrtTeal!7] (\x,1.6) rectangle +(3.6,3.2);
+  \draw[ocrtLine,rounded corners=2pt] (\x,0) rectangle +(3.6,4.8);
+  \node[anchor=north west,text=ocrtGray] at (\x+0.12,4.7) {\FigLang{대기}{Atmosphere}};
+  \foreach \px/\py in {0.6/3.1,1.75/3.7,2.7/2.8}{\fill[ocrtTeal!55] (\x+\px,\py) circle (1.8pt);}
+}
+\node[align=center,font=\sffamily\bfseries\fontsize{9}{11}\selectfont] at (1.8,5.2) {\texttt{black}};
+\node[align=center,font=\sffamily\bfseries\fontsize{9}{11}\selectfont] at (5.75,5.2) {\texttt{flat}};
+\node[align=center,font=\sffamily\bfseries\fontsize{9}{11}\selectfont] at (9.7,5.2) {\texttt{black\_fresnel\_}\vphantom{g}\\\texttt{ocean}};
+\node[align=center,font=\sffamily\bfseries\fontsize{9}{11}\selectfont] at (13.65,5.2) {\texttt{ocean}};
+% Absorbing lower boundary; atmospheric scattering remains active.
+\fill[ocrtNavy!16] (0,0) rectangle (3.6,1.6);
+\draw[ocrtNavy,very thick] (0,1.6)--(3.6,1.6);
+\draw[->,orange!85!black,very thick] (0.5,4.05)--(1.7,1.66);
+\draw[ocrtNavy,thick] (1.55,1.48)--(1.85,1.78) (1.55,1.78)--(1.85,1.48);
+\draw[->,ocrtTeal,thick] (0.25,3.5)--(1.75,3.7)--(3.2,4.35);
+\node[align=center,text width=3.15cm] at (1.8,0.77) {\FigLang{반사 없는 하부 경계\\수중 RT 없음}{Absorbing boundary\\No underwater RT}};
+% Flat Fresnel, with absorption below.
+\fill[ocrtNavy!16] (3.95,0) rectangle +(3.6,1.6);
+\draw[ocrtTeal,very thick] (3.95,1.6)--+(3.6,0);
+\draw[->,orange!85!black,very thick] (4.3,3.7)--(5.75,1.65)--(7.2,3.7);
+\draw[->,ocrtGray,dashed,thick] (5.75,1.6)--(6.03,1.0);
+\node[align=center,text width=3.15cm] at (5.75,0.49) {\FigLang{평면 Fresnel 반사\\수중 RT 없음}{Flat Fresnel reflection\\No underwater RT}};
+% Rough Fresnel, with absorption below.
+\fill[ocrtNavy!16] (7.9,0) rectangle +(3.6,1.6);
+\draw[ocrtTeal,very thick] plot[smooth] coordinates {(7.9,1.6)(8.35,1.72)(8.8,1.5)(9.25,1.6)(9.7,1.73)(10.15,1.52)(10.6,1.58)(11.1,1.72)(11.5,1.6)};
+\draw[->,orange!85!black,very thick] (8.2,3.75)--(9.4,1.67)--(10.8,3.2);
+\draw[->,orange!85!black,thick,dashed] (9.4,1.67)--(10.15,3.5);
+\node[align=center,text width=3.25cm] at (9.7,0.72) {\FigLang{풍속 0: 평면\\양수: 거친 해면\\수중 RT 없음}{Wind 0: flat\\Wind $>0$: rough\\No underwater RT}};
+% Coupled atmosphere, rough surface, and water scattering.
+\fill[ocrtTeal!18] (11.85,0) rectangle +(3.6,1.6);
+\draw[ocrtTeal,very thick] plot[smooth] coordinates {(11.85,1.6)(12.3,1.72)(12.75,1.5)(13.2,1.6)(13.65,1.73)(14.1,1.52)(14.55,1.58)(15.05,1.72)(15.45,1.6)};
+\draw[->,orange!85!black,very thick] (12.15,3.8)--(13.2,1.63)--(14.45,3.4);
+\draw[->,ocrtTeal,very thick] (13.2,1.63)--(13.55,0.95)--(14.05,1.58)--(14.8,2.75);
+\fill[ocrtTeal] (13.55,0.95) circle (2.5pt);
+\node[align=center,text width=3.25cm] at (13.65,0.38) {\FigLang{수중 흡수·산란\\결합 RT}{Water RT\\Atmosphere coupling}};
+\node[anchor=north,align=center,text width=15.1cm,text=ocrtGray] at (7.73,-0.28) {\FigLang{주황: 직달 입사·표면 반사 \qquad 청록: 산란을 거친 경로\\회색 하부: 수중 복사장 미계산}{Orange: direct / surface reflection \qquad Teal: scattered paths\\Gray lower layer: no underwater RT}};
+\end{tikzpicture}
+\caption{\FigLang{\texttt{--surface}는 하부 경계와 수중 계산의 범위를 선택한다. 거친 해면은 경사 분포를 개념적으로 그린 것으로 실제 파도를 공간적으로 추적하는 계산이 아니다. \texttt{ocean}만 수질/IOP를 이용해 수중 복사전달을 결합한다. 직달 glint의 출력 포함 여부는 다음 그림의 분리 규칙을 따른다.}{\texttt{--surface} selects the lower boundary and whether underwater RT is solved. The rough surface depicts a statistical slope distribution, not spatially resolved wave tracing. Only \texttt{ocean} couples underwater RT using water constituents/IOPs. Direct-glint inclusion follows the output separation rules in the next figure.}}
+\label{fig:options-surfaces}
+\end{figure}

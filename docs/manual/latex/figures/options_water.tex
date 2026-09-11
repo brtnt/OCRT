@@ -1,0 +1,42 @@
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[x=1cm,y=1cm,font=\sffamily\fontsize{9}{11}\selectfont,>=Latex]
+\node[align=center,text width=4.5cm,font=\sffamily\bfseries\fontsize{10}{12}\selectfont] at (2.5,7.45) {\FigLang{수질 입력}{Water inputs}};
+\node[align=center,text width=4.5cm,font=\sffamily\bfseries\fontsize{10}{12}\selectfont] at (7.6,7.45) {\FigLang{선택한 파장의 IOP}{IOPs at chosen\\wavelength}};
+\node[align=center,text width=4.5cm,font=\sffamily\bfseries\fontsize{10}{12}\selectfont] at (12.7,7.45) {\FigLang{흡수와 산란의 의미}{Absorption\\and scattering}};
+\foreach \y in {6.1,4.25,2.4}{\draw[ocrtLine,rounded corners=2pt,fill=ocrtTeal!5] (0.2,\y-0.65) rectangle (4.8,\y+0.65);}
+\node[align=center,text width=4.3cm] at (2.5,6.1) {\texttt{--water-model ocrt}\\Chl, TSM, $a_{\rm DOM}(440)$\\\FigLang{성분별 물성으로 변환}{Constituent optical conversion}};
+\node[align=center,text width=4.3cm] at (2.5,4.25) {\texttt{--water-model ccrr}\\Chl, TSM, $a_{\rm DOM}(440)$\\\FigLang{CCRR 구성성분 변환}{CCRR constituent conversion}};
+\node[align=center,text width=4.3cm] at (2.5,2.4) {\texttt{--water-model iop}\\\texttt{--iop-a, --iop-b, --iop-bb}\\\FigLang{총 IOP를 직접 입력}{Direct total IOP input}};
+\draw[ocrtLine,rounded corners=2pt,fill=white] (5.9,1.75) rectangle (9.2,6.75);
+\foreach \y in {6.1,4.25,2.4}{\draw[->,ocrtTeal,thick] (4.8,\y)--(5.85,\y);}
+\node[align=center,text width=3.1cm] at (7.55,5.2) {$a\quad[\mathrm{m}^{-1}]$\\[6pt]$b\quad[\mathrm{m}^{-1}]$\\[6pt]$b_b\quad[\mathrm{m}^{-1}]$\\[8pt]\FigLang{위상함수 / 행렬}{Phase function\\or matrix}};
+\node[align=center,text width=2.95cm] at (7.55,2.72) {$c=a+b$\\[4pt]\FigLang{$b_b$는 $b$의 일부\\추가 소광항이 아님}{$b_b$ is part of $b$\\Do not add it to $c$}};
+% Absorption terminates a ray.
+\draw[->,orange!85!black,very thick] (10.0,6.05)--(13.0,6.05);
+\fill[ocrtNavy] (13.15,6.05) circle (3.4pt);
+\draw[ocrtNavy,thick] (13.55,5.75)--(14.15,6.35) (13.55,6.35)--(14.15,5.75);
+\node[align=center] at (12.6,6.65) {$a$: \FigLang{흡수되어 소멸}{absorbed}};
+% Scattering angular redistribution; back hemisphere is a subset.
+\fill[ocrtTeal!17] (12.7,3.65)--(12.7,4.75) arc[start angle=90,end angle=270,radius=1.1]--cycle;
+\draw[ocrtLine] (12.7,3.65) circle (1.1);
+\draw[->,orange!85!black,very thick] (9.95,3.65)--(12.55,3.65);
+\foreach \dx/\dy in {1.4/0.6,1.45/-0.5,0.5/1.4,0.65/-1.35,-0.8/1.0,-0.95/-0.75}{\draw[->,ocrtTeal,thick] (12.7,3.65)--+(\dx,\dy);}
+\fill[ocrtTeal] (12.7,3.65) circle (3pt);
+\node[align=center] at (12.7,5.2) {$b$: \FigLang{모든 산란 방향}{all scattering directions}};
+\node[align=center,text width=4.9cm] at (12.7,1.8) {\FigLang{색칠한 뒤쪽 반구의 산란이 $b_b$}{Back hemisphere (shaded): $b_b$}};
+\draw[->,ocrtTeal,very thick] (7.55,1.65)--(7.55,0.85);
+% A physical stack, not a fourth alternative water model.
+\fill[ocrtTeal!6] (4.6,-0.12) rectangle (10.5,0.75);
+\fill[ocrtTeal!18] (4.6,-1.02) rectangle (10.5,-0.12);
+\draw[ocrtTeal,thick] (4.6,-0.12)--(10.5,-0.12);
+\node at (7.55,0.35) {\FigLang{대기}{Atmosphere}};
+\node at (7.55,-0.6) {\FigLang{수중 복사전달}{Underwater RT}};
+\draw[<->,ocrtNavy,very thick] (5.2,0.48)--(5.2,-0.7);
+\node[align=center,text width=3.8cm] at (2.35,-0.12) {\FigLang{세 입력 경로 모두\\OCRT 결합 해석기 사용}{All three input routes use\\the OCRT coupled solver}};
+\draw[->,ocrtTeal,thick] (10.55,-0.12)--(11.3,-0.12);
+\node[align=center,text width=3.7cm] at (13.2,-0.12) {$L_u(0^+),\; R_{rs}$\\$\boldsymbol{\rho}_{\rm TOA}$};
+\end{tikzpicture}
+\caption{\FigLang{\texttt{--water-model}은 수질에서 광학 입력을 만드는 경로를 선택한다. OCRT/CCRR는 구성성분을 변환하고 IOP 모드는 순수 해수 기여까지 포함한 총 $a,b,b_b$를 직접 받는다. $b_b$는 후방 산란 부분이므로 소광계수는 $a+b$이며 $a+b+b_b$가 아니다. 위상함수는 산란 에너지가 각 방향으로 분배되는 모양을 정한다.}{\texttt{--water-model} selects the route from water properties to optical inputs. OCRT/CCRR convert constituents; IOP mode receives total $a,b,b_b$, already including pure seawater. Backscattering is a subset of scattering, so extinction is $a+b$, not $a+b+b_b$. The phase function describes how scattered energy is distributed over direction.}}
+\label{fig:options-water}
+\end{figure}

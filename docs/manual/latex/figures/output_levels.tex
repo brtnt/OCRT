@@ -1,0 +1,41 @@
+% Height conventions and normalization, schematic rather than a ray solver.
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[x=1cm,y=1cm,>=Latex,
+ every node/.style={font=\sffamily\fontsize{9}{11}\selectfont},
+ quantity/.style={draw=ocrtLine,rounded corners=2pt,fill=white,text width=6.5cm,align=left,inner sep=6pt}]
+\fill[ocrtTeal!9] (0,0) rectangle (6.7,1.7);
+\fill[blue!3] (0,1.7) rectangle (6.7,5.1);
+\draw[ocrtNavy,thick] (0,1.7)--(6.7,1.7);
+\draw[ocrtGray,dashed] (0,5.1)--(6.7,5.1);
+\node[anchor=west] at (0.1,5.35) {TOA};
+\node[anchor=west,text=ocrtGray] at (0.1,4.5) {\FigLang{대기}{Atmosphere}};
+\node[anchor=west,text=ocrtTeal] at (0.1,0.25) {\FigLang{해수}{Seawater}};
+\node[anchor=east] at (6.6,1.97) {$0^+$};
+\node[anchor=east] at (6.6,1.40) {$0^-$};
+\draw[->,very thick,orange!85!black] (1.1,3.6)--(1.1,1.9);
+\node[anchor=west,align=left] at (1.35,3.05) {$E_d(0^+)$\\\FigLang{하향 조도}{Downward irradiance}};
+\draw[->,very thick,orange!85!black] (1.1,1.5)--(1.1,0.6);
+\node[anchor=west] at (1.35,0.98) {$E_d(0^-)$};
+\draw[->,very thick,ocrtTeal] (4.25,0.3)--(4.65,1.5);
+\node[anchor=west] at (4.65,0.55) {$L_u(0^-)$};
+\draw[->,very thick,ocrtTeal] (4.7,1.9)--(6.2,4.65);
+\node[anchor=east,align=right] at (5.2,3.85) {$L_u(0^+)$\\\FigLang{상향 휘도}{Upward radiance}};
+\draw[->,very thick,ocrtNavy] (6.2,4.8)--(6.65,5.62);
+\node[anchor=east] at (6.1,5.75) {$L_{\rm TOA}$};
+\node[quantity,anchor=north west] at (7.5,5.9)
+ {$\displaystyle \rho_X=\frac{\pi L_{{\rm TOA},X}}{F_0\cos({\rm SZA})}$\\[4pt]
+  \FigLang{TOA 반사도: 무차원}{TOA reflectance: dimensionless}};
+\node[quantity,anchor=north west] at (7.5,3.83)
+ {$\displaystyle Rrs_X=\frac{L_{u,X}(0^+)}{E_d(0^+)}$\\[4pt]
+  \FigLang{수면 위: sr$^{-1}$}{Above water: sr$^{-1}$}};
+\node[quantity,anchor=north west] at (7.5,1.76)
+ {$\displaystyle rrs_X=\frac{L_{u,X}(0^-)}{E_d(0^-)}$\\[4pt]
+  \FigLang{수면 아래: sr$^{-1}$}{Below water: sr$^{-1}$}};
+\node[anchor=north west,text width=14.6cm,align=left,font=\sffamily\footnotesize] at (0,-0.35)
+ {$X\in\{I,Q,U\}$\qquad
+  \FigLang{$F_0$: 태양광에 수직인 면의 입사량; 수평면에서는 $F_0\cos({\rm SZA})$}{$F_0$: incident irradiance normal to the solar beam; a horizontal plane receives $F_0\cos({\rm SZA})$}};
+\end{tikzpicture}
+\caption{\FigLang{출력 위치와 정규화의 구분. $0^+$와 $0^-$는 수면을 사이에 둔 서로 다른 위치다. 대문자 \texttt{Rrs}와 소문자 \texttt{rrs}는 교환할 수 없고, 둘에 $\pi$를 곱해도 대기 경로를 포함한 TOA \texttt{rho}가 되지 않는다. 화살표는 물리량의 방향과 평가 위치를 설명하는 도식이며 모든 산란 경로를 그린 것은 아니다.}{Output levels and their normalizations. $0^+$ and $0^-$ are distinct positions on opposite sides of the interface. Uppercase \texttt{Rrs} and lowercase \texttt{rrs} are not interchangeable. Multiplying either by $\pi$ does not produce TOA \texttt{rho}, which includes the atmosphere. Arrows identify directions and sampling levels schematically; they do not enumerate every scattering path.}}
+\label{fig:output-levels}
+\end{figure}

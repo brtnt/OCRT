@@ -1,0 +1,1272 @@
+% Authoritative LaTeX chapter. Update this file directly, with matching catalogue arguments.
+
+\chapter{Practical Cookbook: 40 Reproducible Recipes}
+
+\label{chap:09_cookbook}
+
+These recipes extend Appendix~\ref{chap:04_examples} with controlled comparisons and finite runnable cases. All commands run from \texttt{code/\allowbreak{}OCRT\_\allowbreak{}C} in Bash/Linux/WSL, after the Quick start build. Start with R01/R07/R38; select ocean or aerosol cases after their data dependencies are installed. This appendix contains 40 recipes and 49 C invocations; several paired recipes deliberately run both states. Commands and outputs are identical in both language editions.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+export OMP_NUM_THREADS=1
+mkdir -p ../../task/manual_cookbook
+
+\end{ManualCode}
+\end{minipage}\par
+
+Use a fresh output directory and a shell without inherited OCRT experiment/diagnostic variables. The displayed redirections overwrite matching files, so change the directory name when repeating a manual command. The supplied \texttt{run\_\allowbreak{}recipes.py} offers a safer reproducible path: it refuses existing results, removes inherited \texttt{OCRT\_\allowbreak{}*} variables, and enables only the per-case settings printed here. Gases are explicitly zero unless a recipe says otherwise. Refractive index is fixed at 1.34 wherever a sea surface is used. No recipe enables unsupported coupled-ocean IPSS or EAP phytoplankton scattering.
+
+\Needspace{16\baselineskip}
+\section{Select and run recipes}
+\label{sec:auto:09_cookbook:1}
+
+Run this helper from the repository root. Planning never invokes the solver. Inspect manifest.json, then repeat the same selection and output directory with \texttt{-\allowbreak{}-\allowbreak{}run}. Native Windows uses \texttt{python} and a Windows executable path; the Python helper avoids shell-specific arrays and redirections.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+python3 docs/manual/examples/run_recipes.py --list
+
+python3 docs/manual/examples/run_recipes.py \
+  --select R01,R02,R07,R38 \
+  --ocrt-root code/OCRT_C --exe code/OCRT_C/build/ocrt \
+  --outdir task/cookbook_selected --threads 1 --timeout 900
+
+\end{ManualCode}
+\end{minipage}\par
+
+Use \texttt{-\allowbreak{}-\allowbreak{}group geometry,rayleigh}, \texttt{-\allowbreak{}-\allowbreak{}group ocean} or \texttt{-\allowbreak{}-\allowbreak{}select all} to broaden the selection. Available groups are geometry, rayleigh, gas, aerosol, ocean and workflow. The default selection is all 40; an explicit small selection is easier for a first run. The runner hashes the executable and required input files, writes the complete argv/environment and timing per invocation, and saves both stdout and stderr. It serializes cases; \texttt{-\allowbreak{}-\allowbreak{}threads} controls threads inside each C process.
+
+\Needspace{16\baselineskip}
+\section{Viewing geometry and polarization}
+\label{sec:auto:09_cookbook:2}
+
+\Needspace{17\baselineskip}
+
+\subsection{R01 · A black-boundary reference}
+\label{sec:auto:09_cookbook:2.1}
+
+\label{recipe:R01}
+
+\textbf{Purpose. }Establish a gas-free molecular-scattering reference at SZA40\textdegree{}, VZA30\textdegree{} and RAA90\textdegree{}. The black lower boundary excludes surface reflection and underwater light. No aerosol file or AOD option is supplied.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface black --sza 40 --wavelength 555 --pressure 1013.25 \
+  --vza 30 --raa 90 --gas-column-h2o 0 --gas-column-o3 0 --gas-column-no2 0 \
+  --gas-column-o2 0 --gas-column-co2 0 --gas-column-ch4 0 \
+  > ../../task/manual_cookbook/R01.txt \
+  2> ../../task/manual_cookbook/R01.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{Outputs. }\texttt{R01.txt}.
+
+\textbf{Read and compare. }Read \texttt{TOA\_\allowbreak{}rho\_\allowbreak{}I/\allowbreak{}Q/\allowbreak{}U}, \texttt{tau\_\allowbreak{}R}, \texttt{orders} and \texttt{conv} in R01.txt. This is a dimensionless TOA reflectance reference. Negative Q or U is valid; \texttt{conv=\allowbreak{}1} is a numerical convergence flag, not an accuracy assessment. Use this unchanged state for R02–R06.
+
+\Needspace{17\baselineskip}
+
+\subsection{R02 · Mirror azimuth and the sign of U}
+\label{sec:auto:09_cookbook:2.2}
+
+\label{recipe:R02}
+
+\textbf{Purpose. }Change only RAA from 90\textdegree{} to 270\textdegree{}. These directions are mirror images around the solar principal plane for the horizontally uniform, azimuthally symmetric scene used here.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface black --sza 40 --wavelength 555 --pressure 1013.25 \
+  --vza 30 --raa 270 --gas-column-h2o 0 --gas-column-o3 0 --gas-column-no2 0 \
+  --gas-column-o2 0 --gas-column-co2 0 --gas-column-ch4 0 \
+  > ../../task/manual_cookbook/R02.txt \
+  2> ../../task/manual_cookbook/R02.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{Outputs. }\texttt{R02.txt}.
+
+\textbf{Read and compare. }Compare R02.txt with R01.txt: I and Q should agree within numerical error and U should change sign. Use an absolute error near U=0. Do not fold both angles into 90\textdegree{} when generating polarized data; doing so discards signed U information.
+
+\Needspace{17\baselineskip}
+
+\subsection{R03 · The RAA = 0 principal plane}
+\label{sec:auto:09_cookbook:2.3}
+
+\label{recipe:R03}
+
+\textbf{Purpose. }Place the view in the RAA0\textdegree{} principal plane while retaining the black-boundary reference. This is the principal-plane branch opposite the direct-glint branch in the OCRT convention.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface black --sza 40 --wavelength 555 --pressure 1013.25 \
+  --vza 30 --raa 0 --gas-column-h2o 0 --gas-column-o3 0 --gas-column-no2 0 \
+  --gas-column-o2 0 --gas-column-co2 0 --gas-column-ch4 0 \
+  > ../../task/manual_cookbook/R03.txt \
+  2> ../../task/manual_cookbook/R03.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{Outputs. }\texttt{R03.txt}.
+
+\textbf{Read and compare. }The symmetry of this scene makes \texttt{TOA\_\allowbreak{}rho\_\allowbreak{}U} close to zero. Record the actual value and compare it with I to assess numerical residuals. R03 and R04 are different scattering geometries; their I and Q are not required to agree.
+
+\Needspace{17\baselineskip}
+
+\subsection{R04 · The RAA = 180 principal plane}
+\label{sec:auto:09_cookbook:2.4}
+
+\label{recipe:R04}
+
+\textbf{Purpose. }Move from RAA0\textdegree{} to 180\textdegree{} at fixed SZA and VZA. The name “glint branch” defines the geometry; the black boundary in this case cannot produce a surface glint signal.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface black --sza 40 --wavelength 555 --pressure 1013.25 \
+  --vza 30 --raa 180 --gas-column-h2o 0 --gas-column-o3 0 --gas-column-no2 0 \
+  --gas-column-o2 0 --gas-column-co2 0 --gas-column-ch4 0 \
+  > ../../task/manual_cookbook/R04.txt \
+  2> ../../task/manual_cookbook/R04.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{Outputs. }\texttt{R04.txt}.
+
+\textbf{Read and compare. }Read I/Q/U in R04.txt and compare with R03.txt. U should again be near zero. Actual sea-surface glint is introduced by R10/R11, with VZA=SZA=40\textdegree{} and a Fresnel boundary; R04 is an atmospheric principal-plane example.
+
+\Needspace{17\baselineskip}
+
+\subsection{R05 · Nadir and the azimuth degeneracy}
+\label{sec:auto:09_cookbook:2.5}
+
+\label{recipe:R05}
+
+\textbf{Purpose. }Set VZA=0\textdegree{} while retaining the nominal RAA90\textdegree{} label. At exact nadir, an azimuth no longer specifies a distinct outgoing ray; it can still label the polarization reference basis used by a program.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface black --sza 40 --wavelength 555 --pressure 1013.25 \
+  --vza 0 --raa 90 --gas-column-h2o 0 --gas-column-o3 0 --gas-column-no2 0 \
+  --gas-column-o2 0 --gas-column-co2 0 --gas-column-ch4 0 \
+  > ../../task/manual_cookbook/R05.txt \
+  2> ../../task/manual_cookbook/R05.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{Outputs. }\texttt{R05.txt}.
+
+\textbf{Read and compare. }Use R05.txt to check the nadir handling of a reader or interpolator. Do not treat four nadir RAA rows in a grid as four independent physical look directions. Compare Stokes components only after accounting for the reference-plane convention; prioritize I for a basic nadir check.
+
+\Needspace{17\baselineskip}
+
+\subsection{R06 · An oblique viewing direction}
+\label{sec:auto:09_cookbook:2.6}
+
+\label{recipe:R06}
+
+\textbf{Purpose. }Change only VZA from\textsuperscript{3}0\textdegree{} to 60\textdegree{}, keeping SZA40\textdegree{} and RAA90\textdegree{}. This tests a longer viewing path without simultaneously changing wavelength, pressure or surface.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface black --sza 40 --wavelength 555 --pressure 1013.25 \
+  --vza 60 --raa 90 --gas-column-h2o 0 --gas-column-o3 0 --gas-column-no2 0 \
+  --gas-column-o2 0 --gas-column-co2 0 --gas-column-ch4 0 \
+  > ../../task/manual_cookbook/R06.txt \
+  2> ../../task/manual_cookbook/R06.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{Outputs. }\texttt{R06.txt}.
+
+\textbf{Read and compare. }Compare \texttt{TOA\_\allowbreak{}rho\_\allowbreak{}I/\allowbreak{}Q/\allowbreak{}U} and \texttt{T\_\allowbreak{}dir\_\allowbreak{}up\_\allowbreak{}view} with R01. A longer path changes scattering and attenuation together; a simple air-mass multiplier is not a replacement for this solve. Use independent oblique directions when checking LUT interpolation.
+
+\Needspace{16\baselineskip}
+\section{Rayleigh, the sea surface and IPSS}
+\label{sec:auto:09_cookbook:3}
+
+\Needspace{17\baselineskip}
+
+\subsection{R07 · Rayleigh over a rough black ocean}
+\label{sec:auto:09_cookbook:3.1}
+
+\label{recipe:R07}
+
+\textbf{Purpose. }Replace the black boundary in R01 by a rough Fresnel sea surface over black water, with wind 5 m/s and index 1.34. Separate direct sunglint; retain the other surface–atmosphere interactions. This is the baseline for the Rayleigh recipes.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface black_fresnel_ocean --sza 40 --wavelength 555 \
+  --pressure 1013.25 --vza 30 --raa 90 --wind-speed 5 --n-water 1.34 \
+  --gas-column-h2o 0 --gas-column-o3 0 --gas-column-no2 0 --gas-column-o2 0 \
+  --gas-column-co2 0 --gas-column-ch4 0 --decouple-sunglint \
+  > ../../task/manual_cookbook/R07.txt \
+  2> ../../task/manual_cookbook/R07.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{Outputs. }\texttt{R07.txt}.
+
+\textbf{Read and compare. }R07.txt is a sea-surface Rayleigh reference under the stated glint definition. Compare \texttt{TOA\_\allowbreak{}rho\_\allowbreak{}I/\allowbreak{}Q/\allowbreak{}U} with R01 to isolate the change of boundary. It contains no water-leaving constituent signal and is not a coupled-ocean \texttt{Rrs} product.
+
+\Needspace{17\baselineskip}
+
+\subsection{R08 · Calm-surface limit}
+\label{sec:auto:09_cookbook:3.2}
+
+\label{recipe:R08}
+
+\textbf{Purpose. }Set only wind speed to 0 m/s relative to R07. SZA40\textdegree{}, VZA30\textdegree{}, RAA90\textdegree{} avoids the exact specular direction, so this is a useful flat-boundary limit check.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface black_fresnel_ocean --sza 40 --wavelength 555 \
+  --pressure 1013.25 --vza 30 --raa 90 --wind-speed 0 --n-water 1.34 \
+  --gas-column-h2o 0 --gas-column-o3 0 --gas-column-no2 0 --gas-column-o2 0 \
+  --gas-column-co2 0 --gas-column-ch4 0 --decouple-sunglint \
+  > ../../task/manual_cookbook/R08.txt \
+  2> ../../task/manual_cookbook/R08.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{Outputs. }\texttt{R08.txt}.
+
+\textbf{Read and compare. }Compare R08.txt with R07.txt. Zero wind invokes a flat interface; it should not be interpreted as a small but finite Cox–Munk glint lobe. Keep the refractive index fixed when attributing differences to surface roughness.
+
+\Needspace{17\baselineskip}
+
+\subsection{R09 · Wind-speed sensitivity}
+\label{sec:auto:09_cookbook:3.3}
+
+\label{recipe:R09}
+
+\textbf{Purpose. }Increase wind from 5 to 10 m/s, retaining the gas-free, glint-separated R07 configuration. This changes the distribution of surface slopes without changing the atmospheric optical depth.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface black_fresnel_ocean --sza 40 --wavelength 555 \
+  --pressure 1013.25 --vza 30 --raa 90 --wind-speed 10 --n-water 1.34 \
+  --gas-column-h2o 0 --gas-column-o3 0 --gas-column-no2 0 --gas-column-o2 0 \
+  --gas-column-co2 0 --gas-column-ch4 0 --decouple-sunglint \
+  > ../../task/manual_cookbook/R09.txt \
+  2> ../../task/manual_cookbook/R09.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{Outputs. }\texttt{R09.txt}.
+
+\textbf{Read and compare. }Read the same TOA Stokes keys in R09 and R07. A directional value can rise or fall as a lobe broadens; higher wind does not imply a larger reflectance at every angle. Repeat on a full angular grid if the shape of the lobe matters.
+
+\Needspace{17\baselineskip}
+
+\subsection{R10 · Direct sunglint included}
+\label{sec:auto:09_cookbook:3.4}
+
+\label{recipe:R10}
+
+\textbf{Purpose. }Use SZA=VZA=40\textdegree{} and RAA180\textdegree{} at wind 5 m/s, with direct sunglint included. This explicitly places the view on the OCRT glint branch while maintaining a finite rough-surface distribution.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface black_fresnel_ocean --sza 40 --wavelength 555 \
+  --pressure 1013.25 --vza 40 --raa 180 --wind-speed 5 --n-water 1.34 \
+  --gas-column-h2o 0 --gas-column-o3 0 --gas-column-no2 0 --gas-column-o2 0 \
+  --gas-column-co2 0 --gas-column-ch4 0 \
+  > ../../task/manual_cookbook/R10.txt \
+  2> ../../task/manual_cookbook/R10.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{Outputs. }\texttt{R10.txt}.
+
+\textbf{Read and compare. }R10.txt gives the non-ocean total including the direct glint term. Compare with R11, whose only change is \texttt{-\allowbreak{}-\allowbreak{}decouple-\allowbreak{}sunglint}. Inspect I and Q first. For non-ocean U, the separate direct-glint diagnostic has a documented sign inconsistency; use the paired total outputs instead.
+
+\Needspace{17\baselineskip}
+
+\subsection{R11 · Direct sunglint separated}
+\label{sec:auto:09_cookbook:3.5}
+
+\label{recipe:R11}
+
+\textbf{Purpose. }Repeat R10 with direct sunglint separated. Every numerical and physical setting is identical except for the single flag, making the two runs a controlled decomposition experiment.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface black_fresnel_ocean --sza 40 --wavelength 555 \
+  --pressure 1013.25 --vza 40 --raa 180 --wind-speed 5 --n-water 1.34 \
+  --gas-column-h2o 0 --gas-column-o3 0 --gas-column-no2 0 --gas-column-o2 0 \
+  --gas-column-co2 0 --gas-column-ch4 0 --decouple-sunglint \
+  > ../../task/manual_cookbook/R11.txt \
+  2> ../../task/manual_cookbook/R11.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{Outputs. }\texttt{R11.txt}.
+
+\textbf{Read and compare. }Subtract R11 total reflectance from R10 total reflectance to measure the change caused by direct-glint inclusion. The remaining R11 signal still includes reflection and repeated interactions at the lower boundary; the flag does not turn the sea surface into a black boundary.
+
+\Needspace{17\baselineskip}
+
+\subsection{R12 · A lower surface pressure}
+\label{sec:auto:09_cookbook:3.6}
+
+\label{recipe:R12}
+
+\textbf{Purpose. }Lower pressure from 1013.25 to 900 hPa, with all gas columns still zero. This varies molecular scattering alone while retaining wavelength, geometry and sea-surface state.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface black_fresnel_ocean --sza 40 --wavelength 555 \
+  --pressure 900 --vza 30 --raa 90 --wind-speed 5 --n-water 1.34 \
+  --gas-column-h2o 0 --gas-column-o3 0 --gas-column-no2 0 --gas-column-o2 0 \
+  --gas-column-co2 0 --gas-column-ch4 0 --decouple-sunglint \
+  > ../../task/manual_cookbook/R12.txt \
+  2> ../../task/manual_cookbook/R12.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{Outputs. }\texttt{R12.txt}.
+
+\textbf{Read and compare. }Compare \texttt{tau\_\allowbreak{}R} with R07: its pressure scaling is linear. The full \texttt{TOA\_\allowbreak{}rho\_\allowbreak{}I/\allowbreak{}Q/\allowbreak{}U} response includes multiple scattering and the surface and need not scale exactly by 900/1013.25. Use explicit pressure states when validating pressure interpolation.
+
+\Needspace{17\baselineskip}
+
+\subsection{R13 · A blue wavelength}
+\label{sec:auto:09_cookbook:3.7}
+
+\label{recipe:R13}
+
+\textbf{Purpose. }Change wavelength from 555 to 443 nm at the same pressure and surface state. No gas absorption or aerosol spectrum is present in this pair, so the molecular wavelength dependence is easier to identify.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface black_fresnel_ocean --sza 40 --wavelength 443 \
+  --pressure 1013.25 --vza 30 --raa 90 --wind-speed 5 --n-water 1.34 \
+  --gas-column-h2o 0 --gas-column-o3 0 --gas-column-no2 0 --gas-column-o2 0 \
+  --gas-column-co2 0 --gas-column-ch4 0 --decouple-sunglint \
+  > ../../task/manual_cookbook/R13.txt \
+  2> ../../task/manual_cookbook/R13.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{Outputs. }\texttt{R13.txt}.
+
+\textbf{Read and compare. }Compare \texttt{tau\_\allowbreak{}R} and TOA reflectance with R07. A wavelength power law for molecular optical thickness is not an exact power law for full directional reflectance. The 555/443 nm pair is monochromatic; it is not a sensor-band integration.
+
+\Needspace{17\baselineskip}
+
+\subsection{R14 · Large zenith angles without IPSS}
+\label{sec:auto:09_cookbook:3.8}
+
+\label{recipe:R14}
+
+\textbf{Purpose. }Calculate SZA75\textdegree{}, VZA70\textdegree{}, RAA90\textdegree{} without spherical correction. This provides the plane-parallel denominator for the IPSS comparison in R15; do not compare it with R07, which has different angles.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface black_fresnel_ocean --sza 75 --wavelength 555 \
+  --pressure 1013.25 --vza 70 --raa 90 --wind-speed 5 --n-water 1.34 \
+  --gas-column-h2o 0 --gas-column-o3 0 --gas-column-no2 0 --gas-column-o2 0 \
+  --gas-column-co2 0 --gas-column-ch4 0 --decouple-sunglint \
+  > ../../task/manual_cookbook/R14.txt \
+  2> ../../task/manual_cookbook/R14.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{Outputs. }\texttt{R14.txt}.
+
+\textbf{Read and compare. }Retain R14.txt and its log. Large zenith angles make geometry and numerical convergence particularly consequential. Record the actual surface-referenced angles, and use R15/R14 ratios only for components sufficiently far from zero.
+
+\Needspace{17\baselineskip}
+
+\subsection{R15 · Large zenith angles with IPSS}
+\label{sec:auto:09_cookbook:3.9}
+
+\label{recipe:R15}
+
+\textbf{Purpose. }Add \texttt{-\allowbreak{}-\allowbreak{}pssa} to exactly the R14 state. The historical option name enables the current IPSS correction. This surface is supported; coupled \texttt{-\allowbreak{}-\allowbreak{}surface ocean} with IPSS is not supported.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface black_fresnel_ocean --sza 75 --wavelength 555 \
+  --pressure 1013.25 --vza 70 --raa 90 --wind-speed 5 --n-water 1.34 \
+  --gas-column-h2o 0 --gas-column-o3 0 --gas-column-no2 0 --gas-column-o2 0 \
+  --gas-column-co2 0 --gas-column-ch4 0 --decouple-sunglint --pssa \
+  > ../../task/manual_cookbook/R15.txt \
+  2> ../../task/manual_cookbook/R15.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{Outputs. }\texttt{R15.txt}.
+
+\textbf{Read and compare. }Compare I/Q/U against R14, using absolute differences near zero. Inspect the IPSS diagnostics in R15.log. The angles are anchored at the surface pixel, and the correction is not a new full three-dimensional ocean solver. Keep the IPSS flag in LUT metadata.
+
+\Needspace{16\baselineskip}
+\section{Gas absorption and atmospheric profiles}
+\label{sec:auto:09_cookbook:4}
+
+\Needspace{17\baselineskip}
+
+\subsection{R16 · All gases at the standard profile columns}
+\label{sec:auto:09_cookbook:4.1}
+
+\label{recipe:R16}
+
+\textbf{Purpose. }Enable gas absorption using the six default integrated columns of \texttt{usstd76}. The six zero-column options used in R07 are deliberately absent. Other physical settings remain identical.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface black_fresnel_ocean --sza 40 --wavelength 555 \
+  --pressure 1013.25 --vza 30 --raa 90 --wind-speed 5 --n-water 1.34 \
+  --atm-profile usstd76 --decouple-sunglint \
+  > ../../task/manual_cookbook/R16.txt \
+  2> ../../task/manual_cookbook/R16.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{Outputs. }\texttt{R16.txt}.
+
+\textbf{Read and compare. }Compare R16 with R07 to see the effect of the default gas mixture at 555 nm. Read each gas column and optical-depth contribution from R16.log; do not infer the amount from the profile name alone. This normal single-case path initializes gases; legacy \texttt{-\allowbreak{}-\allowbreak{}batch} does not.
+
+\Needspace{17\baselineskip}
+
+\subsection{R17 · Ozone alone at 300 DU}
+\label{sec:auto:09_cookbook:4.2}
+
+\label{recipe:R17}
+
+\textbf{Purpose. }Set ozone to 300 DU and explicitly set the other five gas columns to zero. This isolates ozone absorption from water vapour and the other gases at the R07 geometry and wavelength.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface black_fresnel_ocean --sza 40 --wavelength 555 \
+  --pressure 1013.25 --vza 30 --raa 90 --wind-speed 5 --n-water 1.34 \
+  --gas-column-h2o 0 --gas-column-o3 300 --gas-column-no2 0 --gas-column-o2 0 \
+  --gas-column-co2 0 --gas-column-ch4 0 --decouple-sunglint \
+  > ../../task/manual_cookbook/R17.txt \
+  2> ../../task/manual_cookbook/R17.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{Outputs. }\texttt{R17.txt}.
+
+\textbf{Read and compare. }R17 versus R07 changes only the ozone column. Check the overridden O3 column in the log. One DU corresponds to 2.6868e16 molecules/cm\textsuperscript{2};300 is a DU value, not an ozone mixing ratio or a molecular column in cm\textsuperscript{-2}.
+
+\Needspace{17\baselineskip}
+
+\subsection{R18 · Water-vapour absorption at 940 nm}
+\label{sec:auto:09_cookbook:4.3}
+
+\label{recipe:R18}
+
+\textbf{Purpose. }At 940 nm, compare a dry reference with 3 g/cm\textsuperscript{2} of water vapour. All other gases are explicitly zero and both commands use the same gas-profile shape, geometry and sea surface.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface black_fresnel_ocean --sza 40 --wavelength 940 \
+  --pressure 1013.25 --vza 30 --raa 90 --wind-speed 5 --n-water 1.34 \
+  --gas-column-h2o 0 --gas-column-o3 0 --gas-column-no2 0 --gas-column-o2 0 \
+  --gas-column-co2 0 --gas-column-ch4 0 --decouple-sunglint \
+  > ../../task/manual_cookbook/R18_dry.txt \
+  2> ../../task/manual_cookbook/R18_dry.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface black_fresnel_ocean --sza 40 --wavelength 940 \
+  --pressure 1013.25 --vza 30 --raa 90 --wind-speed 5 --n-water 1.34 \
+  --gas-column-h2o 3 --gas-column-o3 0 --gas-column-no2 0 --gas-column-o2 0 \
+  --gas-column-co2 0 --gas-column-ch4 0 --decouple-sunglint \
+  > ../../task/manual_cookbook/R18_wet.txt \
+  2> ../../task/manual_cookbook/R18_wet.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{Outputs. }\texttt{R18\_\allowbreak{}dry.txt}, \texttt{R18\_\allowbreak{}wet.txt}.
+
+\textbf{Read and compare. }Compare R18\_wet.txt with R18\_dry.txt and inspect H2 O absorption in the two logs. The input is mass per area, not relative humidity. Near a structured absorption band, these are monochromatic samples; a sensor-band result requires a separately validated spectral integration.
+
+\Needspace{17\baselineskip}
+
+\subsection{R19 · 760 nm oxygen: a diagnostic case}
+\label{sec:auto:09_cookbook:4.4}
+
+\label{recipe:R19}
+
+\textbf{Purpose. }At 760 nm, compare O2=0 with an illustrative oxygen column of 4.4e24 molecules/cm\textsuperscript{2}. All five other gases are zero. The value is explicitly a molecular column, not the chemical unit mol.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface black_fresnel_ocean --sza 40 --wavelength 760 \
+  --pressure 1013.25 --vza 30 --raa 90 --wind-speed 5 --n-water 1.34 \
+  --gas-column-h2o 0 --gas-column-o3 0 --gas-column-no2 0 --gas-column-o2 0 \
+  --gas-column-co2 0 --gas-column-ch4 0 --decouple-sunglint \
+  > ../../task/manual_cookbook/R19_off.txt \
+  2> ../../task/manual_cookbook/R19_off.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface black_fresnel_ocean --sza 40 --wavelength 760 \
+  --pressure 1013.25 --vza 30 --raa 90 --wind-speed 5 --n-water 1.34 \
+  --gas-column-h2o 0 --gas-column-o3 0 --gas-column-no2 0 \
+  --gas-column-o2 4.4e24 --gas-column-co2 0 --gas-column-ch4 0 \
+  --decouple-sunglint \
+  > ../../task/manual_cookbook/R19_on.txt \
+  2> ../../task/manual_cookbook/R19_on.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{Outputs. }\texttt{R19\_\allowbreak{}off.txt}, \texttt{R19\_\allowbreak{}on.txt}.
+
+\textbf{Read and compare. }Read the oxygen optical depth in R19\_on.log. Do not multiply the input by Avogadro's number; the historical mol/cm\textsuperscript{2} log label means molecules/cm\textsuperscript{2}. The current executable gave TOA I about 0.01142 with O2 off and 0.05405 with it on at 40 layers. An additional O2-on check with 400 and 4000 layers gave about 0.005611 and 0.001098, despite \texttt{conv=\allowbreak{}1} in all three. This strong vertical-resolution sensitivity is not resolved by the SOS convergence flag. Treat this as an implementation diagnostic, not a validated oxygen-absorption or production gas-correction benchmark;400 layers alone is not established as sufficient.
+
+\Needspace{17\baselineskip}
+
+\subsection{R20 · Standard versus tropical gas profiles}
+\label{sec:auto:09_cookbook:4.5}
+
+\label{recipe:R20}
+
+\textbf{Purpose. }Compare \texttt{usstd76} and \texttt{tropical} at 760 nm without overriding gas columns. This changes the complete default gas profiles and their integrated columns, not only the vertical shape.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface black_fresnel_ocean --sza 40 --wavelength 760 \
+  --pressure 1013.25 --vza 30 --raa 90 --wind-speed 5 --n-water 1.34 \
+  --atm-profile usstd76 --decouple-sunglint \
+  > ../../task/manual_cookbook/R20_std.txt \
+  2> ../../task/manual_cookbook/R20_std.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface black_fresnel_ocean --sza 40 --wavelength 760 \
+  --pressure 1013.25 --vza 30 --raa 90 --wind-speed 5 --n-water 1.34 \
+  --atm-profile tropical --decouple-sunglint \
+  > ../../task/manual_cookbook/R20_tropical.txt \
+  2> ../../task/manual_cookbook/R20_tropical.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{Outputs. }\texttt{R20\_\allowbreak{}std.txt}, \texttt{R20\_\allowbreak{}tropical.txt}.
+
+\textbf{Read and compare. }Store R20\_std and R20\_tropical with their logged gas columns. For a shape-only experiment, fix all six columns to the same nonnegative values. As in R19, the strong 760 nm absorption requires independent vertical-resolution validation; these default-layer results demonstrate profile selection, not production accuracy. The profile option selects gases, not a different Rayleigh climatology.
+
+\Needspace{16\baselineskip}
+\section{Aerosol loading, spectra and height}
+\label{sec:auto:09_cookbook:5}
+
+\Needspace{17\baselineskip}
+
+\subsection{R21 · M80C aerosol with a 555 nm AOD reference}
+\label{sec:auto:09_cookbook:5.1}
+
+\label{recipe:R21}
+
+\textbf{Purpose. }Add M80 C aerosol at AOD555=0.1 to the 443 nm gas-free sea-surface state. Install \texttt{inputs/\allowbreak{}M80C.mie} from the data release first. The calculation wavelength and AOD reference wavelength are intentionally different.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface black_fresnel_ocean --sza 40 --wavelength 443 \
+  --pressure 1013.25 --vza 30 --raa 90 --wind-speed 5 --n-water 1.34 \
+  --gas-column-h2o 0 --gas-column-o3 0 --gas-column-no2 0 --gas-column-o2 0 \
+  --gas-column-co2 0 --gas-column-ch4 0 --decouple-sunglint \
+  --mie inputs/M80C.mie --aod-555 0.1 \
+  > ../../task/manual_cookbook/R21.txt \
+  2> ../../task/manual_cookbook/R21.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{Outputs. }\texttt{R21.txt}.
+
+\textbf{Read and compare. }Read \texttt{AOD\_\allowbreak{}ref}, \texttt{AOD\_\allowbreak{}ref\_\allowbreak{}nm}, \texttt{AOD\_\allowbreak{}band} and TOA reflectance in R21.txt. Compare with aerosol-free R13. Their difference includes aerosol–molecule and aerosol–surface interactions, so it is not just a single-scattering aerosol term. The aerosol numerical defaults also follow the active-aerosol branch.
+
+\Needspace{17\baselineskip}
+
+\subsection{R22 · Changing the AOD reference wavelength}
+\label{sec:auto:09_cookbook:5.2}
+
+\label{recipe:R22}
+
+\textbf{Purpose. }Replace AOD555=0.1 by AOD865=0.1 for the same M80 C file and 443 nm calculation. Only one AOD input form is supplied in each command.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface black_fresnel_ocean --sza 40 --wavelength 443 \
+  --pressure 1013.25 --vza 30 --raa 90 --wind-speed 5 --n-water 1.34 \
+  --gas-column-h2o 0 --gas-column-o3 0 --gas-column-no2 0 --gas-column-o2 0 \
+  --gas-column-co2 0 --gas-column-ch4 0 --decouple-sunglint \
+  --mie inputs/M80C.mie --aod-865 0.1 \
+  > ../../task/manual_cookbook/R22.txt \
+  2> ../../task/manual_cookbook/R22.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{Outputs. }\texttt{R22.txt}.
+
+\textbf{Read and compare. }R22 is a different aerosol loading from R21 despite the common number 0.1. Compare \texttt{AOD\_\allowbreak{}band} and the reference-wavelength keys. To represent the same physical loading under a different reference, convert the AOD using the file's extinction ratio; do not keep its numeric value blindly.
+
+\Needspace{17\baselineskip}
+
+\subsection{R23 · Changing the aerosol model file}
+\label{sec:auto:09_cookbook:5.3}
+
+\label{recipe:R23}
+
+\textbf{Purpose. }Change only the aerosol file from M80 C to C50 at the same AOD555=0.1. Install \texttt{inputs/\allowbreak{}C50.mie} and retain its hash alongside the M80 C hash.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface black_fresnel_ocean --sza 40 --wavelength 443 \
+  --pressure 1013.25 --vza 30 --raa 90 --wind-speed 5 --n-water 1.34 \
+  --gas-column-h2o 0 --gas-column-o3 0 --gas-column-no2 0 --gas-column-o2 0 \
+  --gas-column-co2 0 --gas-column-ch4 0 --decouple-sunglint \
+  --mie inputs/C50.mie --aod-555 0.1 \
+  > ../../task/manual_cookbook/R23.txt \
+  2> ../../task/manual_cookbook/R23.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{Outputs. }\texttt{R23.txt}.
+
+\textbf{Read and compare. }Compare R23 with R21. Phase function, single-scattering albedo and spectral extinction can all change with the model; the band AOD may differ even though AOD555 is fixed. Treat model identifiers as data provenance, and consult the model documentation before giving them a physical aerosol label.
+
+\Needspace{17\baselineskip}
+
+\subsection{R24 · Doubling aerosol loading}
+\label{sec:auto:09_cookbook:5.4}
+
+\label{recipe:R24}
+
+\textbf{Purpose. }Increase M80 C AOD555 from 0.1 to 0.2 while retaining 443 nm, geometry and surface. The default 20-order cap gave \texttt{conv=\allowbreak{}0} at 0.2 in the manual check, so both comparison commands explicitly use a 40-order cap and ADVANCED permission.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+env OCRT_ADVANCED=1 ./build/ocrt --surface black_fresnel_ocean --sza 40 \
+  --wavelength 443 --pressure 1013.25 --vza 30 --raa 90 --wind-speed 5 \
+  --n-water 1.34 --gas-column-h2o 0 --gas-column-o3 0 --gas-column-no2 0 \
+  --gas-column-o2 0 --gas-column-co2 0 --gas-column-ch4 0 --decouple-sunglint \
+  --mie inputs/M80C.mie --aod-555 0.1 --sos-max-orders 40 \
+  > ../../task/manual_cookbook/R24_ref.txt \
+  2> ../../task/manual_cookbook/R24_ref.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+env OCRT_ADVANCED=1 ./build/ocrt --surface black_fresnel_ocean --sza 40 \
+  --wavelength 443 --pressure 1013.25 --vza 30 --raa 90 --wind-speed 5 \
+  --n-water 1.34 --gas-column-h2o 0 --gas-column-o3 0 --gas-column-no2 0 \
+  --gas-column-o2 0 --gas-column-co2 0 --gas-column-ch4 0 --decouple-sunglint \
+  --mie inputs/M80C.mie --aod-555 0.2 --sos-max-orders 40 \
+  > ../../task/manual_cookbook/R24_double.txt \
+  2> ../../task/manual_cookbook/R24_double.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{Outputs. }\texttt{R24\_\allowbreak{}ref.txt}, \texttt{R24\_\allowbreak{}double.txt}.
+
+\textbf{Read and compare. }Compare R24\_double with R24\_ref after confirming \texttt{conv=\allowbreak{}1} in both. Using the same cap avoids silently mixing numerical settings with the aerosol-loading change. The band AOD doubles, but total reflectance need not double because attenuation and repeated scattering also change. Raising a cap is useful only when actual convergence is checked.
+
+\Needspace{17\baselineskip}
+
+\subsection{R25 · Aerosol height in an IPSS calculation}
+\label{sec:auto:09_cookbook:5.5}
+
+\label{recipe:R25}
+
+\textbf{Purpose. }With IPSS enabled at SZA75\textdegree{} and VZA70\textdegree{}, compare aerosol scale heights 2 km and 1 km while retaining AOD555=0.1. The column aerosol loading stays fixed; its vertical distribution changes.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface black_fresnel_ocean --sza 75 --wavelength 555 \
+  --pressure 1013.25 --vza 70 --raa 90 --wind-speed 5 --n-water 1.34 \
+  --gas-column-h2o 0 --gas-column-o3 0 --gas-column-no2 0 --gas-column-o2 0 \
+  --gas-column-co2 0 --gas-column-ch4 0 --decouple-sunglint \
+  --mie inputs/M80C.mie --aod-555 0.1 --pssa --aer-h-km 2 \
+  > ../../task/manual_cookbook/R25_h2.txt \
+  2> ../../task/manual_cookbook/R25_h2.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface black_fresnel_ocean --sza 75 --wavelength 555 \
+  --pressure 1013.25 --vza 70 --raa 90 --wind-speed 5 --n-water 1.34 \
+  --gas-column-h2o 0 --gas-column-o3 0 --gas-column-no2 0 --gas-column-o2 0 \
+  --gas-column-co2 0 --gas-column-ch4 0 --decouple-sunglint \
+  --mie inputs/M80C.mie --aod-555 0.1 --pssa --aer-h-km 1 \
+  > ../../task/manual_cookbook/R25_h1.txt \
+  2> ../../task/manual_cookbook/R25_h1.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{Outputs. }\texttt{R25\_\allowbreak{}h2.txt}, \texttt{R25\_\allowbreak{}h1.txt}.
+
+\textbf{Read and compare. }Compare R25\_h 2 and R25\_h 1 and inspect IPSS diagnostics. The current phase-weighted correction distinguishes molecular and aerosol source distributions. \texttt{-\allowbreak{}-\allowbreak{}aer-\allowbreak{}h-\allowbreak{}km} is positive and does not require the ADVANCED gate in the current parser, despite the older help wording.
+
+\Needspace{16\baselineskip}
+\section{Water constituents and total IOPs}
+\label{sec:auto:09_cookbook:6}
+
+\Needspace{17\baselineskip}
+
+\subsection{R26 · Pure seawater with a molecular atmosphere}
+\label{sec:auto:09_cookbook:6.1}
+
+\label{recipe:R26}
+
+\textbf{Purpose. }Select coupled ocean with all OCRT constituent inputs explicitly zero. Fix 20\textdegree{}C, salinity 35 g/kg, interface index 1.34 and wind 3 m/s. Molecules remain at 1013.25 hPa, while gases and aerosols are absent.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface ocean --sza 40 --wavelength 555 --pressure 1013.25 \
+  --vza 30 --raa 90 --wind-speed 3 --n-water 1.34 --gas-column-h2o 0 \
+  --gas-column-o3 0 --gas-column-no2 0 --gas-column-o2 0 --gas-column-co2 0 \
+  --gas-column-ch4 0 --water-model ocrt --water-temperature 20 \
+  --water-salinity 35 --ocrt-chl 0 --ocrt-tsm 0 --ocrt-adom440 0 \
+  > ../../task/manual_cookbook/R26.txt \
+  2> ../../task/manual_cookbook/R26.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{Outputs. }\texttt{R26.txt}.
+
+\textbf{Read and compare. }Read \texttt{Rrs0plus\_\allowbreak{}I}, \texttt{rrs0minus\_\allowbreak{}I}, IOPs and the TOA component keys in R26.txt. These single-text names differ from grid \texttt{Rrs\_\allowbreak{}I/\allowbreak{}rrs\_\allowbreak{}I}. This pure-water path uses an internal solar normalization of pi; use normalized ratios rather than raw Lu when comparing it with nonzero-constituent paths.
+
+\Needspace{17\baselineskip}
+
+\subsection{R27 · Pure seawater without atmospheric optical depth}
+\label{sec:auto:09_cookbook:6.2}
+
+\label{recipe:R27}
+
+\textbf{Purpose. }Set pressure to 0 in R26 while keeping all gas columns zero and omitting aerosols. This removes atmospheric molecular scattering and gas/aerosol optical depth, but keeps solar illumination and the air–water boundary.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface ocean --sza 40 --wavelength 555 --pressure 0 --vza 30 \
+  --raa 90 --wind-speed 3 --n-water 1.34 --gas-column-h2o 0 --gas-column-o3 0 \
+  --gas-column-no2 0 --gas-column-o2 0 --gas-column-co2 0 --gas-column-ch4 0 \
+  --water-model ocrt --water-temperature 20 --water-salinity 35 --ocrt-chl 0 \
+  --ocrt-tsm 0 --ocrt-adom440 0 \
+  > ../../task/manual_cookbook/R27.txt \
+  2> ../../task/manual_cookbook/R27.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{Outputs. }\texttt{R27.txt}.
+
+\textbf{Read and compare. }Compare water reflectance and TOA components with R26. Pressure 0 alone would not have disabled the default gases. This is useful for a water-boundary benchmark; it is not a realistic observational atmosphere and does not introduce a finite-depth reflective seabed.
+
+\Needspace{17\baselineskip}
+
+\subsection{R28 · Adding CDOM absorption}
+\label{sec:auto:09_cookbook:6.3}
+
+\label{recipe:R28}
+
+\textbf{Purpose. }Add aDOM440=0.1 m\textsuperscript{-1} to R26 while leaving Chl and TSM at zero. The default aDOM slope is 0.014 nm\textsuperscript{-1}, and all atmospheric and surface conditions remain fixed.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface ocean --sza 40 --wavelength 555 --pressure 1013.25 \
+  --vza 30 --raa 90 --wind-speed 3 --n-water 1.34 --gas-column-h2o 0 \
+  --gas-column-o3 0 --gas-column-no2 0 --gas-column-o2 0 --gas-column-co2 0 \
+  --gas-column-ch4 0 --water-model ocrt --water-temperature 20 \
+  --water-salinity 35 --ocrt-chl 0 --ocrt-tsm 0 --ocrt-adom440 0.1 \
+  > ../../task/manual_cookbook/R28.txt \
+  2> ../../task/manual_cookbook/R28.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{Outputs. }\texttt{R28.txt}.
+
+\textbf{Read and compare. }Inspect \texttt{a\_\allowbreak{}dom}, \texttt{a\_\allowbreak{}total} and normalized \texttt{Rrs0plus\_\allowbreak{}I}. CDOM adds absorption; it does not add a particulate phase function. Compare with R26 using ratios/reflectances, because the nonzero-constituent branch uses internal solar normalization 1 rather than the pure-water branch's pi.
+
+\Needspace{17\baselineskip}
+
+\subsection{R29 · The spectral slope of CDOM}
+\label{sec:auto:09_cookbook:6.4}
+
+\label{recipe:R29}
+
+\textbf{Purpose. }At 555 nm and fixed aDOM440=0.1 m\textsuperscript{-1}, compare slopes 0.014 and 0.020 nm\textsuperscript{-1}. Both commands are printed so that the reference absorption and all other conditions can be checked directly.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface ocean --sza 40 --wavelength 555 --pressure 1013.25 \
+  --vza 30 --raa 90 --wind-speed 3 --n-water 1.34 --gas-column-h2o 0 \
+  --gas-column-o3 0 --gas-column-no2 0 --gas-column-o2 0 --gas-column-co2 0 \
+  --gas-column-ch4 0 --water-model ocrt --water-temperature 20 \
+  --water-salinity 35 --ocrt-chl 0 --ocrt-tsm 0 --ocrt-adom440 0.1 \
+  --ocrt-adom-slope 0.014 \
+  > ../../task/manual_cookbook/R29_s014.txt \
+  2> ../../task/manual_cookbook/R29_s014.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface ocean --sza 40 --wavelength 555 --pressure 1013.25 \
+  --vza 30 --raa 90 --wind-speed 3 --n-water 1.34 --gas-column-h2o 0 \
+  --gas-column-o3 0 --gas-column-no2 0 --gas-column-o2 0 --gas-column-co2 0 \
+  --gas-column-ch4 0 --water-model ocrt --water-temperature 20 \
+  --water-salinity 35 --ocrt-chl 0 --ocrt-tsm 0 --ocrt-adom440 0.1 \
+  --ocrt-adom-slope 0.020 \
+  > ../../task/manual_cookbook/R29_s020.txt \
+  2> ../../task/manual_cookbook/R29_s020.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{Outputs. }\texttt{R29\_\allowbreak{}s014.txt}, \texttt{R29\_\allowbreak{}s020.txt}.
+
+\textbf{Read and compare. }The prescribed CDOM absorptions are approximately 0.01999 and 0.01003 m\textsuperscript{-1} because aDOM(lambda)=aDOM440*exp[-S*(lambda-440)]. Verify \texttt{a\_\allowbreak{}dom} in each result before interpreting \texttt{Rrs0plus\_\allowbreak{}I}. A larger slope reduces CDOM absorption above 440 nm and increases it below 440 nm.
+
+\Needspace{17\baselineskip}
+
+\subsection{R30 · Chlorophyll and the current scattering limitation}
+\label{sec:auto:09_cookbook:6.5}
+
+\label{recipe:R30}
+
+\textbf{Purpose. }Set Chl=1 mg/m\textsuperscript{3} while retaining TSM=aDOM440=0. Install the phytoplankton absorption and detritus data required by the current C constituent path.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface ocean --sza 40 --wavelength 555 --pressure 1013.25 \
+  --vza 30 --raa 90 --wind-speed 3 --n-water 1.34 --gas-column-h2o 0 \
+  --gas-column-o3 0 --gas-column-no2 0 --gas-column-o2 0 --gas-column-co2 0 \
+  --gas-column-ch4 0 --water-model ocrt --water-temperature 20 \
+  --water-salinity 35 --ocrt-chl 1 --ocrt-tsm 0 --ocrt-adom440 0 \
+  > ../../task/manual_cookbook/R30.txt \
+  2> ../../task/manual_cookbook/R30.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{Outputs. }\texttt{R30.txt}.
+
+\textbf{Read and compare. }Inspect \texttt{a\_\allowbreak{}chl}, \texttt{a\_\allowbreak{}pig}, \texttt{b\_\allowbreak{}pig}, \texttt{bb\_\allowbreak{}pig} and total IOPs. EAP phytoplankton scattering is currently disabled; positive Chl does not activate it. Detritus scattering tied to Chl can remain even with zero detrital absorption. Do not label this run as a complete species-resolved phytoplankton simulation.
+
+\Needspace{17\baselineskip}
+
+\subsection{R31 · Red-clay suspended mineral particles}
+\label{sec:auto:09_cookbook:6.6}
+
+\label{recipe:R31}
+
+\textbf{Purpose. }Set inorganic TSM=0.5 g/m\textsuperscript{3} with species \texttt{red\_\allowbreak{}clay}, keeping Chl and CDOM zero. Install the red-clay Ahn phase table and the matching mass-specific absorption/scattering files.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface ocean --sza 40 --wavelength 555 --pressure 1013.25 \
+  --vza 30 --raa 90 --wind-speed 3 --n-water 1.34 --gas-column-h2o 0 \
+  --gas-column-o3 0 --gas-column-no2 0 --gas-column-o2 0 --gas-column-co2 0 \
+  --gas-column-ch4 0 --water-model ocrt --water-temperature 20 \
+  --water-salinity 35 --ocrt-chl 0 --ocrt-tsm 0.5 --ocrt-adom440 0 \
+  --ocrt-tsm-species red_clay \
+  > ../../task/manual_cookbook/R31.txt \
+  2> ../../task/manual_cookbook/R31.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{Outputs. }\texttt{R31.txt}.
+
+\textbf{Read and compare. }Inspect \texttt{a\_\allowbreak{}min}, \texttt{b\_\allowbreak{}min}, \texttt{bb\_\allowbreak{}min}, total IOPs and \texttt{Rrs0plus\_\allowbreak{}I}. This TSM is dry inorganic mineral mass, not a generic sum of every suspended component. Retain the mineral species and table hash with the concentration; mass alone does not specify the optical state.
+
+\Needspace{17\baselineskip}
+
+\subsection{R32 · Brown earth at the same mineral concentration}
+\label{sec:auto:09_cookbook:6.7}
+
+\label{recipe:R32}
+
+\textbf{Purpose. }Replace red clay by \texttt{brown\_\allowbreak{}earth} at the same 0.5 g/m\textsuperscript{3} concentration and all other R31 conditions. The \texttt{Brown\_\allowbreak{}earth\_\allowbreak{}AHN.mie} file and its matching coefficient tables are required.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface ocean --sza 40 --wavelength 555 --pressure 1013.25 \
+  --vza 30 --raa 90 --wind-speed 3 --n-water 1.34 --gas-column-h2o 0 \
+  --gas-column-o3 0 --gas-column-no2 0 --gas-column-o2 0 --gas-column-co2 0 \
+  --gas-column-ch4 0 --water-model ocrt --water-temperature 20 \
+  --water-salinity 35 --ocrt-chl 0 --ocrt-tsm 0.5 --ocrt-adom440 0 \
+  --ocrt-tsm-species brown_earth \
+  > ../../task/manual_cookbook/R32.txt \
+  2> ../../task/manual_cookbook/R32.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{Outputs. }\texttt{R32.txt}.
+
+\textbf{Read and compare. }Compare R32 and R31 mineral IOPs before comparing reflectance. This is a species substitution at fixed mass, not a phase-only substitution at fixed a/b/bb. Differences in absorption, scattering and phase can all contribute to the output change.
+
+\Needspace{17\baselineskip}
+
+\subsection{R33 · Detrital absorption at fixed chlorophyll}
+\label{sec:auto:09_cookbook:6.8}
+
+\label{recipe:R33}
+
+\textbf{Purpose. }At Chl=1 mg/m\textsuperscript{3}, explicitly add detrital absorption a 440=0.01 m\textsuperscript{-1} with slope 0.0109 nm\textsuperscript{-1}. TSM and CDOM remain zero, matching R30 except for the detrital absorption input.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface ocean --sza 40 --wavelength 555 --pressure 1013.25 \
+  --vza 30 --raa 90 --wind-speed 3 --n-water 1.34 --gas-column-h2o 0 \
+  --gas-column-o3 0 --gas-column-no2 0 --gas-column-o2 0 --gas-column-co2 0 \
+  --gas-column-ch4 0 --water-model ocrt --water-temperature 20 \
+  --water-salinity 35 --ocrt-chl 1 --ocrt-tsm 0 --ocrt-adom440 0 \
+  --ocrt-detritus-a440 0.01 --ocrt-detritus-slope 0.0109 \
+  > ../../task/manual_cookbook/R33.txt \
+  2> ../../task/manual_cookbook/R33.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{Outputs. }\texttt{R33.txt}.
+
+\textbf{Read and compare. }Compare the absorption budget and normalized water reflectance with R30. The current interface requires positive Chl for explicit detritus options. Zero detrital a 440 would remove its absorption, not the Chl-derived detrital scattering; this is not an independent detritus-concentration model.
+
+\Needspace{17\baselineskip}
+
+\subsection{R34 · Temperature at a fixed interface index}
+\label{sec:auto:09_cookbook:6.9}
+
+\label{recipe:R34}
+
+\textbf{Purpose. }Reduce water temperature from 20\textdegree{}C to 5\textdegree{}C at salinity 35 g/kg, retaining the explicitly fixed interface refractive index 1.34. This isolates the temperature-dependent pure-water IOP input from an index change at the boundary.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface ocean --sza 40 --wavelength 555 --pressure 1013.25 \
+  --vza 30 --raa 90 --wind-speed 3 --n-water 1.34 --gas-column-h2o 0 \
+  --gas-column-o3 0 --gas-column-no2 0 --gas-column-o2 0 --gas-column-co2 0 \
+  --gas-column-ch4 0 --water-model ocrt --water-temperature 5 \
+  --water-salinity 35 --ocrt-chl 0 --ocrt-tsm 0 --ocrt-adom440 0 \
+  > ../../task/manual_cookbook/R34.txt \
+  2> ../../task/manual_cookbook/R34.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{Outputs. }\texttt{R34.txt}.
+
+\textbf{Read and compare. }Compare \texttt{a\_\allowbreak{}w}, \texttt{b\_\allowbreak{}w}, \texttt{bb\_\allowbreak{}w} and normalized reflectance with R26. \texttt{-\allowbreak{}-\allowbreak{}water-\allowbreak{}temperature} does not automatically replace \texttt{-\allowbreak{}-\allowbreak{}n-\allowbreak{}water} by a temperature-dependent interface index in this single-case configuration. If a varying index is desired, compute and specify consistent values across every comparison path.
+
+\Needspace{17\baselineskip}
+
+\subsection{R35 · The CCRR constituent adapter}
+\label{sec:auto:09_cookbook:6.10}
+
+\label{recipe:R35}
+
+\textbf{Purpose. }Use the CCRR constituent adapter at Chl=1 mg/m\textsuperscript{3} with TSM=CDOM=0, matching the physical labels in R30. The adapter maps these inputs to OCRT IOPs; it does not run a separate CCRR transfer solver.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface ocean --sza 40 --wavelength 555 --pressure 1013.25 \
+  --vza 30 --raa 90 --wind-speed 3 --n-water 1.34 --gas-column-h2o 0 \
+  --gas-column-o3 0 --gas-column-no2 0 --gas-column-o2 0 --gas-column-co2 0 \
+  --gas-column-ch4 0 --water-model ccrr --water-temperature 20 \
+  --water-salinity 35 --ccrr-chl 1 --ccrr-tsm 0 --ccrr-adom440 0 \
+  > ../../task/manual_cookbook/R35.txt \
+  2> ../../task/manual_cookbook/R35.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{Outputs. }\texttt{R35.txt}.
+
+\textbf{Read and compare. }Compare IOP budgets first and normalized water reflectance second. The same nominal Chl does not guarantee the same absorption/scattering as the OCRT constituent model. Do not combine \texttt{-\allowbreak{}-\allowbreak{}ccrr-\allowbreak{}*} and \texttt{-\allowbreak{}-\allowbreak{}ocrt-\allowbreak{}*} constituent flags in one run.
+
+\Needspace{17\baselineskip}
+
+\subsection{R36 · Direct total IOP input}
+\label{sec:auto:09_cookbook:6.11}
+
+\label{recipe:R36}
+
+\textbf{Purpose. }Supply total a=0.1, b=0.2 and bb=0.005 m\textsuperscript{-1} directly. These totals already include pure water and all constituents; do not add a separate pure-water amount afterward.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface ocean --sza 40 --wavelength 555 --pressure 1013.25 \
+  --vza 30 --raa 90 --wind-speed 3 --n-water 1.34 --gas-column-h2o 0 \
+  --gas-column-o3 0 --gas-column-no2 0 --gas-column-o2 0 --gas-column-co2 0 \
+  --gas-column-ch4 0 --water-model iop --water-temperature 20 \
+  --water-salinity 35 --iop-a 0.1 --iop-b 0.2 --iop-bb 0.005 \
+  > ../../task/manual_cookbook/R36.txt \
+  2> ../../task/manual_cookbook/R36.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{Outputs. }\texttt{R36.txt}.
+
+\textbf{Read and compare. }Verify \texttt{a\_\allowbreak{}total}, \texttt{b\_\allowbreak{}total} and \texttt{bb\_\allowbreak{}total} and read \texttt{Rrs0plus\_\allowbreak{}I}. The inputs satisfy a>=0, b>0 and 0<bb<0.5 b. The default direct-IOP phase construction is used without external phase files or forward truncation; a/b/bb alone are not a unique description of every possible phase function.
+
+\Needspace{17\baselineskip}
+
+\subsection{R37 · Changing the backscattering fraction}
+\label{sec:auto:09_cookbook:6.12}
+
+\label{recipe:R37}
+
+\textbf{Purpose. }Increase total bb from 0.005 to 0.01 m\textsuperscript{-1} while retaining a=0.1 and b=0.2 m\textsuperscript{-1}. The backscattering ratio therefore changes from 0.025 to 0.05.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface ocean --sza 40 --wavelength 555 --pressure 1013.25 \
+  --vza 30 --raa 90 --wind-speed 3 --n-water 1.34 --gas-column-h2o 0 \
+  --gas-column-o3 0 --gas-column-no2 0 --gas-column-o2 0 --gas-column-co2 0 \
+  --gas-column-ch4 0 --water-model iop --water-temperature 20 \
+  --water-salinity 35 --iop-a 0.1 --iop-b 0.2 --iop-bb 0.01 \
+  > ../../task/manual_cookbook/R37.txt \
+  2> ../../task/manual_cookbook/R37.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{Outputs. }\texttt{R37.txt}.
+
+\textbf{Read and compare. }Compare R37 with R36. Verify the requested total IOPs before attributing differences in Rrs to the backscattering-ratio change. This experiment follows the selected default phase construction; it does not prove that two arbitrary phase functions with the same bb/b produce identical reflectance.
+
+\Needspace{16\baselineskip}
+\section{LUTs, native batch and numerical checks}
+\label{sec:auto:09_cookbook:7}
+
+\Needspace{17\baselineskip}
+
+\subsection{R38 · A 12-direction Rayleigh LUT}
+\label{sec:auto:09_cookbook:7.1}
+
+\label{recipe:R38}
+
+\textbf{Purpose. }Replace the single direction of R07 by VZA=0/30/60\textdegree{} and RAA=0/90/180/270\textdegree{}. This makes a 12-row,13-column atmospheric/surface CSV at one wavelength and one SZA.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface black_fresnel_ocean --sza 40 --wavelength 555 \
+  --pressure 1013.25 --wind-speed 5 --n-water 1.34 --gas-column-h2o 0 \
+  --gas-column-o3 0 --gas-column-no2 0 --gas-column-o2 0 --gas-column-co2 0 \
+  --gas-column-ch4 0 --decouple-sunglint --lut-vza-step 30 --lut-vza-max 60 \
+  --lut-raa-step 90 --output-full-grid ../../task/manual_cookbook/R38.csv \
+  > ../../task/manual_cookbook/R38.txt \
+  2> ../../task/manual_cookbook/R38.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{Outputs. }\texttt{R38.csv}.
+
+\textbf{Read and compare. }Use the actual \texttt{rho\_\allowbreak{}I/\allowbreak{}Q/\allowbreak{}U} grid headers. Compare its VZA30\textdegree{},RAA90\textdegree{} row with R07 \texttt{TOA\_\allowbreak{}rho\_\allowbreak{}I/\allowbreak{}Q/\allowbreak{}U}; the no-aerosol numerical defaults are aligned. Count 12 rows, preserve RAA270\textdegree{} and signed U, and check finite observables. This is a compact plumbing test, not a production angular-resolution recommendation.
+
+\Needspace{17\baselineskip}
+
+\subsection{R39 · Two spectral states: single grids and native batch}
+\label{sec:auto:09_cookbook:7.2}
+
+\label{recipe:R39}
+
+\textbf{Purpose. }Compute CDOM-water angular grids at 555 and 443 nm both as individual states and through native ocean batch. All paths explicitly use index 1.34 and 96 underwater nodes; ADVANCED is enabled only for that explicit numerical setting.
+
+First create the native batch input in the same C working directory:
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+cat > ../../task/manual_cookbook/R39_jobs.csv <<'CSV'
+out,wavelength,sza,wind,ocrt_adom440
+../../task/manual_cookbook/R39_batch555.csv,555,40,3,0.1
+../../task/manual_cookbook/R39_batch443.csv,443,40,3,0.1
+CSV
+
+\end{ManualCode}
+\end{minipage}\par
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+env OCRT_ADVANCED=1 ./build/ocrt --surface ocean --sza 40 --wavelength 555 \
+  --pressure 1013.25 --wind-speed 3 --n-water 1.34 --gas-column-h2o 0 \
+  --gas-column-o3 0 --gas-column-no2 0 --gas-column-o2 0 --gas-column-co2 0 \
+  --gas-column-ch4 0 --water-model ocrt --water-temperature 20 \
+  --water-salinity 35 --ocrt-chl 0 --ocrt-tsm 0 --ocrt-adom440 0.1 \
+  --n-mu-water 96 --lut-vza-step 30 --lut-vza-max 60 --lut-raa-step 90 \
+  --output-full-grid ../../task/manual_cookbook/R39_single555.csv \
+  > ../../task/manual_cookbook/R39_single555.txt \
+  2> ../../task/manual_cookbook/R39_single555.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+env OCRT_ADVANCED=1 ./build/ocrt --surface ocean --sza 40 --wavelength 443 \
+  --pressure 1013.25 --wind-speed 3 --n-water 1.34 --gas-column-h2o 0 \
+  --gas-column-o3 0 --gas-column-no2 0 --gas-column-o2 0 --gas-column-co2 0 \
+  --gas-column-ch4 0 --water-model ocrt --water-temperature 20 \
+  --water-salinity 35 --ocrt-chl 0 --ocrt-tsm 0 --ocrt-adom440 0.1 \
+  --n-mu-water 96 --lut-vza-step 30 --lut-vza-max 60 --lut-raa-step 90 \
+  --output-full-grid ../../task/manual_cookbook/R39_single443.csv \
+  > ../../task/manual_cookbook/R39_single443.txt \
+  2> ../../task/manual_cookbook/R39_single443.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+env OCRT_ADVANCED=1 ./build/ocrt --surface ocean --sza 40 --wavelength 555 \
+  --pressure 1013.25 --wind-speed 3 --n-water 1.34 --gas-column-h2o 0 \
+  --gas-column-o3 0 --gas-column-no2 0 --gas-column-o2 0 --gas-column-co2 0 \
+  --gas-column-ch4 0 --water-model ocrt --water-temperature 20 \
+  --water-salinity 35 --ocrt-chl 0 --ocrt-tsm 0 --ocrt-adom440 0.1 \
+  --n-mu-water 96 --lut-vza-step 30 --lut-vza-max 60 --lut-raa-step 90 \
+  --batch-full-grid ../../task/manual_cookbook/R39_jobs.csv \
+  > ../../task/manual_cookbook/R39_batch.txt \
+  2> ../../task/manual_cookbook/R39_batch.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{Outputs. }\texttt{R39\_\allowbreak{}single555.csv}, \texttt{R39\_\allowbreak{}single443.csv}, \texttt{R39\_\allowbreak{}batch555.csv}, \texttt{R39\_\allowbreak{}batch443.csv}.
+
+\textbf{Read and compare. }The four output CSVs each contain 12 rows and 60 columns. Compare R39\_single 555 with R39\_batch 555, and the analogous 443 nm pair, by angle/header names. Explicit n-water prevents the batch wavelength field from silently selecting the Quan–Fry index; explicit n-mu-water prevents the batch 48 versus grid 96 default mismatch. The UTF-8 batch input has no BOM and contains no quoted/comma-containing paths.
+
+\Needspace{17\baselineskip}
+
+\subsection{R40 · Independent atmospheric and underwater convergence checks}
+\label{sec:auto:09_cookbook:7.3}
+
+\label{recipe:R40}
+
+\textbf{Purpose. }Perform two separate numerical refinements: atmospheric n-mu 24→32 relative to R07, and underwater n-mu-water 48→96 relative to the single-ocean R26. Each pair changes only its own integration-node count; these are not changes to the output-angle grid.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+env OCRT_ADVANCED=1 ./build/ocrt --surface black_fresnel_ocean --sza 40 \
+  --wavelength 555 --pressure 1013.25 --vza 30 --raa 90 --wind-speed 5 \
+  --n-water 1.34 --gas-column-h2o 0 --gas-column-o3 0 --gas-column-no2 0 \
+  --gas-column-o2 0 --gas-column-co2 0 --gas-column-ch4 0 --decouple-sunglint \
+  --n-mu 32 \
+  > ../../task/manual_cookbook/R40_atmos32.txt \
+  2> ../../task/manual_cookbook/R40_atmos32.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+env OCRT_ADVANCED=1 ./build/ocrt --surface ocean --sza 40 --wavelength 555 \
+  --pressure 1013.25 --vza 30 --raa 90 --wind-speed 3 --n-water 1.34 \
+  --gas-column-h2o 0 --gas-column-o3 0 --gas-column-no2 0 --gas-column-o2 0 \
+  --gas-column-co2 0 --gas-column-ch4 0 --water-model ocrt \
+  --water-temperature 20 --water-salinity 35 --ocrt-chl 0 --ocrt-tsm 0 \
+  --ocrt-adom440 0 --n-mu-water 96 \
+  > ../../task/manual_cookbook/R40_water96.txt \
+  2> ../../task/manual_cookbook/R40_water96.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{Outputs. }\texttt{R40\_\allowbreak{}atmos32.txt}, \texttt{R40\_\allowbreak{}water96.txt}.
+
+\textbf{Read and compare. }For each pair compute absolute I/Q/U differences and relative I error when I is nonzero. The atmospheric and ocean outputs belong to different physical scenes, so do not compare R40\_atmos 32 directly with R40\_water 96. A small difference is evidence for this refinement at this state, not a universal accuracy bound. Refine Fourier order, layers or tolerance separately if the intended case requires it.
+
+\Needspace{16\baselineskip}
+\section{Turn a successful recipe into a trustworthy data set}
+\label{sec:auto:09_cookbook:8}
+
+The runner's basic checks require finite primary observables, expected grid dimensions/angles, and \texttt{water\_\allowbreak{}converged=\allowbreak{}1} in ocean CSVs. In coupled-ocean single text, \texttt{conv} reports the returned water solve's convergence; it is not an independent atmospheric/full-coupling certificate. For atmospheric single text, \texttt{conv} aggregates the Fourier SOS convergence. Invalid upward transmittance is recorded separately and not replaced by zero. R19 illustrates why passing these checks alone does not establish physical validity. The current Python R1 missing-EAP-data limitation and the C/Python IPSS difference remain as documented in Appendix~\ref{chap:06_python_batch}; these recipes call C.
+
+Before expanding a state axis, compare paired states with all other physical and numerical settings fixed. Use independent calculation points for interpolation error, convergence refinements for numerical error, and external observations/benchmarks for physical validity. Keep wavelength/SZA/pressure/wind/AOD/water state and file hashes with every result. For training data, partition complete atmospheric/ocean states across training and evaluation sets instead of splitting only neighboring angular rows. Never replace a failed solve by an all-zero spectrum.

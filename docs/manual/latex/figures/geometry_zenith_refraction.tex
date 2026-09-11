@@ -1,0 +1,64 @@
+% Editable vector artwork. Both editions use the same physical geometry.
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[x=1cm,y=1cm,font=\sffamily\fontsize{9}{11}\selectfont,
+  ray/.style={line width=1.05pt,-{Latex[length=2.2mm]}},
+  axis/.style={ocrtGray,dashed,line width=.55pt},
+  angle/.style={ocrtNavy,line width=.8pt},
+  note/.style={align=center,text width=6.8cm}]
+\path[use as bounding box] (0,-3.6) rectangle (15.8,3.9);
+\begin{scope}[shift={(3.6,0)}]
+  \node[anchor=north,font=\sffamily\bfseries] at (0,3.9)
+    {\FigLang{(a) 화소에서 위쪽을 바라본 각도}{(a) Look directions from the pixel}};
+  \fill[ocrtTeal!8] (-3.3,-.55) rectangle (3.3,0);
+  \draw[ocrtTeal,line width=.8pt] (-3.3,0)--(3.3,0);
+  \draw[axis] (0,-.35)--(0,2.75);
+  \node[anchor=south,fill=white,inner sep=1.5pt] at (0,2.75)
+    {\FigLang{국소 수직선}{Local vertical}};
+  \draw[ocrtGray,dashed,-{Latex[length=2mm]}] (0,0)--(125:2.65);
+  \draw[ray,orange!85!black] (125:2.25)--(125:.35);
+  \draw[ray,ocrtTeal] (0,0)--(45:2.8);
+  \node[anchor=south,align=center] at (-1.85,2.37)
+    {\FigLang{태양을 향한 방향}{Toward the Sun}};
+  \node[anchor=south,align=center] at (2.02,2.08)
+    {\FigLang{센서를 향한 방향}{Toward the sensor}};
+  \draw[angle] (90:.85) arc[start angle=90,end angle=125,radius=.85];
+  \node[ocrtNavy] at (-.52,1.14) {SZA};
+  \draw[angle] (45:1.12) arc[start angle=45,end angle=90,radius=1.12];
+  \node[ocrtNavy] at (.66,1.37) {VZA};
+  \fill[ocrtNavy] (0,0) circle (2pt);
+  \node[anchor=north] at (0,-.12) {\FigLang{지상 화소}{Ground pixel}};
+  \node[note,anchor=north] at (0,-.95)
+    {\FigLang{태양을 바라보는 방향과 입사광의 진행 방향은 서로 반대다.}{The Sunward look direction is opposite to incoming photon travel.}};
+  \draw[ray,orange!85!black] (-2.75,-2.13)--(-1.9,-2.13);
+  \node[anchor=west] at (-1.7,-2.13) {\FigLang{입사 태양광}{Incoming sunlight}};
+  \draw[ray,ocrtTeal] (-2.75,-2.68)--(-1.9,-2.68);
+  \node[anchor=west] at (-1.7,-2.68) {\FigLang{센서로 나가는 빛}{Light toward the sensor}};
+\end{scope}
+\draw[ocrtLine] (7.8,-3.35)--(7.8,3.55);
+\begin{scope}[shift={(11.8,0)}]
+  \node[anchor=north,font=\sffamily\bfseries] at (0,3.9)
+    {\FigLang{(b) 공기 중 VZA와 수중 각도}{(b) Air VZA and underwater angle}};
+  \fill[ocrtTeal!8] (-3.4,-1.9) rectangle (3.4,0);
+  \draw[ocrtTeal,line width=.8pt] (-3.4,0)--(3.4,0);
+  \draw[axis] (0,-1.8)--(0,2.65);
+  \draw[ray,ocrtTeal] (-.847,-1.55)--(0,0);
+  \draw[ray,ocrtTeal] (0,0)--(50:2.65);
+  \node[anchor=south,align=center] at (1.9,2.1)
+    {\FigLang{센서}{Sensor}};
+  \node[anchor=west] at (-3.18,.42) {\FigLang{공기}{Air}};
+  \node[anchor=west] at (-3.18,-.43) {\FigLang{물}{Water}};
+  \draw[angle] (50:.9) arc[start angle=50,end angle=90,radius=.9];
+  \node[ocrtNavy] at (.7,1.17) {$\mathrm{VZA}_{\rm air}$};
+  \draw[angle] (-90:.7) arc[start angle=-90,end angle=-118.66,radius=.7];
+  \node[ocrtNavy] at (-.63,-1.05) {$\theta_w$};
+  \fill[ocrtNavy] (0,0) circle (2pt);
+  \node[note,anchor=north] at (0,-2.16)
+    {$n_{\rm air}\sin(\mathrm{VZA}_{\rm air})=n_w\sin\theta_w$};
+  \node[note,anchor=north] at (0,-2.7)
+    {\FigLang{입력: 공기 중 VZA\\수중 각도는 내부에서 계산}{Input: air VZA\\Underwater angle is computed internally}};
+\end{scope}
+\end{tikzpicture}
+\caption{\FigLang{SZA와 VZA는 화소의 위쪽 수직선에서 잰다. (a)는 두 look 방향을 한 단면에 배치한 예시이며 일반 기하의 RAA는 별도로 지정한다. (b)는 평탄한 경계의 굴절 도식이다. 표준 해양 경로의 VZA 입력을 수중 각도로 바꾸어 넣지 않는다.}{SZA and VZA are measured from the upward vertical at the pixel. Panel (a) places both look directions in one cross-section for illustration; RAA is specified separately for general geometry. Panel (b) shows refraction at a flat interface. Do not replace the standard ocean-path air-VZA input with an underwater angle.}}
+\label{fig:geometry-zenith-refraction}
+\end{figure}

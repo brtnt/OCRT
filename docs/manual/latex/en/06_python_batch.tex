@@ -1,0 +1,704 @@
+% Authoritative LaTeX chapter. Edit this file for future revisions.
+% Initially migrated 2026-09-11; no Markdown import occurs during PDF builds.
+\chapter{Python Usage and Batch Dataset Generation}
+\label{chap:06_python_batch}
+\begingroup\setlength{\parskip}{4pt}
+Manual contents · \hyperref[chap:01_concepts_geometry]{RAA and viewing geometry} · \hyperref[chap:04_examples]{C execution examples}
+
+This appendix describes the public execution scripts in \texttt{code/\allowbreak{}OCRT\_\allowbreak{}Python/\allowbreak{}} and the C execution-management tools in \texttt{code/\allowbreak{}campaign\_\allowbreak{}runner/\allowbreak{}}. Options, defaults, and outputs are based on the source checked on 2026-09-11. \textbf{The Python solver does not currently provide every feature of C v1.11.1.} Do not copy C options directly into Python commands or apply agreement figures from older Python READMEs to all current datasets.
+
+\section{Supported scope: read this first}
+\label{sec:auto:06_python_batch:1}
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3000\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2300\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.4700\linewidth-5.33pt\relax}@{}}
+\toprule
+\textbf{Purpose} & \textbf{Entry point} & \textbf{Characteristics} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Purpose} & \textbf{Entry point} & \textbf{Characteristics} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+Inspect R1/R2/R3 for one condition & \texttt{ocrt\_\allowbreak{}solve.\allowbreak{}py single} & Select reflectance components, specify pressure, and display convergence status \\
+Calculate multiple conditions sequentially & \texttt{ocrt\_\allowbreak{}solve.\allowbreak{}py grid} & Single calculations by row, row/band selection, and explicit resume \\
+Calculate multiple conditions in NumPy/CuPy batches & \texttt{produce\_\allowbreak{}grid.\allowbreak{}py} & Calculates R1/R2/R3 for every condition, resumes automatically, and provides detailed derived outputs \\
+VZA \ensuremath{\times} RAA angular grid for a fixed physical state & \texttt{ocrt\_\allowbreak{}fullgrid.\allowbreak{}py} & Angular LUT sharing atmospheric and underwater fields; I/Q/U output \\
+Compare CPU/GPU results & \texttt{gpu\_\allowbreak{}gate.\allowbreak{}py} & Compares four I-component products \\
+Manage C calculations in multiple processes & \texttt{campaign\_\allowbreak{}runner/\allowbreak{}runner/\allowbreak{}run\_\allowbreak{}campaign.\allowbreak{}py} & Separate tool in which Python invokes the C executable \\
+\end{longtable}
+}
+
+In the current version, distinguish the following in particular.
+
+\begin{itemize}
+\item \textbf{Spherical correction:} The Python calculation CLIs above have no \texttt{-\allowbreak{}-\allowbreak{}pssa} or IPSS option. Use the C path for LUTs or dataset production requiring current C IPSS results. Do not treat Python as a fully equivalent replacement, even for C defaults.
+\item \textbf{Sea surface:} The Python coupled single-geometry/angular-LUT paths raise \texttt{NotImplementedEr\allowbreak{}ror} for \texttt{wind <=\allowbreak{} 0} because flat-surface coupling has not been ported. The examples use positive wind speed. Acceptance of the number 0 by the batch path does not establish support for a flat-surface implementation.
+\item \textbf{Chl:} Omitting the species option selects the default absorption table and sets phytoplankton's own \texttt{b =\allowbreak{} bb =\allowbreak{} 0}. Chl-linked detrital scattering remains separately active. With \texttt{Chl > 0}, explicitly specifying \texttt{-\allowbreak{}-\allowbreak{}phyto}/\texttt{-\allowbreak{}-\allowbreak{}phyto-\allowbreak{}group} is an error even for the default species name. \texttt{OCRT\_\allowbreak{}ADVANCED=\allowbreak{}1} does not remove this restriction.
+\item \textbf{Missing installation data:} The current constructor also reads an unused species-specific EAP Mie file. Its default path is \texttt{data/\allowbreak{}water\_\allowbreak{}iop/\allowbreak{}eap/\allowbreak{}EAP\_\allowbreak{}02\_\allowbreak{}Diatoms\_\allowbreak{}centric\_\allowbreak{}D6.\allowbreak{}mie}. This file is absent from the current 181-file \texttt{data-\allowbreak{}v1} manifest. At the time of manual preparation, constituent-model initialization also failed locally because this file was missing. Therefore, \textbf{installing the current repository and the 181 public data files alone does not establish that Python R1, batch, or angular-LUT execution is ready.} Obtain matching supplementary EAP data from the distributor and verify its path and provenance, or use the C path. Do not rename a different Mie file to this filename.
+\item \textbf{Batch versus single numerical paths:} The R1 atmospheric pass in \texttt{produce\_\allowbreak{}grid.\allowbreak{}py} uses the Greek-coefficient kernel, while R3 uses the value kernel. The single CLI uses the value kernel for both R1 and R3. Batch R2 also has separate layer-count and scattering-order defaults. Verify CPU/GPU agreement, batch/single agreement, and agreement with current C separately.
+\item \textbf{Wavelength:} The default wavelength contract is 330--1100 nm, but the absorption and phase tables actually used must cover the requested wavelength. The detritus range of 350--850 nm retained in old source comments may differ from the installed tables. A read check of the current local FR631 detritus phase table found a range of 330--1100 nm. Record data versions and SHA-256 hashes.
+\end{itemize}
+
+The statements “gas absorption not applied” and “value kernel not applied to R2/R3,” and the \texttt{-\allowbreak{}-\allowbreak{}strict-\allowbreak{}check} guidance remaining in the header of \texttt{produce\_\allowbreak{}grid.\allowbreak{}py}, do not match the current execution code. Gas absorption is now passed to the batch atmosphere, R3 uses the value kernel, and no CLI option named \texttt{-\allowbreak{}-\allowbreak{}strict-\allowbreak{}check} exists.
+
+\section{Installation and readiness checks}
+\label{sec:auto:06_python_batch:2}
+Run the commands below from the repository's \texttt{code/\allowbreak{}OCRT\_\allowbreak{}Python} directory. \texttt{ocrt\_\allowbreak{}py} is imported from that directory; there is currently no separate distribution \texttt{pyproject.\allowbreak{}toml}/\texttt{setup.\allowbreak{}py}.
+
+Example CPU setup:
+
+
+\begin{ManualCode}
+cd <OCRT repository path>\code\OCRT_Python
+python -m venv .venv
+.\.venv\Scripts\python -m pip install "numpy>=2" scipy
+.\.venv\Scripts\python -c "import numpy, scipy; print(numpy.__version__, scipy.__version__)"
+\end{ManualCode}
+
+On Linux/WSL, use commands such as \texttt{python3 -\allowbreak{}m venv .\allowbreak{}venv} and \texttt{.\allowbreak{}venv/\allowbreak{}bin/\allowbreak{}python -\allowbreak{}m pip install 'n\allowbreak{}umpy>=\allowbreak{}2' scipy}. In subsequent examples, replace \texttt{python} with Python from the prepared virtual environment. An environment based on Python 3.10 or later is convenient for using both the solvers and campaign tools in this appendix. NumPy 2 or later is specified because the current code uses \texttt{numpy.\allowbreak{}trapezoid}; SciPy is needed for CPU-batch \texttt{erfc} calculations. The old README instruction to install “NumPy only” is insufficient for this batch path.
+
+Install Mie data with \texttt{scripts/\allowbreak{}fetch\_\allowbreak{}data.\allowbreak{}ps1} or \texttt{scripts/\allowbreak{}fetch\_\allowbreak{}data.\allowbreak{}sh} at the repository root. Files are placed under C \texttt{inputs/\allowbreak{}} and Python \texttt{data/\allowbreak{}} with matching relative paths. \textbf{This installation is separate from checking the missing EAP file described above.} Python's high-level CLIs read \texttt{.\allowbreak{}mie} files even when aerosol AOD is 0. Do not apply the C Rayleigh-only “run without Mie” condition to Python examples.
+
+Readiness checks:
+
+
+\begin{ManualCode}
+python produce_grid.py --help
+python ocrt_solve.py single --help
+python ocrt_fullgrid.py --help
+python -c "from pathlib import Path; print(Path('data/water_iop/eap/EAP_02_Diatoms_centric_D6.mie').is_file())"
+python -c "from ocrt_py.constituent import OCRTConstituentModel; OCRTConstituentModel('data'); print('constituent data loaded')"
+\end{ManualCode}
+
+The final check must succeed before proceeding with R1 examples. Successful \texttt{-\allowbreak{}-\allowbreak{}help} output does not establish data readiness or a successful radiative-transfer calculation.
+
+GPU use additionally requires a compatible NVIDIA CUDA environment and a matching CuPy package. For example, a CUDA 12-series environment uses \texttt{python -\allowbreak{}m pip install cu\allowbreak{}py-\allowbreak{}cuda12x}. Match the actual driver/CUDA/Python combination to the \href{https://docs.cupy.dev/en/stable/install.html}{official CuPy installation instructions}. Select the GPU \textbf{before starting the Python process}.
+
+
+\begin{ManualCode}
+$env:OCRT_PY_GPU = "1"
+python produce_grid.py --grid grid.csv --out result_gpu.csv --bands 443,555 --chunk 4
+Remove-Item Env:OCRT_PY_GPU
+\end{ManualCode}
+
+On Linux/WSL, use \texttt{OCRT\_\allowbreak{}PY\_\allowbreak{}GPU=\allowbreak{}1 python produce\allowbreak{}\_\allowbreak{}grid.\allowbreak{}py .\allowbreak{}.\allowbreak{}.\allowbreak{}}. CuPy is imported only when the value is exactly \texttt{1}. Missing CuPy produces an error; there is no automatic fallback to CPU. This setting does not mean that every stage of \texttt{ocrt\_\allowbreak{}solve.\allowbreak{}py} or the angular LUT is GPU-accelerated.
+
+\section{Common input conventions: units and RAA}
+\label{sec:auto:06_python_batch:3}
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3400\linewidth-4.00pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.6600\linewidth-4.00pt\relax}@{}}
+\toprule
+\textbf{Input} & \textbf{Meaning and units} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Input} & \textbf{Meaning and units} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{sza} & Solar zenith angle, degrees \\
+\texttt{vza} & Viewing zenith angle on the air side, degrees \\
+\texttt{raa} & OCRT relative azimuth angle, degrees. \textbf{180\textdegree{} is the specular/sunglint side; 0\textdegree{} is the backscattering side} \\
+\texttt{wind} & Wind speed, m/s \\
+\texttt{aerosol} or \texttt{aer} & Mie path relative to \texttt{data/\allowbreak{}}, or model name \\
+\texttt{aod865} & Aerosol optical depth referenced to 865 nm, dimensionless \\
+\texttt{chl} & Chl concentration, mg/m\textsuperscript{3} \\
+\texttt{tsm} & Suspended-matter concentration, g/m\textsuperscript{3}; numerically equal to mg/L \\
+\texttt{acdom440} & CDOM absorption coefficient at 440 nm, m\textsuperscript{-}\textsuperscript{1} \\
+\end{longtable}
+}
+
+\textbf{Check the definition before copying RAA directly from another program.} If comparison data use a symmetric \texttt{0--180\textdegree{}} convention with the specular direction at \texttt{0\textdegree{}}, OCRT input is \texttt{180\textdegree{} - RAA\_\allowbreak{}external}. For example, external \texttt{0/\allowbreak{}60/\allowbreak{}180\textdegree{}} maps to OCRT \texttt{180/\allowbreak{}120/\allowbreak{}0\textdegree{}}. Apply this conversion only after confirming the directional definitions of both conventions. When constructing signed \texttt{0--360\textdegree{}} RAA from satellite solar and sensor azimuths, also record the reference vectors and rotation direction. \textbf{Arbitrarily folding RAA into \texttt{0--180\textdegree{}} when handling Q/U can discard U-sign information.} The examples include both \texttt{90\textdegree{}} and \texttt{270\textdegree{}} to allow azimuthal-symmetry checks.
+
+Typical upward-viewing examples keep SZA/VZA in the range \texttt{0 <=\allowbreak{} angle < 90\textdegree{}}. The 65\textdegree{}/55\textdegree{} limits in \texttt{make\_\allowbreak{}grid.\allowbreak{}py} define that sample design; they do not declare a validation range for all OCRT. Some optional polarized value underwater kernels have a known output singularity at exact nadir, \texttt{VZA=\allowbreak{}0\textdegree{}}. If enabling those kernels for research, compare at an explicitly non-nadir angle such as \texttt{0.\allowbreak{}001\textdegree{}} and record the substituted angle.
+
+\subsection{Batch CSV}
+\label{sec:auto:06_python_batch:3.1}
+\texttt{produce\_\allowbreak{}grid.\allowbreak{}py} requires these 10 headers. Header matching is case-insensitive, but it does not automatically fix spaces or spelling within names. Use \texttt{.\allowbreak{}} as the decimal separator and omit unit strings from numerical values. \texttt{case\_\allowbreak{}id} must be unique within the file.
+
+
+\begin{ManualCode}
+case_id,sza,vza,raa,wind,aerosol,aod865,chl,tsm,acdom440
+open_ocean,30,20,90,5,C50,0.05,0.2,0.1,0.01
+coastal,40,35,90,5,M80C,0.10,1.0,3.0,0.04
+\end{ManualCode}
+
+\texttt{produce\_\allowbreak{}grid.\allowbreak{}py} always appends \texttt{.\allowbreak{}mie} to the name, so use \textbf{\texttt{C50}}, rather than \texttt{C50.\allowbreak{}mie}. For models in subdirectories, use a name such as \texttt{aerosol\_\allowbreak{}ahmad2010\_\allowbreak{}paper\_\allowbreak{}mie/\allowbreak{}A2010ver\_\allowbreak{}r80f50v01}. The single/angular CLI option \texttt{-\allowbreak{}-\allowbreak{}aer} accepts the \texttt{.\allowbreak{}mie} extension. Use installed model names, and do not interchange similarly named AccuRT-family models with models based on the Ahmad paper.
+
+Optional CSV columns use defaults when empty.
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3000\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2300\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.4700\linewidth-5.33pt\relax}@{}}
+\toprule
+\textbf{Canonical header} & \textbf{Other accepted names (\texttt{produce\_\allowbreak{}grid.\allowbreak{}py})} & \textbf{Default and effect} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Canonical header} & \textbf{Other accepted names (\texttt{produce\_\allowbreak{}grid.\allowbreak{}py})} & \textbf{Default and effect} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{ocrt\_\allowbreak{}adom\_\allowbreak{}slope} & \texttt{adom\_\allowbreak{}slope}, \texttt{cdom\_\allowbreak{}slope} & 0.014 nm\textsuperscript{-}\textsuperscript{1}. \texttt{aCDOM(\ensuremath{\lambda})=\allowbreak{}aCDOM440·exp[-S(\allowbreak{}\ensuremath{\lambda}-440)]} \\
+\texttt{ocrt\_\allowbreak{}detritus\_\allowbreak{}a440} & \texttt{detritus\_\allowbreak{}a440}, \texttt{det\_\allowbreak{}a440} & 0 m\textsuperscript{-}\textsuperscript{1}. Absorption amplitude at 440 nm for Chl-linked detritus \\
+\texttt{ocrt\_\allowbreak{}detritus\_\allowbreak{}slope} & \texttt{detritus\_\allowbreak{}slope}, \texttt{det\_\allowbreak{}slope} & 0.0109 nm\textsuperscript{-}\textsuperscript{1}. Exponential slope of detrital absorption \\
+\end{longtable}
+}
+
+\texttt{ocrt\_\allowbreak{}solve.\allowbreak{}py grid} reads the same canonical headers and supports additional aliases. For example, ID also accepts \texttt{row\_\allowbreak{}id/\allowbreak{}id/\allowbreak{}case/\allowbreak{}index/\allowbreak{}row}; aerosol accepts \texttt{aer\_\allowbreak{}model/\allowbreak{}aerosol\_\allowbreak{}model/\allowbreak{}mie/\allowbreak{}model/\allowbreak{}aer}; angles accept \texttt{sza\_\allowbreak{}deg/\allowbreak{}vza\_\allowbreak{}deg/\allowbreak{}raa\_\allowbreak{}deg}; TSM accepts \texttt{tsm\_\allowbreak{}g\_\allowbreak{}m3/\allowbreak{}tsm\_\allowbreak{}gm3}; Chl accepts \texttt{chl\_\allowbreak{}mg\_\allowbreak{}m3/\allowbreak{}chl\_\allowbreak{}mgm3/\allowbreak{}chla}; CDOM accepts \texttt{adom440/\allowbreak{}a\_\allowbreak{}cdom\_\allowbreak{}440/\allowbreak{}acdom440\_\allowbreak{}m\_\allowbreak{}inv/\allowbreak{}acdom\_\allowbreak{}440/\allowbreak{}cdom440/\allowbreak{}a\_\allowbreak{}cdom440}; AOD accepts \texttt{aod\_\allowbreak{}865}; and wind accepts \texttt{wind\_\allowbreak{}ms/\allowbreak{}wind\_\allowbreak{}speed/\allowbreak{}wind\_\allowbreak{}speed\_\allowbreak{}ms/\allowbreak{}wind\_\allowbreak{}m\_\allowbreak{}s}. Header normalization retains only English letters and digits for comparison. If ID is omitted, the row number is used. For a CSV shared by multiple tools, retaining the canonical headers above is safer.
+
+\section{\texttt{produce\_\allowbreak{}grid.\allowbreak{}py}: complete option reference}
+\label{sec:auto:06_python_batch:4}
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3000\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2300\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.4700\linewidth-5.33pt\relax}@{}}
+\toprule
+\textbf{Option} & \textbf{Default} & \textbf{Description} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Option} & \textbf{Default} & \textbf{Description} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{-\allowbreak{}h}, \texttt{-\allowbreak{}-\allowbreak{}help} & --- & Print help and exit \\
+\texttt{-\allowbreak{}-\allowbreak{}grid PATH} & Required & Input-condition CSV \\
+\texttt{-\allowbreak{}-\allowbreak{}out PATH} & Required & Result CSV. If it exists, append automatically and skip completed keys \\
+\texttt{-\allowbreak{}-\allowbreak{}data DIR} & \texttt{data/\allowbreak{}} beside the script & Root for aerosol, seawater IOP, AFGL, and gas cross-section data \\
+\texttt{-\allowbreak{}-\allowbreak{}phyto NAME} & Omitted & Default Chl absorption path. Explicit species selection is prohibited if any row has Chl > 0 \\
+\texttt{-\allowbreak{}-\allowbreak{}mineral NAME} & \texttt{red\_\allowbreak{}clay} & Mineral type: \texttt{red\_\allowbreak{}clay}, \texttt{brown\_\allowbreak{}earth}, \texttt{yellow\_\allowbreak{}clay}, \texttt{calcareous\_\allowbreak{}sand} \\
+\texttt{-\allowbreak{}-\allowbreak{}chunk N} & 64 & Number of condition rows per batch; positive integer. Adjust to GPU memory and case complexity \\
+\texttt{-\allowbreak{}-\allowbreak{}n-\allowbreak{}mu-\allowbreak{}water N} & 24 & Passed to the underwater and batch-atmosphere Gauss-node counts \\
+\texttt{-\allowbreak{}-\allowbreak{}nt-\allowbreak{}atm N} & 400 & Number of R1/R3 atmospheric SOS layers \\
+\texttt{-\allowbreak{}-\allowbreak{}m-\allowbreak{}max N} & 16 & Maximum R1/R3 atmospheric Fourier mode \\
+\texttt{-\allowbreak{}-\allowbreak{}max-\allowbreak{}it-\allowbreak{}water N} & 500 & Maximum underwater scattering order. Reaching the limit is distinct from convergence \\
+\texttt{-\allowbreak{}-\allowbreak{}bands LIST} & The 12 bands below & Comma-separated integer wavelengths in nm; for example, \texttt{443,\allowbreak{}555,\allowbreak{}865} \\
+\texttt{-\allowbreak{}-\allowbreak{}no-\allowbreak{}gas} & Unset; absorption enabled & Disable gas absorption \\
+\end{longtable}
+}
+
+The default bands are \texttt{380,\allowbreak{}412,\allowbreak{}443,\allowbreak{}490,\allowbreak{}510,\allowbreak{}555,\allowbreak{}620,\allowbreak{}660,\allowbreak{}680,\allowbreak{}709,\allowbreak{}745,\allowbreak{}865}. Do not confuse this list with final spectral-response-integrated products for a particular sensor. Calculations are performed at the specified wavelength points.
+
+Also record major conditions that this CLI cannot change: pressure \texttt{1013.\allowbreak{}25 hPa}, water refractive index \texttt{1.\allowbreak{}34}, R1/R3 atmospheric scattering-order limit \texttt{100}, atmospheric/underwater tolerance \texttt{1e-\allowbreak{}7}, aerosol expansion limit \texttt{80}, and underwater-particle expansion limit \texttt{200}. R2 uses separate function defaults of \textbf{40 layers, maximum Fourier mode 2, and maximum order 20}; changing \texttt{-\allowbreak{}-\allowbreak{}nt-\allowbreak{}atm} or \texttt{-\allowbreak{}-\allowbreak{}m-\allowbreak{}max} does not change R2 with them. The default gas-absorption model is \texttt{usstd76}; this CLI has no options for selecting atmospheric profiles or individual gas amounts.
+
+\subsection{Resume rules}
+\label{sec:auto:06_python_batch:4.1}
+An existing CSV header must match the current \texttt{OUT\_\allowbreak{}FIELDS} exactly. If it does, completion is determined solely by \texttt{(case\_\allowbreak{}id,\allowbreak{} band\_\allowbreak{}nm)}. The tool does not compare changes in inputs, data files, mineral type, gas settings, or numerical options; it also does not automatically recalculate recorded NaN or unconverged results. Do not have multiple processes write the same CSV simultaneously.
+
+\textbf{Use a new output file whenever inputs or calculation settings change.} Resume an interrupted run only with identical inputs, settings, and data. Create the output parent directory beforehand. Output order is band \ensuremath{\rightarrow} chunk \ensuremath{\rightarrow} input row; do not assume that results are sorted by row ID. Remove duplicate input IDs and duplicate bands before execution.
+
+\section{\texttt{ocrt\_\allowbreak{}solve.\allowbreak{}py}: complete single/sequential-grid option reference}
+\label{sec:auto:06_python_batch:5}
+Use \texttt{python ocrt\_\allowbreak{}solve.\allowbreak{}py single .\allowbreak{}.\allowbreak{}.\allowbreak{}} or \texttt{python ocrt\_\allowbreak{}solve.\allowbreak{}py grid .\allowbreak{}.\allowbreak{}.\allowbreak{}}. Place common options after the subcommand.
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3000\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2300\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.4700\linewidth-5.33pt\relax}@{}}
+\toprule
+\textbf{Common option} & \textbf{Default} & \textbf{Description} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Common option} & \textbf{Default} & \textbf{Description} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{-\allowbreak{}h}, \texttt{-\allowbreak{}-\allowbreak{}help} & --- & Help for the relevant subcommand \\
+\texttt{-\allowbreak{}-\allowbreak{}which R1 R2 R3} & All & Space-separated components to run. \texttt{-\allowbreak{}-\allowbreak{}which R2} calculates only the Rayleigh reference \\
+\texttt{-\allowbreak{}-\allowbreak{}phyto-\allowbreak{}group NAME} & Omitted & Species-selection restrictions are the same as in Section~\ref{sec:auto:06_python_batch:1} \\
+\texttt{-\allowbreak{}-\allowbreak{}tsm-\allowbreak{}species NAME} & \texttt{red\_\allowbreak{}clay} & Select one of the four mineral types \\
+\texttt{-\allowbreak{}-\allowbreak{}n-\allowbreak{}mu-\allowbreak{}water N} & 48 & Underwater Gauss-node count for coupled R1. R2/R3 atmospheric nodes are internally fixed at 24 \\
+\texttt{-\allowbreak{}-\allowbreak{}m-\allowbreak{}max N} & 16 & Maximum R1/R3 atmospheric Fourier mode. R2 is fixed at 2 \\
+\texttt{-\allowbreak{}-\allowbreak{}n-\allowbreak{}layers N} & 400 & Number of R1/R2/R3 atmospheric layers \\
+\texttt{-\allowbreak{}-\allowbreak{}max-\allowbreak{}it-\allowbreak{}water N} & 500 & Maximum R1 underwater scattering order \\
+\texttt{-\allowbreak{}-\allowbreak{}pressure HPA} & 1013.25 & Pressure passed to the Rayleigh calculation, hPa \\
+\texttt{-\allowbreak{}-\allowbreak{}no-\allowbreak{}gas} & Unset & Disable gas absorption. Setting pressure to 0 alone does not disable gases \\
+\texttt{-\allowbreak{}-\allowbreak{}adom-\allowbreak{}slope S}, \texttt{-\allowbreak{}-\allowbreak{}cdom-\allowbreak{}slope S} & 0.014 & Exponential CDOM absorption slope, nm\textsuperscript{-}\textsuperscript{1}; aliases for the same option \\
+\texttt{-\allowbreak{}-\allowbreak{}detritus-\allowbreak{}a440 A} & 0 & Chl-linked detrital absorption amplitude, m\textsuperscript{-}\textsuperscript{1} \\
+\texttt{-\allowbreak{}-\allowbreak{}detritus-\allowbreak{}slope S} & 0.0109 & Detrital absorption slope, nm\textsuperscript{-}\textsuperscript{1} \\
+\end{longtable}
+}
+
+Options specific to \texttt{single}:
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3000\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2300\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.4700\linewidth-5.33pt\relax}@{}}
+\toprule
+\textbf{Option} & \textbf{Default} & \textbf{Description} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Option} & \textbf{Default} & \textbf{Description} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{-\allowbreak{}-\allowbreak{}wl NM} & Required & Wavelength, nm; real values accepted \\
+\texttt{-\allowbreak{}-\allowbreak{}sza DEG}, \texttt{-\allowbreak{}-\allowbreak{}vza DEG}, \texttt{-\allowbreak{}-\allowbreak{}raa DEG} & Each required & Viewing geometry under the OCRT convention in Section~\ref{sec:auto:06_python_batch:3} \\
+\texttt{-\allowbreak{}-\allowbreak{}wind MPS} & Required & Wind speed; must be positive for coupled R1 \\
+\texttt{-\allowbreak{}-\allowbreak{}chl VALUE} & 0 & Chl concentration, mg/m\textsuperscript{3} \\
+\texttt{-\allowbreak{}-\allowbreak{}tsm VALUE} & 0 & TSM concentration, g/m\textsuperscript{3} \\
+\texttt{-\allowbreak{}-\allowbreak{}acdom440 VALUE} & 0 & CDOM absorption coefficient, m\textsuperscript{-}\textsuperscript{1} \\
+\texttt{-\allowbreak{}-\allowbreak{}aod865 VALUE} & 0 & AOD at 865 nm \\
+\texttt{-\allowbreak{}-\allowbreak{}aer NAME} & \texttt{C50} & Model name or path relative to \texttt{data/\allowbreak{}}; \texttt{.\allowbreak{}mie} extension optional \\
+\end{longtable}
+}
+
+Options specific to \texttt{grid}:
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3000\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2300\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.4700\linewidth-5.33pt\relax}@{}}
+\toprule
+\textbf{Option} & \textbf{Default} & \textbf{Description} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Option} & \textbf{Default} & \textbf{Description} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{-\allowbreak{}-\allowbreak{}grid PATH}, \texttt{-\allowbreak{}-\allowbreak{}out PATH} & Each required & Input-condition CSV and result CSV \\
+\texttt{-\allowbreak{}-\allowbreak{}bands NM .\allowbreak{}.\allowbreak{}.\allowbreak{}} & 12 bands & \textbf{Space-separated} integer wavelengths in nm, unlike the comma-separated format of \texttt{produce\_\allowbreak{}grid.\allowbreak{}py} \\
+\texttt{-\allowbreak{}-\allowbreak{}rows LO:\allowbreak{}HI} & All & Zero-based slice of CSV data rows; LO included, HI excluded. For example, \texttt{0:\allowbreak{}10} is the first 10 rows. Supply both integers \\
+\texttt{-\allowbreak{}-\allowbreak{}resume} & Off & Skip existing \texttt{(row\_\allowbreak{}id,\allowbreak{}wavelength\_\allowbreak{}nm)} keys. If omitted, overwrite existing results \\
+\texttt{-\allowbreak{}-\allowbreak{}progress N} & 1 & Print progress every N processed items; integer at least 1 \\
+\end{longtable}
+}
+
+Neither subcommand has a \texttt{-\allowbreak{}-\allowbreak{}data} option. Both use \texttt{data/\allowbreak{}} beside the script. Optional slope columns in \texttt{grid} take precedence over CLI defaults for that row. Additional slope aliases include CDOM \texttt{ccrr\_\allowbreak{}adom\_\allowbreak{}slope/\allowbreak{}s\_\allowbreak{}cdom/\allowbreak{}scdom} and detritus \texttt{s\_\allowbreak{}detritus/\allowbreak{}sdetritus/\allowbreak{}s\_\allowbreak{}det}.
+
+When a condition raises an exception, \texttt{grid} prints \texttt{FAIL row=\allowbreak{}.\allowbreak{}.\allowbreak{}.\allowbreak{} wl=\allowbreak{}.\allowbreak{}.\allowbreak{}.\allowbreak{}} and proceeds to the next condition. A final “complete” message does not mean every condition succeeded. Compare requested rows \ensuremath{\times} bands with the actual number of unique result keys, and check the log for \texttt{FAIL}. Header, setting, and value validation during resume is weaker than in the batch producer; do not append to CSVs from different versions.
+
+\subsection{Species names}
+\label{sec:auto:06_python_batch:5.1}
+The parser accepts the compatibility aliases \texttt{pico}, \texttt{nano}, and \texttt{micro}. Formal catalog names are:
+
+
+\begin{ManualCode}
+eap_diatoms_pennate        eap_chlorophytes        eap_diatoms_centric
+eap_cryptophytes           eap_cyano_blue         eap_cyano_red
+eap_dinoflagellates        eap_eustigmatophytes   eap_hapto_pavlovaceae
+eap_pelagophytes           eap_prasinophytes      eap_prochlorococcus
+eap_hapto_prymnesiaceae     eap_raphidophytes      eap_rhodophytes
+eap_synechococcus          eap_microcystis
+\end{ManualCode}
+
+This list does not mean species-specific scattering is available in production RT. With Chl > 0, explicit selection itself is rejected. Even with Chl=0, a choice other than the default \texttt{micro}/\texttt{eap\_\allowbreak{}diatoms\_\allowbreak{}centric} requires \texttt{OCRT\_\allowbreak{}ADVANCED=\allowbreak{}1} and reads the corresponding EAP file. Omit the species option for ordinary dataset generation.
+
+\section{\texttt{ocrt\_\allowbreak{}fullgrid.\allowbreak{}py}: complete angular-LUT option reference}
+\label{sec:auto:06_python_batch:6}
+This tool calculates the Cartesian product of VZA and RAA for one wavelength, solar angle, atmospheric state, and ocean state. It does not vary physical conditions from input row to input row as \texttt{produce\_\allowbreak{}grid.\allowbreak{}py} does.
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3000\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2300\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.4700\linewidth-5.33pt\relax}@{}}
+\toprule
+\textbf{Option} & \textbf{Default} & \textbf{Description} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Option} & \textbf{Default} & \textbf{Description} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{-\allowbreak{}h}, \texttt{-\allowbreak{}-\allowbreak{}help} & --- & Help \\
+\texttt{-\allowbreak{}-\allowbreak{}out PATH} & Required & Angular-LUT CSV. Overwrites an existing file; no automatic resume \\
+\texttt{-\allowbreak{}-\allowbreak{}wl NM}, \texttt{-\allowbreak{}-\allowbreak{}sza DEG}, \texttt{-\allowbreak{}-\allowbreak{}wind MPS} & Each required & Wavelength, solar angle, and wind speed \\
+\texttt{-\allowbreak{}-\allowbreak{}chl}, \texttt{-\allowbreak{}-\allowbreak{}tsm}, \texttt{-\allowbreak{}-\allowbreak{}acdom440}, \texttt{-\allowbreak{}-\allowbreak{}aod865} & Each required & Specify even when the value is 0 \\
+\texttt{-\allowbreak{}-\allowbreak{}aer NAME} & \texttt{C50} & Aerosol model name/path; extension optional \\
+\texttt{-\allowbreak{}-\allowbreak{}vza-\allowbreak{}values LIST} & \texttt{0,\allowbreak{}30} & Comma-separated list of real-valued angles \\
+\texttt{-\allowbreak{}-\allowbreak{}raa-\allowbreak{}values LIST} & \texttt{0,\allowbreak{}90,\allowbreak{}180,\allowbreak{}270} & Comma-separated list of OCRT RAA values \\
+\texttt{-\allowbreak{}-\allowbreak{}phyto-\allowbreak{}group NAME} & Omitted & Species restrictions in Section~\ref{sec:auto:06_python_batch:5} \\
+\texttt{-\allowbreak{}-\allowbreak{}tsm-\allowbreak{}species NAME} & \texttt{red\_\allowbreak{}clay} & Select one of the four mineral types \\
+\texttt{-\allowbreak{}-\allowbreak{}cdom-\allowbreak{}slope S} & 0.014 & CDOM absorption slope, nm\textsuperscript{-}\textsuperscript{1} \\
+\texttt{-\allowbreak{}-\allowbreak{}n-\allowbreak{}mu-\allowbreak{}water N} & 48 & Gauss-node count for the coupled calculation \\
+\texttt{-\allowbreak{}-\allowbreak{}m-\allowbreak{}max N} & 16 & Maximum atmospheric Fourier mode \\
+\texttt{-\allowbreak{}-\allowbreak{}n-\allowbreak{}layers-\allowbreak{}atm N} & 400 & Number of atmospheric layers \\
+\texttt{-\allowbreak{}-\allowbreak{}water-\allowbreak{}m-\allowbreak{}max N} & 30 & Maximum underwater Fourier mode \\
+\texttt{-\allowbreak{}-\allowbreak{}water-\allowbreak{}n-\allowbreak{}layers N} & 300 & Underwater layer-count setting. The actual underwater policy may require more layers \\
+\texttt{-\allowbreak{}-\allowbreak{}max-\allowbreak{}it-\allowbreak{}water N} & 500 & Maximum underwater scattering order \\
+\texttt{-\allowbreak{}-\allowbreak{}pressure HPA} & 1013.25 & Pressure, hPa \\
+\texttt{-\allowbreak{}-\allowbreak{}no-\allowbreak{}gas} & Unset & Disable gas absorption \\
+\end{longtable}
+}
+
+This CLI has no \texttt{-\allowbreak{}-\allowbreak{}data}, \texttt{-\allowbreak{}-\allowbreak{}which}, \texttt{-\allowbreak{}-\allowbreak{}detritus-\allowbreak{}a440}, or \texttt{-\allowbreak{}-\allowbreak{}detritus-\allowbreak{}slope} option. The seawater refractive index is 1.34. Mie data and the wavelength-specific aerosol state are prepared once and shared across the angular grid.
+
+\section{Execution examples}
+\label{sec:auto:06_python_batch:7}
+\textbf{Run the R1 examples below only in an environment where the constituent-data readiness check in Section~\ref{sec:auto:06_python_batch:2} succeeds. R1 numerical execution could not be verified locally because the EAP file was missing.} Command syntax and options were checked against the actual parsers and source. Before large runs, perform a small comparison using the actual data and numerical settings.
+
+\subsection{One Rayleigh-reference reflectance point}
+\label{sec:auto:06_python_batch:7.1}
+This is a Rayleigh reference over a rough Fresnel sea surface, without aerosol or gas absorption. Its surface condition differs from an atmosphere over a perfectly black boundary.
+
+
+\begin{ManualCode}
+python ocrt_solve.py single --wl 555 --sza 30 --vza 20 --raa 90 --wind 5 --aer C50 --aod865 0 --which R2 --no-gas --pressure 1013.25 --n-layers 400
+\end{ManualCode}
+
+R2 does not construct the seawater constituent model and therefore does not require the EAP file, but it does read \texttt{C50.\allowbreak{}mie}. R1/R3 and Rrs outputs not requested through the parser are absent. Use the C examples for operational ocean atmospheric-correction Rayleigh LUTs that include IPSS.
+
+During manual preparation, this command was actually run on a Windows CPU with NumPy 2.3.5, confirming normal termination, \texttt{rho\_\allowbreak{}R\_\allowbreak{}I =\allowbreak{} 3.\allowbreak{}8982239255e-\allowbreak{}02}, and \texttt{aod\_\allowbreak{}band =\allowbreak{} 0}. This value documents a functional check of that installation; it does not establish a new precision-validation reference against C.
+
+\subsection{Small Rayleigh LUT at multiple pressures and wavelengths}
+\label{sec:auto:06_python_batch:7.2}
+The following example creates a CSV. Run it interactively in \texttt{python} or from a separate file.
+
+
+\begin{ManualCode}
+import csv
+from itertools import product
+from pathlib import Path
+
+Path("results").mkdir(exist_ok=True)
+with open("results/rayleigh_grid.csv", "w", newline="", encoding="utf-8") as f:
+    w = csv.writer(f)
+    w.writerow(["case_id", "sza", "vza", "raa", "wind", "aerosol", "aod865", "chl", "tsm", "acdom440"])
+    for i, (s, v, r, wind) in enumerate(product([20, 40, 60], [0.001, 20, 40], [0, 60, 120, 180, 240, 300], [2, 5, 10])):
+        w.writerow([f"ray_{i:04d}", s, v, r, wind, "C50", 0, 0, 0, 0])
+\end{ManualCode}
+
+Expect 162 conditions \ensuremath{\times} 3 wavelengths = 486 rows at each pressure.
+
+
+\begin{ManualCode}
+python ocrt_solve.py grid --grid results/rayleigh_grid.csv --out results/rayleigh_p1013.csv --bands 443 555 865 --which R2 --no-gas --pressure 1013.25 --n-layers 400
+python ocrt_solve.py grid --grid results/rayleigh_grid.csv --out results/rayleigh_p900.csv --bands 443 555 865 --which R2 --no-gas --pressure 900 --n-layers 400
+\end{ManualCode}
+
+The LUT products are \texttt{rho\_\allowbreak{}R\_\allowbreak{}I/\allowbreak{}Q/\allowbreak{}U}. Pressure is not automatically saved as a CSV column, so retain it with the execution command. After interruption, add \texttt{-\allowbreak{}-\allowbreak{}resume} to the same command. Record solar/viewing geometry, wind speed, whether gases were enabled, and the pressure-interpolation method in LUT metadata. This example is a LUT for examining the Python plane-parallel atmospheric path.
+
+\subsection{Open-ocean, coastal, turbid-water, and azimuth-change simulations}
+\label{sec:auto:06_python_batch:7.3}
+The included \href{https://github.com/brtnt/OCRT/blob/main/docs/manual/examples/python_simulation_grid.csv}{python\_simulation\_grid.csv} contains six conditions. It demonstrates explicit seawater state, AOD, wind speed, azimuth, and absorption slopes; it is not a validated distribution of natural environmental conditions.
+
+
+\begin{ManualCode}
+New-Item -ItemType Directory -Force results | Out-Null
+python ocrt_solve.py grid --grid ../../docs/manual/examples/python_simulation_grid.csv --out results/simulation_single_443_555.csv --bands 443 555 --n-mu-water 24 --n-layers 400 --m-max 16 --max-it-water 500
+python produce_grid.py --grid ../../docs/manual/examples/python_simulation_grid.csv --out results/simulation_batch_443_555.csv --bands 443,555 --chunk 2 --n-mu-water 24 --nt-atm 400 --m-max 16 --max-it-water 500
+\end{ManualCode}
+
+Expect 12 unique condition--wavelength keys in each file. Match the common \texttt{rho\_\allowbreak{}TOA}, R2/R3, and Rrs products from the single and batch paths, compare them, and record differences. Matching the node count to 24 above does not make the atmospheric kernels or R2 settings identical. For production requiring agreement, resolve and validate those differences first. Do not use tests with low scattering-order or layer-count settings as final converged results.
+
+For turbid-water rows in particular, do not judge convergence from the scattering-order limit alone. Check \texttt{conv/\allowbreak{}orders} from \texttt{ocrt\_\allowbreak{}solve.\allowbreak{}py grid}, and compare changes in the required products against a separate file with increased \texttt{-\allowbreak{}-\allowbreak{}n-\allowbreak{}mu-\allowbreak{}water}, \texttt{-\allowbreak{}-\allowbreak{}n-\allowbreak{}layers}, \texttt{-\allowbreak{}-\allowbreak{}m-\allowbreak{}max}, and \texttt{-\allowbreak{}-\allowbreak{}max-\allowbreak{}it-\allowbreak{}water}. The output of \texttt{produce\_\allowbreak{}grid.\allowbreak{}py} has no underwater convergence flag, so separate representative-condition checks are required.
+
+\subsection{Gas, CDOM, and mineral sensitivity}
+\label{sec:auto:06_python_batch:7.4}
+To compare gas effects, run the same CSV to a new output file.
+
+
+\begin{ManualCode}
+python produce_grid.py --grid ../../docs/manual/examples/python_simulation_grid.csv --out results/simulation_nogas.csv --bands 443,555 --chunk 2 --no-gas
+\end{ManualCode}
+
+Also specify the same numerical options as the previous run for this comparison. Removing gases does not remove water IOPs. To compare only the CDOM slope, use \texttt{single -\allowbreak{}-\allowbreak{}adom-\allowbreak{}slope 0.\allowbreak{}014} and \texttt{single -\allowbreak{}-\allowbreak{}adom-\allowbreak{}slope 0.\allowbreak{}018}, or specify different \texttt{ocrt\_\allowbreak{}adom\_\allowbreak{}slope} values in the CSV. In \texttt{grid}, a populated CSV slope column takes precedence for that row even if the CLI value changes.
+
+Change mineral type with \texttt{ocrt\_\allowbreak{}solve.\allowbreak{}py -\allowbreak{}-\allowbreak{}tsm-\allowbreak{}species} or \texttt{produce\_\allowbreak{}grid.\allowbreak{}py -\allowbreak{}-\allowbreak{}mineral}, and record each run in a separate file. Different mineral types produce different IOPs even at the same TSM mass concentration.
+
+\subsection{Angular water-leaving-light and polarization LUT}
+\label{sec:auto:06_python_batch:7.5}
+
+\begin{ManualCode}
+python ocrt_fullgrid.py --out results/angular_555.csv --wl 555 --sza 30 --wind 5 --chl 1 --tsm 3 --acdom440 0.04 --aod865 0.1 --aer C50 --vza-values 0.001,20,40,55 --raa-values 0,45,90,135,180,225,270,315 --n-mu-water 48 --m-max 16 --n-layers-atm 400 --water-m-max 30 --water-n-layers 300 --max-it-water 500
+\end{ManualCode}
+
+This produces 32 rows of \texttt{Rrs\_\allowbreak{}I/\allowbreak{}Q/\allowbreak{}U}, \texttt{rrs\_\allowbreak{}I/\allowbreak{}Q/\allowbreak{}U}, and \texttt{TOA\_\allowbreak{}rho\_\allowbreak{}I/\allowbreak{}Q/\allowbreak{}U}. Check \texttt{water\_\allowbreak{}converged} and \texttt{water\_\allowbreak{}orders}. This CSV has a different column structure from \texttt{produce\_\allowbreak{}grid.\allowbreak{}py}. Create separate files for physical states and combine them into a LUT with wavelength, SZA, AOD, Chl, TSM, CDOM, and wind-speed dimensions. Also check node and convergence differences between single-angle output and LUT output using a shared angular field.
+
+\subsection{Reproducible random input design and small subsets}
+\label{sec:auto:06_python_batch:7.6}
+
+\begin{ManualCode}
+python make_grid.py --n 1000 --seed 20260718 --out results/design_1000.csv --iop-out results/design_water_1000.csv
+python subsample_grid.py --in results/design_1000.csv --n 8 --seed 20260720 --out results/pilot_8.csv
+\end{ManualCode}
+
+\texttt{make\_\allowbreak{}grid.\allowbreak{}py} samples Chl, TSM, and CDOM from a correlated normal distribution in natural-log space, truncated to specified ranges: TSM \texttt{0.\allowbreak{}1--20 g/\allowbreak{}m\textsuperscript{3}}, Chl \texttt{0.\allowbreak{}1--5 mg/\allowbreak{}m\textsuperscript{3}}, and CDOM \texttt{0.\allowbreak{}01--0.\allowbreak{}1 m\textsuperscript{-}\textsuperscript{1}}. Target log correlations are TSM--Chl \texttt{0.\allowbreak{}85}, Chl--CDOM \texttt{0.\allowbreak{}75}, and TSM--CDOM \texttt{0.\allowbreak{}77}. AOD865 spans \texttt{0.\allowbreak{}05--0.\allowbreak{}3}, wind speed \texttt{1--10 m/\allowbreak{}s}, SZA \texttt{0--65\textdegree{}}, VZA \texttt{0--55\textdegree{}}, and RAA \texttt{0--180\textdegree{}}; aerosol is chosen randomly from \texttt{C50/\allowbreak{}T50/\allowbreak{}M80C/\allowbreak{}M95C/\allowbreak{}M98C/\allowbreak{}O99}. Geometry is resampled until the absolute direct-glint reflectance satisfies \texttt{<5e-\allowbreak{}4}. Consequently, accepted geometry and wind speed are not fully independent samples.
+
+Correlations after range truncation may differ from the targets. This tool also does not reconstruct the exact rows of the historical grid used for the original paper. Retain the generated CSV and seed together.
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3400\linewidth-4.00pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.6600\linewidth-4.00pt\relax}@{}}
+\toprule
+\textbf{Tool} & \textbf{Complete options} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Tool} & \textbf{Complete options} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{make\_\allowbreak{}grid.\allowbreak{}py} & \texttt{-\allowbreak{}h/\allowbreak{}-\allowbreak{}-\allowbreak{}help}; \texttt{-\allowbreak{}-\allowbreak{}n} default 1000; \texttt{-\allowbreak{}-\allowbreak{}seed} default 20260718; \texttt{-\allowbreak{}-\allowbreak{}out} default \texttt{full\_\allowbreak{}grid\_\allowbreak{}design\_\allowbreak{}v1.\allowbreak{}csv}; \texttt{-\allowbreak{}-\allowbreak{}iop-\allowbreak{}out} default \texttt{iop\_\allowbreak{}grid\_\allowbreak{}design\_\allowbreak{}v1.\allowbreak{}csv} \\
+\texttt{subsample\_\allowbreak{}grid.\allowbreak{}py} & \texttt{-\allowbreak{}h/\allowbreak{}-\allowbreak{}-\allowbreak{}help}; \texttt{-\allowbreak{}-\allowbreak{}in} default \texttt{full\_\allowbreak{}grid\_\allowbreak{}design\_\allowbreak{}v1.\allowbreak{}csv}; \texttt{-\allowbreak{}-\allowbreak{}n} default 100; \texttt{-\allowbreak{}-\allowbreak{}seed} default 20260720; if \texttt{-\allowbreak{}-\allowbreak{}out} is omitted, \texttt{draft\_\allowbreak{}grid\_\allowbreak{}<actual row coun\allowbreak{}t>.\allowbreak{}csv} \\
+\end{longtable}
+}
+
+Subset extraction preserves original IDs and original row order. If the requested count exceeds the source count, all rows are selected. The current summary output accesses the first two rows, so use at least two rows instead of \texttt{-\allowbreak{}-\allowbreak{}n 0}/\texttt{-\allowbreak{}-\allowbreak{}n 1}.
+
+\section{Interpreting output CSV files}
+\label{sec:auto:06_python_batch:8}
+\subsection{Columns in \texttt{produce\_\allowbreak{}grid.\allowbreak{}py}}
+\label{sec:auto:06_python_batch:8.1}
+Reflectances \texttt{rho\_\allowbreak{}*} are dimensionless. The subtraction products below are algebraic differences between the three reflectances calculated in that run. \textbf{Satisfying the subtraction identities alone does not establish accurate physical-component separation or agreement with C.} Effects of different numerical kernels, nodes, and scattering orders may remain in the differences.
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3400\linewidth-4.00pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.6600\linewidth-4.00pt\relax}@{}}
+\toprule
+\textbf{Column} & \textbf{Meaning} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Column} & \textbf{Meaning} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{case\_\allowbreak{}id}, \texttt{band\_\allowbreak{}nm} & Condition ID and calculation wavelength in nm \\
+\texttt{sza,\allowbreak{}vza,\allowbreak{}raa,\allowbreak{}wind,\allowbreak{}aerosol,\allowbreak{}aod865,\allowbreak{}chl,\allowbreak{}tsm,\allowbreak{}acdom440} & Copied input conditions. Angles and wind speed are saved to four decimal places; concentrations/AOD to six \\
+\texttt{rho\_\allowbreak{}TOA} & R1: coupled atmosphere--ocean I reflectance, with direct sunglint separated out \\
+\texttt{rho\_\allowbreak{}R} & R2: reference I reflectance for Rayleigh without aerosol plus a rough Fresnel sea surface \\
+\texttt{rho\_\allowbreak{}RpA} & R3: I reflectance for Rayleigh plus aerosol plus a Fresnel surface over a black ocean \\
+\texttt{rho\_\allowbreak{}RC} & \texttt{rho\_\allowbreak{}TOA - rho\_\allowbreak{}R} \\
+\texttt{rho\_\allowbreak{}A\_\allowbreak{}RA} & \texttt{rho\_\allowbreak{}RpA - rho\_\allowbreak{}R} \\
+\texttt{t\_\allowbreak{}rho\_\allowbreak{}w} & \texttt{rho\_\allowbreak{}TOA - rho\_\allowbreak{}RpA} \\
+\texttt{T\_\allowbreak{}dir\_\allowbreak{}dn} & Direct atmospheric transmittance in the solar direction, \texttt{exp(-\ensuremath{\tau}/\allowbreak{}\ensuremath{\mu}sun)} \\
+\texttt{T\_\allowbreak{}diff\_\allowbreak{}dn\_\allowbreak{}hemi} & Hemispherically integrated contribution from downward diffuse light \\
+\texttt{T\_\allowbreak{}total\_\allowbreak{}dn\_\allowbreak{}hemi} & \texttt{Ed(0+) /\allowbreak{} (Fsun·\ensuremath{\mu}sun)} \\
+\texttt{T\_\allowbreak{}dir\_\allowbreak{}up\_\allowbreak{}view} & Direct atmospheric transmittance in the viewing direction, \texttt{exp(-\ensuremath{\tau}/\allowbreak{}\ensuremath{\mu}view)} \\
+\texttt{T\_\allowbreak{}total\_\allowbreak{}up\_\allowbreak{}view} & Effective directional transmittance: TOA water-signal radiance from the actual bottom-source pass divided by \texttt{Lu(0+)} \\
+\texttt{T\_\allowbreak{}diff\_\allowbreak{}up\_\allowbreak{}view} & \texttt{T\_\allowbreak{}total\_\allowbreak{}up\_\allowbreak{}view - T\_\allowbreak{}dir\_\allowbreak{}up\_\allowbreak{}view}. Can be negative because of angular redistribution; do not uniformly clip to 0 \\
+\texttt{TOA\_\allowbreak{}water\_\allowbreak{}signal\_\allowbreak{}I} & TOA radiance obtained by propagating R1's internal water-origin source through the atmosphere. Its units differ from \texttt{t\_\allowbreak{}rho\_\allowbreak{}w} \\
+\texttt{T\_\allowbreak{}up\_\allowbreak{}rt\_\allowbreak{}valid} & 1 if \texttt{abs(Lu(0+)) > 0}, otherwise 0. Not a numerical-convergence or overall-quality flag \\
+\texttt{rho\_\allowbreak{}wn} & \texttt{t\_\allowbreak{}rho\_\allowbreak{}w /\allowbreak{} (T\_\allowbreak{}total\_\allowbreak{}dn\_\allowbreak{}hemi·T\_\allowbreak{}total\_\allowbreak{}up\_\allowbreak{}view)}. NaN for a zero/NaN denominator. Account for the normalization definition and R1/R3 differences when using it \\
+\texttt{Rrs}, \texttt{Rrs\_\allowbreak{}I} & Identical values: \texttt{Lu\_\allowbreak{}I(0+)/\allowbreak{}Ed(0+)}, sr\textsuperscript{-}\textsuperscript{1} \\
+\texttt{Rrs\_\allowbreak{}Q}, \texttt{Rrs\_\allowbreak{}U} & \texttt{Lu\_\allowbreak{}Q/\allowbreak{}U(0+)/\allowbreak{}Ed(0+)}, sr\textsuperscript{-}\textsuperscript{1}. I/Q/U all use the same downward I irradiance as denominator \\
+\texttt{rrs\_\allowbreak{}I}, \texttt{rrs\_\allowbreak{}Q}, \texttt{rrs\_\allowbreak{}U} & Immediately below the surface, \texttt{Lu\_\allowbreak{}I/\allowbreak{}Q/\allowbreak{}U(0-)/\allowbreak{}Ed(0-)}, sr\textsuperscript{-}\textsuperscript{1} \\
+\texttt{a\_\allowbreak{}total,\allowbreak{}b\_\allowbreak{}total,\allowbreak{}bb\_\allowbreak{}total} & Total seawater absorption, scattering, and backscattering coefficients, m\textsuperscript{-}\textsuperscript{1} \\
+\texttt{a\_\allowbreak{}w,\allowbreak{}b\_\allowbreak{}w,\allowbreak{}bb\_\allowbreak{}w} & The same three coefficients for pure seawater, m\textsuperscript{-}\textsuperscript{1} \\
+\texttt{a\_\allowbreak{}chl} & Phytoplankton absorption contribution alone, m\textsuperscript{-}\textsuperscript{1} \\
+\texttt{a\_\allowbreak{}phyto\_\allowbreak{}detritus,\allowbreak{}b\_\allowbreak{}phyto\_\allowbreak{}detritus,\allowbreak{}bb\_\allowbreak{}phyto\_\allowbreak{}detritus} & Sum of phytoplankton and Chl-linked detritus, m\textsuperscript{-}\textsuperscript{1}. Phytoplankton scattering is currently 0 \\
+\texttt{a\_\allowbreak{}dom} & CDOM absorption, m\textsuperscript{-}\textsuperscript{1} \\
+\texttt{a\_\allowbreak{}min,\allowbreak{}b\_\allowbreak{}min,\allowbreak{}bb\_\allowbreak{}min} & Mineral absorption, scattering, and backscattering, m\textsuperscript{-}\textsuperscript{1} \\
+\texttt{Kd0minus} & Attenuation coefficient of downward irradiance immediately below the surface, m\textsuperscript{-}\textsuperscript{1} \\
+\end{longtable}
+}
+
+For rows with \texttt{T\_\allowbreak{}up\_\allowbreak{}rt\_\allowbreak{}valid=\allowbreak{}0}, effective upward transmittance and \texttt{rho\_\allowbreak{}wn} may be NaN. Do not replace NaN with 0 in training or correction datasets. The CSV above does not store all of the following: TOA Q/U, selected slopes, mineral name, pressure, version, GPU/CPU mode, numerical settings, and underwater convergence status. In particular, optional slope columns may be present in the input without being copied into the output. Always retain the original CSV and command logs.
+
+If Rrs is needed, read \texttt{Rrs\_\allowbreak{}I} directly. Do not substitute \texttt{rho\_\allowbreak{}wn/\allowbreak{}\ensuremath{\pi}} for Rrs, or vice versa, without validating their relationship. Do not remove negative \texttt{Rrs\_\allowbreak{}Q/\allowbreak{}U} values merely because they are negative.
+
+\subsection{Output from \texttt{ocrt\_\allowbreak{}solve.\allowbreak{}py}}
+\label{sec:auto:06_python_batch:8.2}
+\texttt{single} writes text to stdout, not CSV. It displays \texttt{conv/\allowbreak{}orders} and selected reflectance/Rrs values. If R1 was not run, as with \texttt{-\allowbreak{}-\allowbreak{}which R2}, \texttt{conv/\allowbreak{}orders} are \texttt{None}. Even if R1 calculates Q/U Rrs internally, the current CLI text does not print every such key.
+
+\texttt{grid} saves the following columns. A field is blank when its reflectance was not requested or when an operand needed for a combination is absent.
+
+
+\begin{ManualCode}
+row_id,wavelength_nm,tsm,chl,acdom440,aer_model,aod865,wind,sza,vza,raa,aod_band,
+rho_TOA_I,rho_R_I,rho_RA_black_I,rho_RC_I,rho_AplusRA_I,t_rho_w_I,Rrs,rrs0minus,
+rho_TOA_Q,rho_TOA_U,rho_R_Q,rho_R_U,rho_RA_black_Q,rho_RA_black_U,orders,conv,
+adom_slope,detritus_a440,detritus_slope
+\end{ManualCode}
+
+\texttt{rho\_\allowbreak{}RA\_\allowbreak{}black\_\allowbreak{}*} is R3, and \texttt{rho\_\allowbreak{}AplusRA\_\allowbreak{}I} is R3-R2. \texttt{aod\_\allowbreak{}band} converts AOD at 865 nm to the calculation wavelength using the Mie spectral extinction ratio. \texttt{Rrs/\allowbreak{}rrs0minus} are the above-/below-surface ratios for I. Check underwater \texttt{conv=\allowbreak{}1}, recognizing that it does not replace all accuracy checks of the atmosphere or complete model. \texttt{orders} is the maximum underwater scattering order used.
+
+\subsection{Output from \texttt{ocrt\_\allowbreak{}fullgrid.\allowbreak{}py}}
+\label{sec:auto:06_python_batch:8.3}
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3400\linewidth-4.00pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.6600\linewidth-4.00pt\relax}@{}}
+\toprule
+\textbf{Column group} & \textbf{Meaning} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Column group} & \textbf{Meaning} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{case\_\allowbreak{}kind} & Currently \texttt{ocean\_\allowbreak{}rrs\_\allowbreak{}grid} \\
+\texttt{sza\_\allowbreak{}deg,\allowbreak{}wavelength\_\allowbreak{}nm,\allowbreak{}wind\_\allowbreak{}speed\_\allowbreak{}ms} & Physical conditions \\
+\texttt{mu\_\allowbreak{}index,\allowbreak{}mu\_\allowbreak{}view,\allowbreak{}vza\_\allowbreak{}deg,\allowbreak{}raa\_\allowbreak{}deg} & Zero-based VZA-list index, \texttt{cos(VZA)}, and input angles \\
+\texttt{Ed0plus\_\allowbreak{}air,\allowbreak{}Lu0plus\_\allowbreak{}I,\allowbreak{}Lu0plus\_\allowbreak{}Q,\allowbreak{}Lu0plus\_\allowbreak{}U} & Above-surface downward irradiance and water-leaving Stokes radiance \\
+\texttt{Rrs\_\allowbreak{}I,\allowbreak{}Rrs\_\allowbreak{}Q,\allowbreak{}Rrs\_\allowbreak{}U} & The above radiances divided by \texttt{Ed0plus\_\allowbreak{}air}, sr\textsuperscript{-}\textsuperscript{1} \\
+\texttt{Ed0minus\_\allowbreak{}water,\allowbreak{}Lu0minus\_\allowbreak{}I,\allowbreak{}Lu0minus\_\allowbreak{}Q,\allowbreak{}Lu0minus\_\allowbreak{}U} & Corresponding below-surface quantities \\
+\texttt{rrs\_\allowbreak{}I,\allowbreak{}rrs\_\allowbreak{}Q,\allowbreak{}rrs\_\allowbreak{}U} & Below-surface radiance/irradiance ratios, sr\textsuperscript{-}\textsuperscript{1} \\
+\texttt{TOA\_\allowbreak{}rho\_\allowbreak{}I,\allowbreak{}TOA\_\allowbreak{}rho\_\allowbreak{}Q,\allowbreak{}TOA\_\allowbreak{}rho\_\allowbreak{}U} & TOA Stokes reflectances with direct sunglint separated out \\
+\texttt{a\_\allowbreak{}total,\allowbreak{}b\_\allowbreak{}total,\allowbreak{}bb\_\allowbreak{}total,\allowbreak{}omega\_\allowbreak{}water} & Three seawater IOP coefficients and \texttt{b/\allowbreak{}(a+b)} \\
+\texttt{water\_\allowbreak{}orders,\allowbreak{}water\_\allowbreak{}converged} & Maximum underwater scattering order used and convergence flag \\
+\texttt{aod\_\allowbreak{}ref,\allowbreak{}aod\_\allowbreak{}ref\_\allowbreak{}nm,\allowbreak{}aod\_\allowbreak{}target} & Reference AOD, reference wavelength in nm, and AOD at the calculation wavelength \\
+\texttt{tau\_\allowbreak{}a\_\allowbreak{}eff,\allowbreak{}ssa\_\allowbreak{}a\_\allowbreak{}eff} & Effective optical depth and single-scattering albedo after aerosol processing \\
+\end{longtable}
+}
+
+Irradiance/radiance values follow the internal \texttt{F\_\allowbreak{}sun\_\allowbreak{}TOA=\allowbreak{}1} normalization; do not equate them directly with observed spectral radiance in W-based units. If absolute physical quantities are required, apply consistent normalization of the incident solar spectrum. The CSV does not contain the Chl/TSM/CDOM inputs themselves, so bundle it with a state file.
+
+\section{GPU comparison and validation tools}
+\label{sec:auto:06_python_batch:9}
+
+\begin{ManualCode}
+python gpu_gate.py --grid results/pilot_8.csv --data data --bands 443,555 --chunk 4 --n-mu-water 24 --nt-atm 400 --m-max 16 --max-it-water 500 --tol 1e-7
+\end{ManualCode}
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3000\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2300\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.4700\linewidth-5.33pt\relax}@{}}
+\toprule
+\textbf{Option} & \textbf{Default} & \textbf{Description} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Option} & \textbf{Default} & \textbf{Description} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{-\allowbreak{}h}, \texttt{-\allowbreak{}-\allowbreak{}help} & --- & Help \\
+\texttt{-\allowbreak{}-\allowbreak{}grid PATH} & Required & Small condition CSV \\
+\texttt{-\allowbreak{}-\allowbreak{}data DIR} & \texttt{data} in the current directory & Data root. Its default base directory differs from \texttt{produce\_\allowbreak{}grid.\allowbreak{}py} \\
+\texttt{-\allowbreak{}-\allowbreak{}bands LIST} & \texttt{443,\allowbreak{}555,\allowbreak{}865} & Comma-separated integer wavelengths \\
+\texttt{-\allowbreak{}-\allowbreak{}chunk N} & 8 & Rows per batch \\
+\texttt{-\allowbreak{}-\allowbreak{}n-\allowbreak{}mu-\allowbreak{}water N} & 24 & Underwater/batch-atmosphere integration-node count \\
+\texttt{-\allowbreak{}-\allowbreak{}nt-\allowbreak{}atm N} & 400 & R1/R3 atmospheric layer count \\
+\texttt{-\allowbreak{}-\allowbreak{}m-\allowbreak{}max N} & 16 & Maximum R1/R3 atmospheric Fourier mode \\
+\texttt{-\allowbreak{}-\allowbreak{}max-\allowbreak{}it-\allowbreak{}water N} & 500 & Maximum underwater scattering order \\
+\texttt{-\allowbreak{}-\allowbreak{}tol VALUE} & \texttt{1e-\allowbreak{}7} & Pass threshold for relative differences against CPU. Not the solver's own convergence-tolerance option \\
+\texttt{-\allowbreak{}-\allowbreak{}gpu-\allowbreak{}only} & Off & Skip CPU comparison and time only the GPU. Do not interpret this as passing validation \\
+\end{longtable}
+}
+
+The comparison covers four I products: \texttt{rho\_\allowbreak{}TOA/\allowbreak{}rho\_\allowbreak{}R/\allowbreak{}rho\_\allowbreak{}RpA/\allowbreak{}Rrs}. Gas absorption is enabled, the default mineral is \texttt{red\_\allowbreak{}clay}, and the default Chl path is used. There are no options to change mineral type or gas on/off. It does not check Q/U, every IOP/transmittance, or C results. The code does not provide sufficiently strict failure checks for NaN or missing keys, so \textbf{check both calculations' key counts and the finiteness of every compared value, independently of a PASS message.} If the reference value is 0, the denominator is set to 1, making the calculation behave like an absolute difference.
+
+\texttt{verify.\allowbreak{}py} is a historical fixed-reference check with no options. It checks against a hard-coded C I-reflectance reference of \texttt{2.\allowbreak{}2748060400e-\allowbreak{}01} under reduced settings, requiring relative difference \texttt{<1e-\allowbreak{}8} and underwater \texttt{conv=\allowbreak{}1}. Independently verify that this reference is synchronized with the current C build and data SHA; a PASS for this one case does not guarantee the full currently supported C scope. \texttt{diag\_\allowbreak{}gpu.\allowbreak{}py} is a GPU-environment diagnostic script with no options.
+
+Do not set advanced environment variables in basic production examples. \texttt{OCRT\_\allowbreak{}PY\_\allowbreak{}NATIVE\_\allowbreak{}COUPLED\_\allowbreak{}LUT\_\allowbreak{}OFF} selects the historical cell-by-cell path instead of the shared angular LUT; \texttt{OCRT\_\allowbreak{}PY\_\allowbreak{}AIR\_\allowbreak{}SURFACE\_\allowbreak{}CACHE\_\allowbreak{}OFF} disables the sea-surface kernel cache. Both activate for any nonempty value. \texttt{OCRT\_\allowbreak{}PY\_\allowbreak{}SEQ\_\allowbreak{}BCS=\allowbreak{}1} is for comparison with the sequential batch-boundary integration path. \texttt{OCRT\_\allowbreak{}VALUE\_\allowbreak{}PHASE\_\allowbreak{}SPLINE}, \texttt{OCRT\_\allowbreak{}WATER\_\allowbreak{}VALUE\_\allowbreak{}KERNEL\_\allowbreak{}POL}, \texttt{OCRT\_\allowbreak{}WATER\_\allowbreak{}MIE\_\allowbreak{}MOMENT\_\allowbreak{}N\_\allowbreak{}MU}, and \texttt{OCRT\_\allowbreak{}WATER\_\allowbreak{}VALUE\_\allowbreak{}NPHI} concern underwater research paths receiving raw \texttt{value\_\allowbreak{}phase}; they do not automatically switch the high-level constituent CLI to the latest C direct FR631 kernel.
+
+\section{\texttt{campaign\_\allowbreak{}runner}: managing campaigns of C processes}
+\label{sec:auto:06_python_batch:10}
+This tool is separate from the Python RT engine. It runs C executables assuming the migration-distribution structure \texttt{runtime-\allowbreak{}root/\allowbreak{}01\_\allowbreak{}OCRT\_\allowbreak{}C/\allowbreak{}} from 2026-08-22. \textbf{It cannot be run immediately by passing the current GitHub repository root as \texttt{-\allowbreak{}-\allowbreak{}runtime-\allowbreak{}root}.} Even when \texttt{-\allowbreak{}-\allowbreak{}exe} is specified, its working directory remains \texttt{runtime-\allowbreak{}root/\allowbreak{}01\_\allowbreak{}OCRT\_\allowbreak{}C}. For new production based on the current repository, first follow the procedures in Chapter~\ref{chap:08_input_formats} and Appendix~\ref{chap:04_examples}.
+
+“PSSA ON” in the historical settings and documentation is the recorded name. The execution command includes \texttt{-\allowbreak{}-\allowbreak{}pssa}, but \textbf{in C v1.11.1 this switch enables IPSS.} Older C executables may use a different correction, so always read the binary version and SHA together. This tool does not automatically upgrade an old runtime to current C.
+
+\subsection{Execution options}
+\label{sec:auto:06_python_batch:10.1}
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3000\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2300\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.4700\linewidth-5.33pt\relax}@{}}
+\toprule
+\textbf{Option} & \textbf{Default} & \textbf{Description} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Option} & \textbf{Default} & \textbf{Description} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{-\allowbreak{}h}, \texttt{-\allowbreak{}-\allowbreak{}help} & --- & Help \\
+\texttt{-\allowbreak{}-\allowbreak{}runtime-\allowbreak{}root DIR} & Required & Migration root containing the \texttt{01\_\allowbreak{}OCRT\_\allowbreak{}C} subdirectory \\
+\texttt{-\allowbreak{}-\allowbreak{}matrix CSV} & Required & Run matrix containing actual C command arguments and validation conditions \\
+\texttt{-\allowbreak{}-\allowbreak{}output-\allowbreak{}dir DIR} & Required & Directory for results, logs, and manifests \\
+\texttt{-\allowbreak{}-\allowbreak{}config JSON} & Bundled \texttt{config/\allowbreak{}polarization\_\allowbreak{}campaign\_\allowbreak{}pssa\_\allowbreak{}16core.\allowbreak{}json} & Execution policy, environment, and validation conditions \\
+\texttt{-\allowbreak{}-\allowbreak{}exe PATH} & Automatic discovery & Absolute/relative executable path. If omitted, searches \texttt{01\_\allowbreak{}OCRT\_\allowbreak{}C/\allowbreak{}build/\allowbreak{}} for \texttt{ocrt\_\allowbreak{}polarization}, \texttt{ocrt}, \texttt{ocrt\_\allowbreak{}v1.\allowbreak{}2}, and their \texttt{.\allowbreak{}exe} variants \\
+\texttt{-\allowbreak{}-\allowbreak{}workers N} & 16 from the configuration file & Number of independent C processes. Current policy permits 1--16 \\
+\texttt{-\allowbreak{}-\allowbreak{}pilot N} & 0, unlimited & Run only the first N rows and print storage/time estimates \\
+\texttt{-\allowbreak{}-\allowbreak{}max-\allowbreak{}runs N} & 0, unlimited & Limit the number of run rows; applied after \texttt{-\allowbreak{}-\allowbreak{}pilot} truncation \\
+\texttt{-\allowbreak{}-\allowbreak{}dry-\allowbreak{}run} & Off & Generate only commands and run settings, without C calculations. Binary/matrix checks and file creation still occur \\
+\texttt{-\allowbreak{}-\allowbreak{}keep-\allowbreak{}raw} & Off & Retain original CSVs after validation and compression \\
+\end{longtable}
+}
+
+The default policy uses \texttt{OMP\_\allowbreak{}NUM\_\allowbreak{}THREADS=\allowbreak{}1} per worker, \texttt{OCRT\_\allowbreak{}ADVANCED=\allowbreak{}1}, and the direct underwater-particle kernel, and prohibits broad truncation. It stops if a water-run row lacks \texttt{-\allowbreak{}-\allowbreak{}n-\allowbreak{}mu-\allowbreak{}water}. \texttt{run\_\allowbreak{}campaign.\allowbreak{}py} adds \texttt{-\allowbreak{}-\allowbreak{}pssa} if absent, whereas the archived-command conversion tool treats an absent option as an error. The configuration file records policy; confirm feature support again against the actual C version being run.
+
+\subsection{Matrix and execution example}
+\label{sec:auto:06_python_batch:10.2}
+Matrix columns are \texttt{run\_\allowbreak{}id,\allowbreak{}stage,\allowbreak{}uses\_\allowbreak{}water,\allowbreak{}expected\_\allowbreak{}rows,\allowbreak{}output\_\allowbreak{}relpath,\allowbreak{}command\_\allowbreak{}args\_\allowbreak{}json,\allowbreak{}required\_\allowbreak{}columns\_\allowbreak{}json,\allowbreak{}expected\_\allowbreak{}vza\_\allowbreak{}json,\allowbreak{}expected\_\allowbreak{}raa\_\allowbreak{}json,\allowbreak{}notes}. \texttt{command\_\allowbreak{}args\_\allowbreak{}json} is a list of string arguments excluding the executable, not a full shell command or pipeline. The runner adds output options, so do not put \texttt{-\allowbreak{}-\allowbreak{}output-\allowbreak{}full-\allowbreak{}grid/\allowbreak{}-\allowbreak{}-\allowbreak{}batch-\allowbreak{}full-\allowbreak{}grid/\allowbreak{}-\allowbreak{}-\allowbreak{}output} in the matrix. \texttt{run\_\allowbreak{}id} must be unique. Choose output relative paths as filenames within the campaign directory.
+
+If the existing migration runtime is prepared, run from \texttt{code/\allowbreak{}campaign\_\allowbreak{}runner}:
+
+
+\begin{ManualCode}
+python runner/run_campaign.py --runtime-root runtime/MIGRATION_PKG_2026-08-19 --matrix matrices/PURE_RAYLEIGH_15RUN_MATRIX.csv --output-dir results/rayleigh_reference --workers 4 --pilot 2 --dry-run
+python runner/run_campaign.py --runtime-root runtime/MIGRATION_PKG_2026-08-19 --matrix matrices/PURE_RAYLEIGH_15RUN_MATRIX.csv --output-dir results/rayleigh_reference --workers 4 --pilot 2
+python runner/monitor_progress.py --output-dir results/rayleigh_reference
+\end{ManualCode}
+
+After checking the actual commands, grids, and results, remove \texttt{-\allowbreak{}-\allowbreak{}pilot 2} and continue into the same output directory. Existing compressed results are reused only after rechecking their structure, row count, specified VZA/RAA, and finiteness of selected numerical columns. This reuse still does not automatically guarantee physical identity of every input setting; use a new output directory for a different command matrix.
+
+\texttt{PURE\_\allowbreak{}RAYLEIGH\_\allowbreak{}15RUN\_\allowbreak{}MATRIX.\allowbreak{}csv} is a known reference of 5 wavelengths \ensuremath{\times} 3 SZAs. \texttt{HISTORICAL\_\allowbreak{}RUN\_\allowbreak{}MATRIX\_\allowbreak{}REQUIRED.\allowbreak{}csv} is not a completed matrix reconstructing the historical 8,045 runs, so an empty matrix cannot run the full campaign. Do not guess missing conditions and call the result a historical reproduction.
+
+Outputs are:
+
+
+\begin{ManualCode}
+results/<campaign>/
+  run_config.json             Runtime, input matrix, and binary SHA
+  run_commands.txt            Actual C arguments
+  run_manifest.csv            Per-run status, time, rows, SHA, and log paths
+  RUN_SUMMARY.json            Run summary
+  PILOT_OR_RUN_ESTIMATE.json  Storage/time estimates
+  logs/*.stdout.log
+  logs/*.stderr.log
+  <stage>/*.csv.gz            Original results finalized after validation
+\end{ManualCode}
+
+CSVs that pass validation are compressed and renamed to their final names. The current validator checks finiteness only in selected output columns; this is not equivalent to scientific-validity checks for every column. The estimate field \texttt{estimated\_\allowbreak{}16\_\allowbreak{}worker\_\allowbreak{}wall\_\allowbreak{}s\_\allowbreak{}ideal} is, as its name indicates, an ideal value obtained by dividing by 16 workers. Do not read it as the expected time for an actual setting such as \texttt{-\allowbreak{}-\allowbreak{}workers 4}.
+
+\subsection{Complete options for auxiliary tools}
+\label{sec:auto:06_python_batch:10.3}
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3400\linewidth-4.00pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.6600\linewidth-4.00pt\relax}@{}}
+\toprule
+\textbf{Tool} & \textbf{Options} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Tool} & \textbf{Options} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{monitor\_\allowbreak{}progress.\allowbreak{}py} & \texttt{-\allowbreak{}h/\allowbreak{}-\allowbreak{}-\allowbreak{}help}, required \texttt{-\allowbreak{}-\allowbreak{}output-\allowbreak{}dir}. Reads manifest counts by status, storage size, and recent rows \\
+\texttt{build\_\allowbreak{}matrix\_\allowbreak{}from\_\allowbreak{}run\_\allowbreak{}commands.\allowbreak{}py} & \texttt{-\allowbreak{}h/\allowbreak{}-\allowbreak{}-\allowbreak{}help}, required \texttt{-\allowbreak{}-\allowbreak{}commands}, required \texttt{-\allowbreak{}-\allowbreak{}output}, \texttt{-\allowbreak{}-\allowbreak{}default-\allowbreak{}expected-\allowbreak{}rows} default 1296. Converts exact archived commands into a matrix and \texttt{.\allowbreak{}audit.\allowbreak{}csv} \\
+\texttt{inspect\_\allowbreak{}historical\_\allowbreak{}package.\allowbreak{}py} & \texttt{-\allowbreak{}h/\allowbreak{}-\allowbreak{}-\allowbreak{}help}, required \texttt{-\allowbreak{}-\allowbreak{}archive}, \texttt{-\allowbreak{}-\allowbreak{}output-\allowbreak{}dir} default \texttt{historical\_\allowbreak{}import}. Extracts condition/command records and SHAs from a historical tar \\
+\texttt{setup\_\allowbreak{}runtime.\allowbreak{}py} & \texttt{-\allowbreak{}h/\allowbreak{}-\allowbreak{}-\allowbreak{}help}, required \texttt{-\allowbreak{}-\allowbreak{}parts-\allowbreak{}dir}, required \texttt{-\allowbreak{}-\allowbreak{}runtime-\allowbreak{}dir}, \texttt{-\allowbreak{}-\allowbreak{}verify-\allowbreak{}only}, \texttt{-\allowbreak{}-\allowbreak{}no-\allowbreak{}python-\allowbreak{}data}, \texttt{-\allowbreak{}-\allowbreak{}no-\allowbreak{}build}, \texttt{-\allowbreak{}-\allowbreak{}march} default \texttt{auto} (\texttt{auto/\allowbreak{}cascadelake/\allowbreak{}x86-\allowbreak{}64-\allowbreak{}v3/\allowbreak{}x86-\allowbreak{}64}), \texttt{-\allowbreak{}-\allowbreak{}full-\allowbreak{}mie-\allowbreak{}hash-\allowbreak{}audit}, \texttt{-\allowbreak{}-\allowbreak{}extract-\allowbreak{}workers} default 4, \texttt{-\allowbreak{}-\allowbreak{}force} \\
+\end{longtable}
+}
+
+\texttt{setup\_\allowbreak{}runtime.\allowbreak{}py} is a restoration installer requiring the historical migration base files, policy overlay, and PART00--PART10 bundles. It differs from \texttt{fetch\_\allowbreak{}data}, which downloads the current four \texttt{data-\allowbreak{}v1} ZIP files. \texttt{-\allowbreak{}-\allowbreak{}verify-\allowbreak{}only} exits after validating input archives; \texttt{-\allowbreak{}-\allowbreak{}no-\allowbreak{}python-\allowbreak{}data} skips installation of the matching Python data; \texttt{-\allowbreak{}-\allowbreak{}no-\allowbreak{}build} skips the build; and \texttt{-\allowbreak{}-\allowbreak{}full-\allowbreak{}mie-\allowbreak{}hash-\allowbreak{}audit} checks SHAs of all extracted Mie files. \textbf{\texttt{-\allowbreak{}-\allowbreak{}force} deletes and recreates an existing \texttt{-\allowbreak{}-\allowbreak{}runtime-\allowbreak{}dir}.} Do not use it on a directory containing original archived data or results.
+
+\section{Basis for preparation and verification}
+\label{sec:auto:06_python_batch:11}
+\begin{itemize}
+\item \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_Python/produce_grid.py}{Batch CLI and output fields}
+\item \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_Python/ocrt_solve.py}{Single/sequential-grid CLI}
+\item \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_Python/ocrt_fullgrid.py}{Angular-LUT CLI}, \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_Python/ocrt_py/lut.py}{angular-LUT output}
+\item \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_Python/ocrt_py/batch_driver.py}{Batch calculation path and transmittance definitions}, \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_Python/ocrt_py/driver.py}{single coupled path}
+\item \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_Python/ocrt_py/constituent.py}{Constituent model and EAP gate}, \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_Python/ocrt_py/backend.py}{array backend}
+\item \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_Python/gpu_gate.py}{GPU comparison tool}, \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_Python/verify.py}{historical C-reference check}
+\item \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/scripts/MIE_SHA256SUMS_data-v1.txt}{Current distribution data manifest}
+\item \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/campaign_runner/runner/run_campaign.py}{C campaign runner}, \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/campaign_runner/config/polarization_campaign_pssa_16core.json}{default configuration}
+\end{itemize}
+
+The checks for this appendix compared actual help output, input parsers, output fields, function-call paths, and local data loading, and confirmed the one-point R2 run in Section~\ref{sec:auto:06_python_batch:7.1}. They do not claim new verification of GPU execution, a full precision comparison with current C, or successful R1 execution requiring supplementary EAP data.
+\endgroup
+

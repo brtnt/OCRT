@@ -1,0 +1,253 @@
+% Authoritative LaTeX chapter. Edit this file for future revisions.
+% Initially migrated 2026-09-11; no Markdown import occurs during PDF builds.
+\chapter{Basic Concepts and Observation Geometry}
+\label{chap:01_concepts_geometry}
+Manual contents · \hyperref[chap:05_output_formats]{Output formats}
+
+This document is based on the public inputs and computed outputs of \texttt{code/\allowbreak{}OCRT\_\allowbreak{}C/\allowbreak{}src}. The reference is Git commit \texttt{54861c68e35ec5aa\allowbreak{}a3938fad53e93dc2\allowbreak{}dfa7eb1d}; the executable's version string alone does not establish whether it reflects the latest source. Historical validation reports document the versions used at the time.
+
+\section{What OCRT calculates}
+\label{sec:auto:01_concepts_geometry:1}
+OCRT is a radiative transfer model that calculates the scattering, absorption, reflection, and transmission of sunlight in the atmosphere, at the sea surface, and underwater. It computes Stokes \texttt{I}, \texttt{Q}, and \texttt{U} for elastic scattering at the same wavelength. \texttt{I} represents total radiance, while \texttt{Q} and \texttt{U} are the linear polarization components relative to the chosen reference plane. Circular polarization \texttt{V} is not included in the public output.
+
+Inputs describe observation geometry, wavelength, atmospheric pressure, aerosols and gases, wind at the sea surface, and the optical properties of water. The main outputs are as follows.
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3400\linewidth-4.00pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.6600\linewidth-4.00pt\relax}@{}}
+\toprule
+\textbf{Location or quantity} & \textbf{Meaning} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Location or quantity} & \textbf{Meaning} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+TOA & Signal leaving the top of the atmosphere toward the satellite \\
+\texttt{0+} & Immediately above the water surface, on the air side \\
+\texttt{0-\allowbreak{}} & Immediately below the water surface, on the water side \\
+\texttt{rho} & Directional TOA reflectance normalized by incident solar illumination; dimensionless \\
+\texttt{Rrs} & \texttt{Lu(0+)/\allowbreak{}Ed(0+)}, above-surface remote-sensing reflectance, sr\textsuperscript{-}\textsuperscript{1} \\
+\texttt{rrs} & \texttt{Lu(0-\allowbreak{})/\allowbreak{}Ed(0-\allowbreak{})}, below-surface remote-sensing reflectance, sr\textsuperscript{-}\textsuperscript{1} \\
+\texttt{Lu}, \texttt{Ed}, \texttt{Eu} & Upwelling radiance, downwelling irradiance, and upwelling irradiance, respectively \\
+\end{longtable}
+}
+
+\texttt{Rrs} and \texttt{rho} have different denominators and units. Surface reflectance obtained by multiplying \texttt{Rrs} by \ensuremath{\pi} is also different from TOA \texttt{rho}, which includes the atmospheric path. Raw \texttt{Lu} and \texttt{Ed} values use model-specific incident-light normalization, so first consult the \hyperref[chap:05_output_formats]{output normalization rules}.
+
+The calculation assumes horizontally uniform layers. Multiple scattering is calculated by SOS (Successive Orders of Scattering, accumulated by scattering order), and azimuthal dependence is represented by Fourier modes. Enabling \texttt{-\allowbreak{}-\allowbreak{}pssa} applies the IPSS spherical correction in the current implementation. This is not a model for fully three-dimensional terrain/cloud radiative transfer or for arbitrary seabed topography.
+
+\section{Select the surface mode first}
+\label{sec:auto:01_concepts_geometry:2}
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3000\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2300\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.4700\linewidth-5.33pt\relax}@{}}
+\toprule
+\textbf{\texttt{-\allowbreak{}-\allowbreak{}surface}} & \textbf{Calculation domain} & \textbf{Typical use} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{\texttt{-\allowbreak{}-\allowbreak{}surface}} & \textbf{Calculation domain} & \textbf{Typical use} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{black} & Atmosphere above a nonreflecting lower boundary & Pure atmospheric path; checking Rayleigh scattering \\
+\texttt{flat} & Atmosphere above a flat Fresnel-reflecting boundary & Reference calculations for flat-surface Fresnel reflection \\
+\texttt{black\_\allowbreak{}fresnel\_\allowbreak{}ocean} & Atmosphere and a wind-dependent Fresnel sea surface, with no water-leaving light & Rayleigh/aerosol path LUTs for ocean atmospheric correction \\
+\texttt{ocean} & Coupled atmosphere--sea-surface--underwater radiative transfer & \texttt{Rrs}, \texttt{rrs}, TOA ocean signals and simulated data \\
+\end{longtable}
+}
+
+For \texttt{ocean}, specify water properties with one of \texttt{-\allowbreak{}-\allowbreak{}water-\allowbreak{}model ocrt}, \texttt{ccrr}, or \texttt{iop}. \texttt{ocrt} and \texttt{ccrr} select how constituents are converted into optical properties; \texttt{iop} supplies absorption, scattering, and backscattering coefficients and the phase function directly. Even identically named concentrations can produce different optical properties under different constituent models.
+
+For IOPs (Inherent Optical Properties), \texttt{a}, \texttt{b}, and \texttt{bb} are the absorption, scattering, and backscattering coefficients, respectively, in m\textsuperscript{-}\textsuperscript{1}. The extinction coefficient is \texttt{c=\allowbreak{}a+b}, and the single-scattering albedo is \texttt{omega=\allowbreak{}b/\allowbreak{}(a+b)}. Since \texttt{bb} is the backward-hemisphere component of \texttt{b}, do not use \texttt{a+b+bb} as the extinction coefficient.
+
+\section{SZA, VZA, and RAA: always referenced to the ground pixel}
+\label{sec:auto:01_concepts_geometry:3}
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3000\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2300\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.4700\linewidth-5.33pt\relax}@{}}
+\toprule
+\textbf{Input / CSV name} & \textbf{Definition} & \textbf{Unit} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Input / CSV name} & \textbf{Definition} & \textbf{Unit} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{-\allowbreak{}-\allowbreak{}sza}, \texttt{sza\_\allowbreak{}deg} & Angle between the upward vertical at the ground pixel and the direction toward the Sun & Degrees \\
+\texttt{-\allowbreak{}-\allowbreak{}vza}, \texttt{vza\_\allowbreak{}deg} & Angle between the upward vertical at the ground pixel and the direction toward the sensor & Degrees \\
+\texttt{-\allowbreak{}-\allowbreak{}raa}, \texttt{raa\_\allowbreak{}deg} & OCRT public relative azimuth angle, following the operational definition below & Degrees \\
+\end{longtable}
+}
+
+\texttt{VZA=\allowbreak{}0\textdegree{}} is nadir viewing. Distinguish VZA from the off-nadir angle viewed downward from the satellite: in spherical geometry, these angles can differ. Inputs remain referenced to the ground pixel when \texttt{-\allowbreak{}-\allowbreak{}pssa} is used. For \texttt{ocean}, VZA is the viewing angle in air, and the standard path obtains the underwater angle through an internal refraction transformation. Do not reinterpret the same numerical VZA as an underwater angle.
+
+For daytime upward viewing, generally prepare valid geometries with \texttt{0 \ensuremath{\leq} SZA < 90} and \texttt{0 \ensuremath{\leq} VZA < 90}. The default LUT spans VZA \texttt{0--85\textdegree{}}; inspect the coordinates in the output CSV for the exact grid. Normalize input RAA to \texttt{[0,\allowbreak{}360)} where possible. \texttt{360\textdegree{}} is physically the same direction as \texttt{0\textdegree{}} and is not included in the LUT as a duplicate endpoint.
+
+Figure~\ref{fig:geometry-zenith-refraction} distinguishes the two zenith angles from underwater refraction. Figure~\ref{fig:geometry-curvature} shows why satellite off-nadir angle must not be passed directly to \texttt{--vza}.
+
+\input{figures/geometry_zenith_refraction}
+\input{figures/geometry_curvature}
+
+\section{Operational definition of OCRT RAA}
+\label{sec:auto:01_concepts_geometry:4}
+\textbf{The direct sunglint direction in OCRT is \texttt{RAA=\allowbreak{}180\textdegree{}}.} For specular reflection from a flat surface, this is the specular branch when \texttt{SZA=\allowbreak{}VZA}. Wind broadens the specular signal into neighboring angles through the Cox--Munk slope distribution.
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3400\linewidth-4.00pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.6600\linewidth-4.00pt\relax}@{}}
+\toprule
+\textbf{OCRT RAA} & \textbf{Interpretation} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{OCRT RAA} & \textbf{Interpretation} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{0\textdegree{}} & Principal-plane branch opposite direct glint \\
+\texttt{90\textdegree{}} & One azimuth perpendicular to the principal plane \\
+\texttt{180\textdegree{}} & Direct-glint principal-plane branch; specular geometry when \texttt{SZA=\allowbreak{}VZA} \\
+\texttt{270\textdegree{}} & Mirror azimuth of \texttt{90\textdegree{}}; \texttt{I/\allowbreak{}Q} are symmetric, while \texttt{U} can have the opposite sign \\
+\texttt{360\textdegree{}} & Same direction as \texttt{0\textdegree{}} \\
+\end{longtable}
+}
+
+Do not determine RAA from descriptions such as “on the same side as the Sun,” “forward,” or “backward” alone. The direction \textbf{looking toward the Sun} and the direction in which sunlight \textbf{propagates} differ by 180\textdegree{} in horizontal azimuth. If another radiative transfer code or LUT places glint at \texttt{RAA=\allowbreak{}0\textdegree{}}, that numerical value cannot be used directly in OCRT.
+
+Following solar photon travel and the sensor look direction in Figure~\ref{fig:geometry-glint-branches} makes the two branches easier to distinguish. The \texttt{RAA=180\textdegree{}} branch alone does not define the specular center: \texttt{SZA=VZA} is also required.
+
+\input{figures/geometry_glint_branches}
+
+\subsection{Calculation from satellite SAA/VAA}
+\label{sec:auto:01_concepts_geometry:4.1}
+First check the following in the product metadata.
+
+\begin{enumerate}
+\item Verify that SAA is the azimuth \textbf{toward the Sun} from the ground pixel.
+\item Verify that VAA is the azimuth \textbf{toward the sensor} from the ground pixel. If it is the azimuth from the sensor toward the surface, add \texttt{180\textdegree{}} to convert it to a ground-pixel reference.
+\item Align the zero reference and positive rotation direction of SAA and VAA. Do not repeat this procedure on a value already supplied as a relative azimuth angle.
+\end{enumerate}
+
+When both values satisfy these look-azimuth definitions and use the same rotation direction, the following is an explicit conversion convention consistent with OCRT's \texttt{0/\allowbreak{}180\textdegree{}} branches.
+
+
+\begin{ManualCode}
+def ocrt_raa_from_look_azimuths(saa_deg, vaa_deg):
+    return (vaa_deg - saa_deg) % 360.0
+\end{ManualCode}
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.2300\linewidth-6.00pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2400\linewidth-6.00pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2300\linewidth-6.00pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.3000\linewidth-6.00pt\relax}@{}}
+\toprule
+\textbf{SAA} & \textbf{VAA} & \textbf{OCRT RAA from the equation above} & \textbf{Meaning} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{SAA} & \textbf{VAA} & \textbf{OCRT RAA from the equation above} & \textbf{Meaning} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+30\textdegree{} & 30\textdegree{} & 0\textdegree{} & Solar look azimuth and sensor look azimuth coincide \\
+30\textdegree{} & 210\textdegree{} & 180\textdegree{} & Glint branch; the specular center also requires SZA=VZA \\
+350\textdegree{} & 10\textdegree{} & 20\textdegree{} & Difference crossing the 0\textdegree{} boundary \\
+10\textdegree{} & 350\textdegree{} & 340\textdegree{} & Mirror azimuth of the preceding row \\
+\end{longtable}
+}
+
+This equation is a transformation derived in the coordinates declared above; it does not automatically align the Stokes reference plane of a particular satellite product. Reversing the product's positive azimuth rotation direction changes \texttt{RAA} to \texttt{360-RAA}, reversing the sign of \texttt{U} even when \texttt{I/\allowbreak{}Q} remain the same. For polarized data, record the original SAA/VAA, conversion equation, reference plane, and rotation direction together, and compare signed \texttt{U} at an off-principal-plane geometry. If the product's azimuth and Stokes definitions are unknown, agreement in \texttt{I/\allowbreak{}Q} alone does not validate the \texttt{U} transformation.
+
+Figure~\ref{fig:geometry-azimuth} shows the rotation from SAA to VAA. The right panel rotates the same coordinates to the solar look azimuth and illustrates why mirror azimuths need to remain distinguishable in stored data.
+
+\input{figures/geometry_azimuth}
+
+\subsection{When only RAA folded into 0--180\textdegree{} is available}
+\label{sec:auto:01_concepts_geometry:4.2}
+A folded value is commonly generated as follows.
+
+
+\begin{ManualCode}
+raa_360 = (vaa_deg - saa_deg) % 360.0
+raa_folded = min(raa_360, 360.0 - raa_360)
+\end{ManualCode}
+
+Under axisymmetric conditions, a half-circle grid can be used for LUTs containing only \texttt{I} and \texttt{Q}. However, retaining only \texttt{raa\_\allowbreak{}folded=\allowbreak{}20\textdegree{}} loses whether the original direction was \texttt{20\textdegree{}} or \texttt{340\textdegree{}}. To preserve \texttt{U}, also store the original 0--360\textdegree{} direction or an indication of the mirror direction. Storing the absolute value \texttt{abs(U)} discards directional information.
+
+\section{Matching Phi in other codes}
+\label{sec:auto:01_concepts_geometry:5}
+The current \texttt{rt\_\allowbreak{}raa\_\allowbreak{}convention.\allowbreak{}h} defines \textbf{one of the following two equivalent alternatives} for OCRT--OSOAA comparisons.
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3000\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2300\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.4700\linewidth-5.33pt\relax}@{}}
+\toprule
+\textbf{Conversion method} & \textbf{Azimuth passed to OSOAA} & \textbf{U comparison with OCRT} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Conversion method} & \textbf{Azimuth passed to OSOAA} & \textbf{U comparison with OCRT} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+A & \texttt{Phi\_\allowbreak{}OSOAA=\allowbreak{}(180-RAA\_\allowbreak{}OCRT) mod 360} & \texttt{U\_\allowbreak{}OCRT=\allowbreak{}-U\_\allowbreak{}OSOAA} \\
+B & \texttt{Phi\_\allowbreak{}OSOAA=\allowbreak{}(RAA\_\allowbreak{}OCRT+180) mod 36\allowbreak{}0} & \texttt{U\_\allowbreak{}OCRT=\allowbreak{}U\_\allowbreak{}OSOAA} \\
+\end{longtable}
+}
+
+Both methods construct the same physical comparison for \texttt{I/\allowbreak{}Q}. Do not apply method A's U sign reversal together with method B's angle transformation. This rule assumes the output conventions of the corresponding comparison harness; it is not a universal formula for arbitrary codes.
+
+Current OCRT atmospheric outputs, above-surface \texttt{Rrs}, and below-surface \texttt{rrs} are Fourier-reconstructed using \textbf{the same public RAA}. The historical no-conversion rule \texttt{Phi\_\allowbreak{}OSOAA,\allowbreak{}water=\allowbreak{}RAA\_\allowbreak{}OCRT} corresponded to water outputs before the correction. Do not use it for water outputs from the current source.
+
+When reading a CCRR reference CSV, \texttt{-\allowbreak{}-\allowbreak{}ccrr-\allowbreak{}compare} internally applies \texttt{RAA\_\allowbreak{}OCRT=\allowbreak{}(180-RAA\_\allowbreak{}CCRR) mod 360}. If the CSV's \texttt{raa\_\allowbreak{}deg} already follows the OCRT convention, do not feed it directly into this comparison mode and transform it twice. Check \texttt{raa\_\allowbreak{}ccrr\_\allowbreak{}deg}, \texttt{raa\_\allowbreak{}ocrt\_\allowbreak{}deg}, and \texttt{raa\_\allowbreak{}mapping} in the results.
+
+\section{Stokes signs and off-principal-plane validation}
+\label{sec:auto:01_concepts_geometry:6}
+The public default path uses Stokes components aligned with the viewing-direction meridian plane (the plane containing the viewing direction and the vertical). The default surface Q convention is \texttt{q\_\allowbreak{}convention=\allowbreak{}1}, with the Fresnel core component \texttt{Q\_\allowbreak{}kernel=\allowbreak{}(Rp-Rs)/\allowbreak{}2}. \texttt{Q} and \texttt{U} are signed quantities, and negative values are normal. Comparison with sensor coordinates or scattering-plane coordinates may require a reference-plane rotation.
+
+For an axisymmetric surface and medium, using the same reference plane, the following symmetries hold.
+
+
+\begin{ManualCode}
+I(RAA) =  I(360−RAA)
+Q(RAA) =  Q(360−RAA)
+U(RAA) = −U(360−RAA)
+\end{ManualCode}
+
+In the principal plane at \texttt{RAA=\allowbreak{}0/\allowbreak{}180\textdegree{}}, U is zero or at the numerical-error level, so errors in the U sign are not exposed. Also check off-principal-plane pairs such as \texttt{RAA=\allowbreak{}45/\allowbreak{}315\textdegree{}}. At exactly \texttt{VZA=\allowbreak{}0\textdegree{}}, the meridian plane is geometrically degenerate, so Q/U as a function of RAA may not correspond to intuitive left/right directions. Include small positive VZA values in model comparisons rather than using only nadir values.
+
+\section{Scattering angle and conflicting historical comments}
+\label{sec:auto:01_concepts_geometry:7}
+Taking the dot product of the actual solar propagation vector and the upward viewing vector derived from the look directions declared above gives the atmospheric scattering angle:
+
+
+\begin{ManualCode}
+mu_s = cos(SZA), mu_v = cos(VZA)
+cos(Theta) = −mu_s*mu_v − sin(SZA)*sin(VZA)*cos(RAA_OCRT)
+\end{ManualCode}
+
+This matches the expression currently used by \texttt{rt\_\allowbreak{}ipss\_\allowbreak{}cos\_\allowbreak{}scattering\_\allowbreak{}angle()}. For \texttt{SZA=\allowbreak{}VZA=\allowbreak{}30\textdegree{}}, \texttt{Theta=\allowbreak{}180\textdegree{}} at \texttt{RAA=\allowbreak{}0\textdegree{}}, whereas \texttt{Theta=\allowbreak{}120\textdegree{}} at the glint branch, \texttt{RAA=\allowbreak{}180\textdegree{}}. \textbf{The surface specular-reflection direction and exact backscattering by atmospheric particles are different concepts.}
+
+The current repository also contains an unresolved inconsistency in its internal descriptions. The helper \texttt{rt\_\allowbreak{}atm\_\allowbreak{}scatter\_\allowbreak{}cos\_\allowbreak{}from\_\allowbreak{}public\_\allowbreak{}raa()} in \texttt{rt\_\allowbreak{}raa\_\allowbreak{}convention.\allowbreak{}h} uses \texttt{+sin(SZA)*sin(VZ\allowbreak{}A)*cos(RAA)}, opposite to the sign above, and associated comments and \texttt{test\_\allowbreak{}raa\_\allowbreak{}convention.\allowbreak{}c} describe \texttt{RAA=\allowbreak{}180\textdegree{}} as exact backscattering. At the time this manual was prepared, no production \texttt{src} calls to this helper were found; actual Fourier reconstruction uses \texttt{public\_\allowbreak{}RAA+\ensuremath{\pi}}, and IPSS uses the \texttt{-cos(RAA)} expression above. Therefore, do not use this helper or the “exact backscattering” wording in historical audit reports as the basis for satellite-geometry conversion. This manual does not change the source code.
+
+\subsection{Implementation references}
+\label{sec:auto:01_concepts_geometry:7.1}
+\begin{itemize}
+\item \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_C/src/rt_raa_convention.h}{Public RAA helpers and current OSOAA mapping}
+\item \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_C/src/rt_fourier.c}{Internal +\ensuremath{\pi} conversion in Fourier reconstruction}
+\item \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_C/src/rt_ipss.c}{IPSS scattering angle and pixel-referenced geometry}
+\item \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_C/src/main.c}{CLI mode selection and CCRR conversion}
+\item \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_C/src/shared/surface.c}{Surface Stokes components and meridian-plane rotation}
+\end{itemize}
+
+Before changing input parameters, first align these three features: glint at \texttt{RAA=\allowbreak{}180\textdegree{}}, the opposite branch at \texttt{0\textdegree{}}, and the off-principal-plane U sign. This reduces common 180\textdegree{} and sign errors in comparisons.
+

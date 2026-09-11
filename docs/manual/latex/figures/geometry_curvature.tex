@@ -1,0 +1,57 @@
+% Angles drawn from exact ray endpoints; exaggerated orbital height is schematic.
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[x=1cm,y=1cm,font=\sffamily\fontsize{9}{11}\selectfont,
+  note/.style={align=left,text width=5.4cm}]
+\path[use as bounding box] (0,-3.15) rectangle (15.8,4.72);
+\coordinate (C) at (3.6,-2.5);
+\coordinate (P) at (3.6,1);
+\coordinate (S) at (8.6,4);
+\fill[ocrtTeal!9] (C)--($(C)+(25:3.5)$)
+  arc[start angle=25,end angle=155,radius=3.5]--cycle;
+\draw[ocrtTeal,line width=1pt] ($(C)+(25:3.5)$)
+  arc[start angle=25,end angle=155,radius=3.5];
+\draw[ocrtLine,dotted,line width=.8pt] ($(C)+(25:3.85)$)
+  arc[start angle=25,end angle=155,radius=3.85];
+\draw[ocrtGray,dashed] (C)--(3.6,4.25);
+\draw[ocrtGray,dashed] (S)--(C);
+\draw[ocrtTeal,line width=1.15pt,-{Latex[length=2.2mm]}] (P)--(S);
+\draw[ocrtNavy,line width=.8pt] ($(P)+(30.96376:1)$)
+  arc[start angle=30.96376,end angle=90,radius=1];
+\node[ocrtNavy,fill=white,inner sep=1pt] at (4.24,2.36) {VZA};
+\draw[purple!70!black,line width=.8pt] ($(S)+(-149.03624:1.1)$)
+  arc[start angle=-149.03624,end angle=-127.56859,radius=1.1];
+\node[purple!70!black,fill=white,inner sep=1pt] at (7.25,2.87) {$\beta$};
+\fill[ocrtNavy] (P) circle (2pt);
+\fill[ocrtNavy] (C) circle (2pt);
+\fill[ocrtTeal] (S) circle (2.3pt);
+\node[anchor=south,align=center] at (3.6,4.29)
+  {\FigLang{화소의 국소 수직선}{Local vertical at the pixel}};
+\node[anchor=south,align=center] at (8.45,4.19)
+  {\FigLang{위성}{Satellite}};
+\node[align=center] at (2.3,1.95)
+  {\FigLang{지상 화소}{Ground pixel}};
+\draw[ocrtGray,line width=.5pt] (2.8,1.66)--(3.5,1.1);
+\node[anchor=north,align=center] at (3.6,-2.69)
+  {\FigLang{지구 중심}{Earth center}};
+\node[align=center] at (1.3,.95)
+  {\FigLang{대기층}{Atmosphere}};
+\draw[ocrtGray,line width=.5pt] (2.22,1.02)--(2.5,1.189);
+\node[fill=ocrtTeal!9,inner sep=2pt] at (3.22,-.65) {$R$};
+\node[rotate=52.43,fill=white,inner sep=2pt] at (5.8,.47) {$R+h$};
+\node[anchor=north west,note,font=\sffamily\bfseries] at (10.0,3.9)
+  {\FigLang{입력하는 각도는 VZA}{Enter VZA at the pixel}};
+\node[anchor=north west,note] at (10.0,3.1)
+  {\FigLang{\texttt{--vza}: 화소의 위쪽 수직선과 센서 look 방향 사이의 각도.}{\texttt{--vza}: angle between the pixel's upward vertical and its sensor look direction.}};
+\node[anchor=north west,note] at (10.0,1.65)
+  {\FigLang{$\beta$: 위성에서 지구 중심을 향하는 천저 방향과 화소를 향하는 방향 사이의 off-nadir 각도.}{$\beta$: satellite off-nadir angle, between the Earth-center direction and the look toward the pixel.}};
+\node[anchor=north west,note] at (10.0,-.05)
+  {$R\sin(\mathrm{VZA})=(R+h)\sin\beta$};
+\node[anchor=north west,note] at (10.0,-.76)
+  {\FigLang{$R$: 구의 반지름, $h$: 센서 고도. 직선 광선·구형 지구에서의 기하 관계다.}{$R$: sphere radius; $h$: sensor altitude. This relation assumes straight rays and a spherical Earth.}};
+\node[anchor=north west,note] at (10.0,-2.24)
+  {\FigLang{\texttt{--pssa}에서도 입력 기준은 화소다.}{The input remains pixel-referenced with \texttt{--pssa}.}};
+\end{tikzpicture}
+\caption{\FigLang{구면 기하에서 지상 화소의 VZA와 위성의 off-nadir 각도는 일반적으로 다르다. 대기층 두께와 센서 고도는 구별이 쉽도록 과장했으며 비례도·계산 결과가 아니다. 현재 \texttt{--pssa}의 IPSS 보정도 지상 화소 기준 기하를 사용한다. 이 도식은 완전한 3차원 구면 다중산란 모델을 의미하지 않는다.}{In spherical geometry, ground-pixel VZA and satellite off-nadir angle generally differ. Atmospheric thickness and sensor altitude are exaggerated for clarity; this is not a scale drawing or a computed result. The current IPSS correction enabled by \texttt{--pssa} also uses ground-pixel geometry. The schematic does not imply a fully three-dimensional spherical multiple-scattering model.}}
+\label{fig:geometry-curvature}
+\end{figure}

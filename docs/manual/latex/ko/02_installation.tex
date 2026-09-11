@@ -1,0 +1,153 @@
+% Authoritative LaTeX chapter. Edit this file for future revisions.
+% Initially migrated 2026-09-11; no Markdown import occurs during PDF builds.
+\begingroup
+\setlength{\parskip}{3pt}
+\chapter{설치와 첫 실행}
+\label{chap:02_installation}
+목차 · \hyperref[chap:03_options]{다음: C 옵션}
+
+\section{구성과 준비물}
+\label{sec:auto:02_installation:1}
+권장 출발점은 C 참조 구현이다. C11 GCC, OpenMP, Git이 필요하다. 저장소 안내의 Linux 기준은 GCC 11 이상이며, Windows는 MinGW-w64 GCC를 사용한다. Python 배치 패키지의 의존성과 지원 범위는 \hyperref[chap:06_python_batch]{부록~\ref*{chap:06_python_batch}}를 따른다.
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3400\linewidth-4.00pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.6600\linewidth-4.00pt\relax}@{}}
+\toprule
+\textbf{위치} & \textbf{역할} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{위치} & \textbf{역할} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{code/\allowbreak{}OCRT\_\allowbreak{}C/\allowbreak{}src/\allowbreak{}} & C 소스 \\
+\texttt{code/\allowbreak{}OCRT\_\allowbreak{}C/\allowbreak{}inputs/\allowbreak{}} & C가 읽는 AFGL, 흡수 단면적, 해수 IOP, Mie 자료 \\
+\texttt{code/\allowbreak{}OCRT\_\allowbreak{}C/\allowbreak{}build/\allowbreak{}} & 로컬에서 빌드하는 실행 파일 \\
+\texttt{code/\allowbreak{}OCRT\_\allowbreak{}Python/\allowbreak{}} & Python 구현 \\
+\texttt{scripts/\allowbreak{}} & 공개 Mie 자료 설치와 해시 목록 \\
+\end{longtable}
+}
+
+명령 예시는 저장소를 \texttt{OCRT}라는 폴더로 복제한다고 가정한다. 계정·컴퓨터마다 다른 절대 경로는 예시에 고정하지 않는다.
+
+
+\par\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+git clone https://github.com/brtnt/OCRT.git
+cd OCRT
+git rev-parse HEAD
+\end{ManualCode}
+\end{minipage}\par
+
+이미 복제했다면 기존 소스의 변경 사항을 먼저 확인하고 사용할 버전을 정한다. 실행 파일은 Git 배포 대상이 아니므로 소스를 받은 뒤 빌드한다.
+
+\section{입력 자료 설치}
+\label{sec:auto:02_installation:2}
+소형 자료는 Git에 포함된다. 에어로졸·입자 해양 계산에 필요한 181개 FR631 Mie 파일은 \href{https://github.com/brtnt/OCRT/releases/tag/data-v1}{data-v1 릴리스}의 네 압축 파일로 배포한다. 다운로드 약 1.3 GB, C 입력 약 4.3 GB와 Python 사본 약 4.3 GB가 필요하다. 압축 캐시 공간도 확보한다.
+
+저장소 최상위에서 실행한다.
+
+Linux/Bash:
+
+
+\par\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+bash scripts/fetch_data.sh
+\end{ManualCode}
+\end{minipage}\par
+
+Windows/PowerShell:
+
+
+\par\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+powershell -ExecutionPolicy Bypass -File scripts\fetch_data.ps1
+\end{ManualCode}
+\end{minipage}\par
+
+스크립트는 압축 파일의 SHA-256을 확인하고 C와 Python 입력 폴더에 설치한다. 정식 설치에서 \texttt{-\allowbreak{}NoVerify}를 사용하지 않는다. 기존 동일 이름의 입력 파일은 설치 과정에서 갱신될 수 있으므로 수정한 사용자 자료는 별도로 보관한다.
+
+Linux에서 개별 C Mie 파일까지 검사하려면:
+
+
+\par\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+cd code/OCRT_C/inputs
+sha256sum -c ../../../scripts/MIE_SHA256SUMS_data-v1.txt
+cd ../../..
+\end{ManualCode}
+\end{minipage}\par
+
+에어로졸이 없고 물속 입자를 계산하지 않는 C Rayleigh 예시는 대형 Mie 다운로드 없이 시작할 수 있다. 기체 흡수를 켠 계산에는 AFGL와 단면적 소형 자료가 필요하다. \textbf{Python은 생성자에서 추가 자료를 미리 읽는 경로가 있으므로 C의 무자료 실행 조건을 그대로 적용하지 않는다.}
+
+\section{Linux 빌드}
+\label{sec:auto:02_installation:3}
+\texttt{Makefile} 기본 CPU 옵션은 \texttt{-\allowbreak{}march=\allowbreak{}cascadelake}(AVX-512)다. CPU가 지원하지 않으면 실행이 실패한다. 일반 x86-64 AVX2 환경에서는 다음처럼 명시한다.
+
+
+\par\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+cd code/OCRT_C
+make CFLAGS='-std=c11 -O3 -march=x86-64-v3 -ffp-contract=fast -fassociative-math -fno-signed-zeros -fno-trapping-math -DOCRT_FAST_KERNELS -fopenmp -Isrc'
+./build/ocrt --version
+./build/ocrt --help
+\end{ManualCode}
+\end{minipage}\par
+
+CPU 옵션을 바꾸어 다시 빌드할 때는 \texttt{make -\allowbreak{}B CFLAGS=\allowbreak{}'\ldots{}'}처럼 같은 \textbf{전체} CFLAGS를 전달해 강제 재빌드한다. 위 명령의 \texttt{\ldots{}}를 실제 옵션으로 대체한다. Make는 CFLAGS 변경만으로 기존 실행 파일을 자동 재생성하지 않는다.
+
+AVX2도 없는 x86-64 CPU에서는 \texttt{-\allowbreak{}march=\allowbreak{}x86-\allowbreak{}64}로 빌드할 수 있으나 성능과 수치 차이를 다시 확인한다. ARM/macOS는 위 x86 전용 옵션을 사용할 수 없으며, 이 매뉴얼의 실행 확인 범위에 포함되지 않는다. Apple Clang을 GCC/OpenMP 환경과 동일하게 취급하지 않는다.
+
+\section{Windows 빌드}
+\label{sec:auto:02_installation:4}
+\href{https://www.msys2.org/}{MSYS2 공식 설치 안내}에 따라 GCC 환경을 설치한다. 현재 공식 기본 환경은 UCRT64다. UCRT64 터미널에서 GCC를 설치하는 명령은 다음과 같다.
+
+
+\par\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+pacman -S mingw-w64-ucrt-x86_64-gcc
+gcc --version
+\end{ManualCode}
+\end{minipage}\par
+
+기존 OCRT Windows 스크립트는 MinGW64 GCC를 전제로 작성되어 있다. 사용 중인 MinGW64 또는 UCRT64의 \texttt{bin} 경로를 일관되게 사용하며 서로 다른 GCC/DLL 환경을 섞지 않는다. 다음은 \textbf{MSYS2를 기본 위치에 설치한 UCRT64 환경의 예시}다. 설치 위치가 다르면 PATH의 해당 항목을 바꾼다.
+
+PowerShell에서 저장소 최상위 기준:
+
+
+\par\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+$env:Path = 'C:\msys64\ucrt64\bin;' + $env:Path
+gcc --version
+Set-Location code\OCRT_C
+.\build_win.bat
+.\build\ocrt_x86-64-v3.exe --version
+.\build\ocrt_x86-64-v3.exe --help
+\end{ManualCode}
+\end{minipage}\par
+
+\texttt{build\_\allowbreak{}win.\allowbreak{}bat}는 Windows 호환 소스도 포함하고, 기본 출력은 \texttt{build\textbackslash{}ocrt\_\allowbreak{}x86-\allowbreak{}64-\allowbreak{}v3.\allowbreak{}exe}다. 실행 후 키 입력을 기다린다. \texttt{build\_\allowbreak{}win.\allowbreak{}bat native}는 현재 컴퓨터의 CPU에 맞춘다. \texttt{cascadelake}는 AVX-512 지원을 확인한 경우에만 사용한다. 오래된 \texttt{ocrt.\allowbreak{}exe}가 폴더에 남아 있어도 새 빌드로 자동 대체되는 것은 아니다.
+
+스크립트 마지막 안내에 나오는 \texttt{build/\allowbreak{}run\_\allowbreak{}star.\allowbreak{}py}는 공개 저장소의 필수 배포 파일이 아니다. 해당 파일이 없다고 컴파일 실패를 의미하지 않는다. 부록~\ref{sec:example_first_run}의 첫 계산과 부록~\ref{sec:example_ipss_gates}의 검증 절차로 확인한다.
+
+이 매뉴얼에서는 Linux/WSL 빌드와 실행을 확인했다. Windows 네이티브 및 UCRT64 빌드는 별도 환경 확인이 필요하다.
+
+\section{실행 시 작업 경로}
+\label{sec:auto:02_installation:5}
+\textbf{실행할 때의 현재 디렉토리를 \texttt{code/\allowbreak{}OCRT\_\allowbreak{}C}로 둔다.} 실행 파일의 위치만 지정해도 내부의 \texttt{inputs/\allowbreak{}} 상대 경로가 자동으로 바뀌지는 않는다.
+
+단일 계산의 Bash 및 PowerShell 명령과 출력 확인은 부록~\ref{sec:example_first_run}에 정리했다. 처음 설치한 경우에는 앞부분의 Quick start부터 실행한다.
+
+\section{검증과 재현성}
+\label{sec:auto:02_installation:6}
+설치 후 기하·Rayleigh 수치 검사를 수행할 수 있다. 검증 스크립트의 실행 방법과 완료 표시는 부록~\ref{sec:example_ipss_gates}를 참고한다.
+
+산출물에는 커밋, 빌드 명령과 GCC 버전, CPU, 실행 파일 해시, 입력 자료 버전, 전체 옵션, 환경변수, 출력 헤더와 표준에러 로그를 남긴다. 과학적 비교는 같은 조건에서 수행하며 컴파일러/CPU로 인한 최하위 자릿수 차이와 모델 차이를 구분한다.
+
+입출력의 대소문자, 공백이 포함된 경로, UTF-8 처리에도 주의한다. 입력 CSV는 UTF-8 BOM 없이 저장하고 숫자 소수점은 \texttt{.\allowbreak{}}, 구분자는 \texttt{,\allowbreak{}}를 사용한다.
+
+\endgroup
+

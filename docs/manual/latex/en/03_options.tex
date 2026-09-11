@@ -1,0 +1,589 @@
+% Authoritative LaTeX chapter. Edit this file for future revisions.
+% Initially migrated 2026-09-11; no Markdown import occurs during PDF builds.
+\chapter{Complete C Executable Option Reference}
+\label{chap:03_options}
+Manual contents · \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_C/src/main.c}{Source: main.c} · \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_C/src/rt_types.h}{Numerical defaults}
+
+This chapter is based on the C executable's argument parser and actual execution paths checked on 2026-09-11. It distinguishes general options, aliases, numerical experiment options, diagnostic options, and removed names. Older \texttt{-\allowbreak{}-\allowbreak{}help} text and change records retain descriptions that differ from the current implementation; the \textbf{current behavior} described below takes precedence. See Appendix~\ref{chap:06_python_batch} for the Python interface.
+
+\section{Input Rules and Execution Modes}
+\label{sec:auto:03_options:1}
+Run commands from the \texttt{code/\allowbreak{}OCRT\_\allowbreak{}C} directory. Separate options and values with spaces: for example, \texttt{-\allowbreak{}-\allowbreak{}wavelength 443}; the \texttt{-\allowbreak{}-\allowbreak{}wavelength=\allowbreak{}443} form is unsupported. Enclose the entire path in quotes if it contains spaces. Values are case-sensitive. Use a decimal point \texttt{.\allowbreak{}} and scientific notation (\texttt{1e-\allowbreak{}7}) for numbers.
+
+The parser does not rigorously check every number's syntax, finiteness, or physical range. Follow the physical ranges and units below, and do not enter \texttt{NaN}, infinity, or unit strings in numeric positions. Recognition of an argument alone does not guarantee a physically valid run.
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.2300\linewidth-6.00pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2400\linewidth-6.00pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2300\linewidth-6.00pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.3000\linewidth-6.00pt\relax}@{}}
+\toprule
+\textbf{Mode} & \textbf{Selection} & \textbf{Required common inputs} & \textbf{Output} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Mode} & \textbf{Selection} & \textbf{Required common inputs} & \textbf{Output} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+Single geometry & Specify both \texttt{-\allowbreak{}-\allowbreak{}vza} and \texttt{-\allowbreak{}-\allowbreak{}raa} & \texttt{-\allowbreak{}-\allowbreak{}surface}, \texttt{-\allowbreak{}-\allowbreak{}sza}, \texttt{-\allowbreak{}-\allowbreak{}wavelength}; wind speed for a sea surface & One case result on standard output \\
+Angular grid & Omit both \texttt{-\allowbreak{}-\allowbreak{}vza} and \texttt{-\allowbreak{}-\allowbreak{}raa} & Same as above & \texttt{-\allowbreak{}-\allowbreak{}output-\allowbreak{}full-\allowbreak{}grid} file; \texttt{result<N>.\allowbreak{}csv} if omitted \\
+Atmospheric case batch & \texttt{-\allowbreak{}-\allowbreak{}batch IN.\allowbreak{}csv -\allowbreak{}-\allowbreak{}output OUT.\allowbreak{}csv} & \texttt{-\allowbreak{}-\allowbreak{}surface}; row geometry/wavelength and common optical properties & CSV with one row per case \\
+Ocean grid batch & \texttt{-\allowbreak{}-\allowbreak{}batch-\allowbreak{}full-\allowbreak{}grid IN.\allowbreak{}csv} & \texttt{-\allowbreak{}-\allowbreak{}surface ocean}, complete baseline water properties on the CLI, \texttt{-\allowbreak{}-\allowbreak{}sza}, \texttt{-\allowbreak{}-\allowbreak{}wavelength}; wind on the CLI or in each row & Angular grid in each file specified by the input row's \texttt{out} \\
+\end{longtable}
+}
+
+Single geometry cannot be combined with grid or batch directives. Specifying only one of \texttt{-\allowbreak{}-\allowbreak{}vza} and \texttt{-\allowbreak{}-\allowbreak{}raa} is an error. \texttt{-\allowbreak{}-\allowbreak{}batch} and \texttt{-\allowbreak{}-\allowbreak{}batch-\allowbreak{}full-\allowbreak{}grid} are also mutually exclusive. Specify ocean \texttt{-\allowbreak{}-\allowbreak{}water-\allowbreak{}model} exactly once, and do not mix water-property options whose prefixes belong to another model.
+
+\texttt{-\allowbreak{}-\allowbreak{}batch} follows a separate atmospheric case path. In particular, the current \texttt{main.\allowbreak{}c} returns through this path before initializing gas absorption. Therefore, do not assume that the gas-absorption defaults and gas-column settings of normal single/grid runs also apply to \texttt{-\allowbreak{}-\allowbreak{}batch}. To generate atmospheric data including gas absorption, repeat single-geometry or angular-grid commands. See the output/file-format chapter for exact batch CSV columns and limitations.
+
+\Needspace{7\baselineskip}
+\section{Geometry, Wavelength, and Surface}
+\label{sec:auto:03_options:2}
+\input{figures/options_surfaces.tex}
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3000\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2300\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.4700\linewidth-5.33pt\relax}@{}}
+\toprule
+\textbf{Option} & \textbf{Value / default} & \textbf{Description and conditions} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Option} & \textbf{Value / default} & \textbf{Description and conditions} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{-\allowbreak{}-\allowbreak{}sza DEG} & Degrees; required for normal runs; \texttt{0 \ensuremath{\leq} SZA < 90} & Zenith angle toward the Sun from the pixel. This is not an option for nighttime calculations. \\
+\texttt{-\allowbreak{}-\allowbreak{}vza DEG} & Degrees; required for single geometry; \texttt{0 \ensuremath{\leq} VZA < 90} & Viewing zenith angle on the air side. Do not enter the underwater refracted angle directly. \\
+\texttt{-\allowbreak{}-\allowbreak{}raa DEG} & Degrees; required for single geometry & OCRT relative azimuth angle. Normally enter \texttt{0 \ensuremath{\leq} RAA < 360}. \textbf{RAA=180\textdegree{} is the direct sunglint branch; 0\textdegree{} is the opposite principal-plane branch.} Do not copy RAA from another model or satellite product without conversion. \\
+\texttt{-\allowbreak{}-\allowbreak{}wavelength NM} & nm; required for normal runs; \texttt{330 \ensuremath{\leq} \ensuremath{\lambda} \ensuremath{\leq} 1100} & Monochromatic calculation wavelength. External \texttt{.\allowbreak{}mie} files and LUTs must also support this wavelength. There is no option for extrapolation beyond the supported range. \\
+\texttt{-\allowbreak{}-\allowbreak{}surface STR} & Required & Select one of the four surfaces below. \\
+\texttt{-\allowbreak{}-\allowbreak{}wind-\allowbreak{}speed MS} & m s\textsuperscript{-}\textsuperscript{1}; nonnegative & Required for \texttt{ocean} and \texttt{black\_\allowbreak{}fresnel\_\allowbreak{}ocean}. Explicitly enter \texttt{0} for calm conditions. \\
+\texttt{-\allowbreak{}-\allowbreak{}n-\allowbreak{}water X} & Dimensionless; default \texttt{1.\allowbreak{}34} & Real refractive index at the air--water interface. Use a physical seawater value (\texttt{>1}). This default does not automatically vary the interface index with temperature, salinity, or wavelength. \\
+\texttt{-\allowbreak{}-\allowbreak{}decouple-\allowbreak{}sunglint} & Flag without a value; normally OFF & Separates and excludes the direct sunglint single-reflection term from non-ocean target results. It does not remove all surface reflection or atmosphere--surface interactions. The direct IOP path internally forces this flag ON. The default ocean TOA separates direct glint in a distinct composition path, so do not interpret OFF simply as inclusion (\hyperref[chap:05_output_formats]{output definitions}). \\
+\texttt{-\allowbreak{}-\allowbreak{}pssa} & Flag without a value; default OFF & Enables the current implementation's spherical correction, \textbf{IPSS}. Angles refer to the ground pixel. Applies to atmospheric/black-ocean paths; it is unsupported for coupled \texttt{-\allowbreak{}-\allowbreak{}surface ocean} runs and produces an error. \\
+\end{longtable}
+}
+
+Read the geometry/output interpretation chapter for RAA conversion equations, scattering angle, and polarization signs. In particular, calculating only \texttt{abs(sensor\_\allowbreak{}azimuth -\allowbreak{} solar\_\allowbreak{}azimuth)} and calling it OCRT RAA can reverse the glint direction.
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3400\linewidth-4.00pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.6600\linewidth-4.00pt\relax}@{}}
+\toprule
+\textbf{\texttt{-\allowbreak{}-\allowbreak{}surface} value} & \textbf{Meaning} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{\texttt{-\allowbreak{}-\allowbreak{}surface} value} & \textbf{Meaning} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{black} & Nonreflecting lower boundary. Used to calculate the atmospheric signal excluding water-surface reflection. \\
+\texttt{flat} & Flat Fresnel boundary over a black ocean. Does not solve underwater scattering or a water-property model. \\
+\texttt{black\_\allowbreak{}fresnel\_\allowbreak{}ocean} & Path with a black ocean beneath a Fresnel-reflecting sea surface. \texttt{-\allowbreak{}-\allowbreak{}wind-\allowbreak{}speed 0} gives a flat surface; positive wind gives a rough surface. Used for atmospheric and surface terms in ocean atmospheric correction. \\
+\texttt{ocean} & Coupled atmosphere--sea-surface--underwater radiative transfer. Requires \texttt{-\allowbreak{}-\allowbreak{}water-\allowbreak{}model ocrt\textbackslash{}|ccrr\allowbreak{}\textbackslash{}|iop} and the corresponding water-property inputs. \\
+\end{longtable}
+}
+
+\texttt{black-\allowbreak{}fresnel-\allowbreak{}ocean} is a current alias of \texttt{black\_\allowbreak{}fresnel\_\allowbreak{}ocean}. \texttt{coxmunk} is also recognized but is interpreted as \texttt{black\_\allowbreak{}fresnel\_\allowbreak{}ocean} with a deprecation warning. \texttt{lambert} produces an error because its boundary condition is not implemented.
+
+\Needspace{7\baselineskip}
+\input{figures/options_glint.tex}
+
+\section{Rayleigh Atmosphere and Gas Absorption}
+\label{sec:auto:03_options:3}
+\input{figures/options_gas.tex}
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3000\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2300\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.4700\linewidth-5.33pt\relax}@{}}
+\toprule
+\textbf{Option} & \textbf{Value / default} & \textbf{Description} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Option} & \textbf{Value / default} & \textbf{Description} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{-\allowbreak{}-\allowbreak{}pressure P} & hPa; default \texttt{1013.\allowbreak{}25}; \texttt{P \ensuremath{\geq} 0} & Scales Rayleigh optical thickness by \texttt{P/\allowbreak{}1013.\allowbreak{}25} relative to standard pressure. \texttt{0} removes Rayleigh scattering. Independent of gas absorption and aerosols. \\
+\texttt{-\allowbreak{}-\allowbreak{}surface-\allowbreak{}pressure P} & Same as above & Alias of \texttt{-\allowbreak{}-\allowbreak{}pressure}. \\
+\texttt{-\allowbreak{}-\allowbreak{}no-\allowbreak{}rayleigh} & Flag without a value & Compatibility option retained in the current parser. Sets pressure to \texttt{0}. Use \texttt{-\allowbreak{}-\allowbreak{}pressure 0} in new commands. \\
+\texttt{-\allowbreak{}-\allowbreak{}rayleigh on\textbackslash{}|off\allowbreak{}} & Pressure-based by default & \texttt{off} sets pressure to \texttt{0}. \texttt{on} restores \texttt{1013.\allowbreak{}25} if the current pressure is \texttt{\ensuremath{\leq}0}, retaining an existing positive pressure. A later \texttt{-\allowbreak{}-\allowbreak{}pressure} takes precedence. \\
+\texttt{-\allowbreak{}-\allowbreak{}atm-\allowbreak{}profile STR} & Default \texttt{usstd76} & AFGL vertical profile for gas absorption: \texttt{usstd76}, \texttt{tropical}, \texttt{mlsumm}, \texttt{mlwint}, \texttt{sasumm}, \texttt{sawint}, \texttt{userdef}. \\
+\texttt{-\allowbreak{}-\allowbreak{}gas-\allowbreak{}profile STR} & Same as above & Alias of \texttt{-\allowbreak{}-\allowbreak{}atm-\allowbreak{}profile}. \\
+\texttt{-\allowbreak{}-\allowbreak{}gas-\allowbreak{}column-\allowbreak{}h2o G} & g cm\textsuperscript{-}\textsuperscript{2}; default AFGL integral & Total water vapor. \texttt{G \ensuremath{\geq} 0}. Converted to a water-molecule column, then scaled to the total while preserving the selected vertical profile's shape. \\
+\texttt{-\allowbreak{}-\allowbreak{}pwv-\allowbreak{}g-\allowbreak{}cm G} & Same as above & Alias of \texttt{-\allowbreak{}-\allowbreak{}gas-\allowbreak{}column-\allowbreak{}h2o}. \\
+\texttt{-\allowbreak{}-\allowbreak{}gas-\allowbreak{}column-\allowbreak{}o3 DU} & DU; default AFGL integral & Total ozone. \texttt{DU \ensuremath{\geq} 0}. \texttt{1 DU =\allowbreak{} 2.\allowbreak{}6868\ensuremath{\times}10\textsuperscript{1}\textsuperscript{6} molecu\allowbreak{}les cm\textsuperscript{-}\textsuperscript{2}}. \\
+\texttt{-\allowbreak{}-\allowbreak{}gas-\allowbreak{}column-\allowbreak{}no2 DU} & DU; default AFGL integral & Total nitrogen dioxide. Uses the same DU conversion as O\textsubscript{3}. \\
+\texttt{-\allowbreak{}-\allowbreak{}gas-\allowbreak{}column-\allowbreak{}o2 N} & \textbf{molecules cm\textsuperscript{-}\textsuperscript{2}}; default AFGL integral & Oxygen molecule column. Nonnegative. \\
+\texttt{-\allowbreak{}-\allowbreak{}gas-\allowbreak{}column-\allowbreak{}co2 N} & \textbf{molecules cm\textsuperscript{-}\textsuperscript{2}}; default AFGL integral & Carbon dioxide molecule column. Do not enter a ppm value directly. \\
+\texttt{-\allowbreak{}-\allowbreak{}gas-\allowbreak{}column-\allowbreak{}ch4 N} & \textbf{molecules cm\textsuperscript{-}\textsuperscript{2}}; default AFGL integral & Methane molecule column. Nonnegative. \\
+\end{longtable}
+}
+
+\textbf{Unit correction:} The \texttt{mol/\allowbreak{}cm\textsuperscript{2}} notation in older help and standard-error logs means \textbf{molecules/cm\textsuperscript{2}}, not moles. The actual H\textsubscript{2}O conversion is \texttt{G \ensuremath{\times} 6.\allowbreak{}02214076e23 /\allowbreak{} 18.\allowbreak{}01528}. Entering mol cm\textsuperscript{-}\textsuperscript{2} for O\textsubscript{2}, CO\textsubscript{2}, or CH\textsubscript{4} produces an input error by a factor of Avogadro's number.
+
+Gas absorption is enabled by default in single/grid runs. For a pure Rayleigh reference calculation, explicitly set all six values below.
+
+
+\begin{ManualCode}
+--gas-column-h2o 0 --gas-column-o3 0 --gas-column-no2 0 --gas-column-o2 0 --gas-column-co2 0 --gas-column-ch4 0
+\end{ManualCode}
+
+Each gas's default column depends on the profile and distributed data. Record the actual log's \texttt{column=\allowbreak{}} and \texttt{overridden} indicators. Negative values may be treated internally as unspecified-value markers, so do not use them to disable absorption. Put a user profile in \texttt{inputs/\allowbreak{}afgl\_\allowbreak{}atm/\allowbreak{}afgl\_\allowbreak{}userdef.\allowbreak{}dat} and select it with \texttt{-\allowbreak{}-\allowbreak{}atm-\allowbreak{}profile userdef}. \texttt{-\allowbreak{}-\allowbreak{}atm-\allowbreak{}profile} selects a gas profile; it does not select one of seven models for the Rayleigh molecular atmosphere itself.
+
+\section{Aerosols}
+\label{sec:auto:03_options:4}
+\input{figures/options_aod.tex}
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3000\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2300\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.4700\linewidth-5.33pt\relax}@{}}
+\toprule
+\textbf{Option} & \textbf{Value / default} & \textbf{Description and conditions} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Option} & \textbf{Value / default} & \textbf{Description and conditions} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{-\allowbreak{}-\allowbreak{}mie FILE} & Aerosol \texttt{.\allowbreak{}mie}; none by default & Required if \texttt{AOD>0}. Its purpose differs from \texttt{-\allowbreak{}-\allowbreak{}iop-\allowbreak{}mie-\allowbreak{}phase}, the underwater particle phase-function file. \\
+\texttt{-\allowbreak{}-\allowbreak{}aod-\allowbreak{}555 X} & Dimensionless; default \texttt{0}; \texttt{X \ensuremath{\geq} 0} & AOD referenced to 555 nm. AOD at the calculation wavelength is converted using the \texttt{.\allowbreak{}mie} extinction-coefficient ratio. \\
+\texttt{-\allowbreak{}-\allowbreak{}aod-\allowbreak{}865 X} & Dimensionless & AOD referenced to 865 nm. \\
+\texttt{-\allowbreak{}-\allowbreak{}aod X} & Dimensionless; default \texttt{0} & Compatibility input. AOD referenced to \texttt{-\allowbreak{}-\allowbreak{}aod-\allowbreak{}ref-\allowbreak{}wavelength}, not AOD at the current calculation wavelength. \\
+\texttt{-\allowbreak{}-\allowbreak{}aod-\allowbreak{}ref-\allowbreak{}wavelength NM} & nm; default \texttt{555} & Reference wavelength for \texttt{-\allowbreak{}-\allowbreak{}aod}. The aerosol file must support both this reference wavelength and the calculation wavelength. \\
+\texttt{-\allowbreak{}-\allowbreak{}aer-\allowbreak{}h-\allowbreak{}km H} & km; default \texttt{2.\allowbreak{}0}; \texttt{H>0} & Scale height of the aerosol vertical distribution \texttt{exp(-\allowbreak{}z/\allowbreak{}H)}. The current CLI checks positivity but implements no ADVANCED gate, unlike the older help's “advanced only” description. \\
+\texttt{-\allowbreak{}-\allowbreak{}aer-\allowbreak{}l-\allowbreak{}max L} & Integer \texttt{L\ensuremath{\geq}2}; default \texttt{80} for active aerosols & Maximum order of aerosol phase moments. Requires \texttt{OCRT\_\allowbreak{}ADVANCED=\allowbreak{}1} when different from the default. \\
+\end{longtable}
+}
+
+Use only one AOD input form to avoid confusing reference wavelengths. Combining multiple \texttt{-\allowbreak{}-\allowbreak{}aod-\allowbreak{}*} options changes the AOD value and reference wavelength according to parsing order. For example, \texttt{-\allowbreak{}-\allowbreak{}aod-\allowbreak{}555 0.\allowbreak{}1 -\allowbreak{}-\allowbreak{}aod-\allowbreak{}ref-\allowbreak{}wavelength 865} ultimately means AOD 0.1 at 865 nm.
+
+In non-batch runs with AOD 0, you cannot also specify \texttt{-\allowbreak{}-\allowbreak{}mie}, \texttt{-\allowbreak{}-\allowbreak{}aer-\allowbreak{}h-\allowbreak{}km}, \texttt{-\allowbreak{}-\allowbreak{}aer-\allowbreak{}l-\allowbreak{}max}, or aerosol truncation options. For AOD>0, the default choices are the value kernel, physical-angle log10-linear forward-peak truncation, \texttt{L=\allowbreak{}80}, atmospheric Fourier \texttt{m=\allowbreak{}16}, and 400 atmospheric layers. Distinguish this default aerosol truncation from the underwater particle FR631 policy of truncation OFF by default.
+
+\texttt{T50}, \texttt{C50}, and \texttt{M80C} are the officially validated subset identified by the code. If a filename contains \texttt{M50C}, the current parser requires \texttt{OCRT\_\allowbreak{}DEBUG=\allowbreak{}1} and issues a diagnostic-use warning. See the \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_C/inputs/deprecated/DEPRECATED_M50C.md}{M50C record} for the model's provenance issue.
+
+\section{Common Underwater Model Inputs}
+\label{sec:auto:03_options:5}
+\input{figures/options_water.tex}
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3000\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2300\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.4700\linewidth-5.33pt\relax}@{}}
+\toprule
+\textbf{Option} & \textbf{Value / default} & \textbf{Description} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Option} & \textbf{Value / default} & \textbf{Description} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{-\allowbreak{}-\allowbreak{}water-\allowbreak{}model M} & \texttt{ocrt}, \texttt{ccrr}, \texttt{iop} & Required exactly once with \texttt{-\allowbreak{}-\allowbreak{}surface ocean}. Cannot be used with another surface. \\
+\texttt{-\allowbreak{}-\allowbreak{}water-\allowbreak{}temperature C} & \textdegree{}C; default \texttt{20} & Temperature correction input for pure-seawater IOPs. Separate from the interface refractive index \texttt{-\allowbreak{}-\allowbreak{}n-\allowbreak{}water}. \\
+\texttt{-\allowbreak{}-\allowbreak{}water-\allowbreak{}salinity G} & g kg\textsuperscript{-}\textsuperscript{1}; default \texttt{38.\allowbreak{}4} & Salinity input for pure-seawater IOPs. Do not use negative values. \\
+\end{longtable}
+}
+
+The CLI does not block every extrapolation range for temperature and salinity. Assess the range used in an experiment together with the sources and correction equations of the distributed pure-seawater data. All three models allow separate settings for atmospheric pressure, gas absorption, wind speed, and aerosols. For underwater-only calculations, use \texttt{-\allowbreak{}-\allowbreak{}pressure 0}, AOD 0, and all six gas columns set to 0 together.
+
+\subsection{OCRT Constituent Model}
+\label{sec:auto:03_options:5.1}
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3000\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2300\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.4700\linewidth-5.33pt\relax}@{}}
+\toprule
+\textbf{Option} & \textbf{Value / default} & \textbf{Description and conditions} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Option} & \textbf{Value / default} & \textbf{Description and conditions} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{-\allowbreak{}-\allowbreak{}ocrt-\allowbreak{}chl X} & mg m\textsuperscript{-}\textsuperscript{3}; required; \texttt{X\ensuremath{\geq}0} & Chlorophyll-a concentration. The current production path uses phytoplankton absorption and detritus scattering; EAP species-specific scattering is inactive. \\
+\texttt{-\allowbreak{}-\allowbreak{}ocrt-\allowbreak{}tsm X} & g m\textsuperscript{-}\textsuperscript{3}; required; \texttt{X\ensuremath{\geq}0} & Dry mass concentration of inorganic suspended matter. Distinguish this from general total suspended matter comprising all underwater constituents. \\
+\texttt{-\allowbreak{}-\allowbreak{}ocrt-\allowbreak{}adom440 X} & m\textsuperscript{-}\textsuperscript{1}; required; \texttt{X\ensuremath{\geq}0} & Dissolved organic matter absorption coefficient at 440 nm. \\
+\texttt{-\allowbreak{}-\allowbreak{}ocrt-\allowbreak{}adom-\allowbreak{}slope X} & nm\textsuperscript{-}\textsuperscript{1}; default \texttt{0.\allowbreak{}014}; \texttt{X>0} & \texttt{aDOM(\ensuremath{\lambda})=\allowbreak{}aDOM(440) exp[-\allowbreak{}X(\ensuremath{\lambda}-440)]}. \\
+\texttt{-\allowbreak{}-\allowbreak{}ocrt-\allowbreak{}tsm-\allowbreak{}species N} & Default \texttt{red\_\allowbreak{}clay} & \texttt{red\_\allowbreak{}clay}, \texttt{brown\_\allowbreak{}earth}, \texttt{yellow\_\allowbreak{}clay}, \texttt{calcareous\_\allowbreak{}sand}. Explicit use requires \texttt{-\allowbreak{}-\allowbreak{}ocrt-\allowbreak{}tsm>0}. \\
+\texttt{-\allowbreak{}-\allowbreak{}ocrt-\allowbreak{}detritus-\allowbreak{}a440 X} & m\textsuperscript{-}\textsuperscript{1}; default \texttt{0}; \texttt{X\ensuremath{\geq}0} & Organic detritus absorption input at 440 nm. Explicit use requires \texttt{-\allowbreak{}-\allowbreak{}ocrt-\allowbreak{}chl>0}. This is not an interface for independently enabling detritus at Chl=0. \textbf{0 means detritus absorption of 0; it does not also disable the detritus scattering derived from Chl.} \\
+\texttt{-\allowbreak{}-\allowbreak{}ocrt-\allowbreak{}detritus-\allowbreak{}slope X} & nm\textsuperscript{-}\textsuperscript{1}; default \texttt{0.\allowbreak{}0109}; \texttt{X>0} & Exponential slope of the detritus absorption spectrum. Explicit use requires \texttt{-\allowbreak{}-\allowbreak{}ocrt-\allowbreak{}chl>0}. Positive values outside the source range \texttt{[0.\allowbreak{}0024,\allowbreak{}0.\allowbreak{}0170]} produce a warning and proceed. \\
+\texttt{-\allowbreak{}-\allowbreak{}ocrt-\allowbreak{}phyto-\allowbreak{}group G} & Unavailable in current production runs & The parser recognizes \texttt{pico}, \texttt{nano}, \texttt{micro}, and canonical \texttt{eap\_\allowbreak{}*} species names, but exits with an unsupported-feature error for Chl>0. Chl=0 also fails a dependency check. Therefore, omit this option currently. \\
+\end{longtable}
+}
+
+When \texttt{Chl=\allowbreak{}TSM=\allowbreak{}aDOM440=\allowbreak{}0}, both OCRT and CCRR descend to the same native pure-seawater path. All three values must be \textbf{explicitly specified even when 0}. Duplicate specifications of Chl, TSM, aDOM440, or aDOM slope are errors.
+
+\subsection{CCRR Constituent Adapter}
+\label{sec:auto:03_options:5.2}
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3000\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2300\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.4700\linewidth-5.33pt\relax}@{}}
+\toprule
+\textbf{Option} & \textbf{Value / default} & \textbf{Description and conditions} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Option} & \textbf{Value / default} & \textbf{Description and conditions} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{-\allowbreak{}-\allowbreak{}ccrr-\allowbreak{}chl X} & mg m\textsuperscript{-}\textsuperscript{3}; required; \texttt{X\ensuremath{\geq}0} & Chl used in CCRR constituent conversion. Positive Chl uses the distributed Morel (1988)/MM01 Case-1 absorption relationship. \\
+\texttt{-\allowbreak{}-\allowbreak{}ccrr-\allowbreak{}tsm X} & g m\textsuperscript{-}\textsuperscript{3}; required; \texttt{X\ensuremath{\geq}0} & CCRR constituent TSM concentration. \\
+\texttt{-\allowbreak{}-\allowbreak{}ccrr-\allowbreak{}adom440 X} & m\textsuperscript{-}\textsuperscript{1}; required; \texttt{X\ensuremath{\geq}0} & aDOM absorption at 440 nm. \\
+\texttt{-\allowbreak{}-\allowbreak{}ccrr-\allowbreak{}adom-\allowbreak{}slope X} & nm\textsuperscript{-}\textsuperscript{1}; default \texttt{0.\allowbreak{}014}; \texttt{X>0} & aDOM exponential slope. \\
+\texttt{-\allowbreak{}-\allowbreak{}ccrr-\allowbreak{}phase-\allowbreak{}moments FILE} & None by default & Replacement file for CCRR particle phase moments. Requires positive Chl or TSM and cannot be combined with \texttt{-\allowbreak{}-\allowbreak{}ccrr-\allowbreak{}particle-\allowbreak{}phase-\allowbreak{}lut}. \\
+\end{longtable}
+}
+
+CCRR is an adapter that converts constituents into OCRT IOP/phase inputs. This option does not run a separate CCRR radiative-transfer solver.
+
+\subsection{Direct Total IOP Input}
+\label{sec:auto:03_options:5.3}
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3000\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2300\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.4700\linewidth-5.33pt\relax}@{}}
+\toprule
+\textbf{Option} & \textbf{Value / default} & \textbf{Description and conditions} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Option} & \textbf{Value / default} & \textbf{Description and conditions} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{-\allowbreak{}-\allowbreak{}iop-\allowbreak{}a A} & m\textsuperscript{-}\textsuperscript{1}; required; \texttt{A\ensuremath{\geq}0} & Total absorption coefficient, including pure seawater, particles, and other contributions. \\
+\texttt{-\allowbreak{}-\allowbreak{}iop-\allowbreak{}b B} & m\textsuperscript{-}\textsuperscript{1}; required; \texttt{B>0} & Total scattering coefficient. \\
+\texttt{-\allowbreak{}-\allowbreak{}iop-\allowbreak{}bb BB} & m\textsuperscript{-}\textsuperscript{1}; required; \texttt{0<BB<0.\allowbreak{}5 B} & Total backscattering coefficient. Do not add the pure-seawater contribution again. \\
+\texttt{-\allowbreak{}-\allowbreak{}iop-\allowbreak{}phase-\allowbreak{}lut FILE} & None by default & Scalar P11 phase LUT. Default processing uses weak-cap \texttt{lut-\allowbreak{}deltam}. \\
+\texttt{-\allowbreak{}-\allowbreak{}iop-\allowbreak{}mie-\allowbreak{}phase FILE} & None by default & Vector P11/P12/P33 phase \texttt{.\allowbreak{}mie}. IOP a,b,bb still come from the three inputs above. \\
+\texttt{-\allowbreak{}-\allowbreak{}iop-\allowbreak{}phase-\allowbreak{}nphi N} & Default \texttt{720} & Number of azimuthal integration points for the scalar phase kernel. \textbf{Explicit use requires \texttt{OCRT\_\allowbreak{}ADVANCED=\allowbreak{}1} even for the default value 720.} Use a positive integer. \\
+\end{longtable}
+}
+
+The two phase-file options are mutually exclusive. If both are omitted, an internal scalar bulk phase representation fitted to the backscattering ratio \texttt{bb/\allowbreak{}b} is used. With a user-supplied phase function, the user must also verify physical consistency between bulk \texttt{bb/\allowbreak{}b} and the phase-function backscattering integral. This path internally forces direct sunglint separation.
+
+\section{Underwater Mie Phase Processing}
+\label{sec:auto:03_options:6}
+Below, \texttt{-\allowbreak{}-\allowbreak{}ocrt-\allowbreak{}mie-\allowbreak{}*} applies to \texttt{-\allowbreak{}-\allowbreak{}water-\allowbreak{}model ocrt} cases with Chl or TSM>0; \texttt{-\allowbreak{}-\allowbreak{}iop-\allowbreak{}mie-\allowbreak{}*} applies to \texttt{-\allowbreak{}-\allowbreak{}water-\allowbreak{}model iop -\allowbreak{}-\allowbreak{}iop-\allowbreak{}mie-\allowbreak{}phase FILE}. Mixing the two prefixes or using them with CCRR produces an error.
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3000\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2300\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.4700\linewidth-5.33pt\relax}@{}}
+\toprule
+\textbf{Option} & \textbf{Value / default} & \textbf{Description} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Option} & \textbf{Value / default} & \textbf{Description} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{-\allowbreak{}-\allowbreak{}ocrt-\allowbreak{}mie-\allowbreak{}moment-\allowbreak{}mode M}, \texttt{-\allowbreak{}-\allowbreak{}iop-\allowbreak{}mie-\allowbreak{}moment-\allowbreak{}mode M} & Default \texttt{gauss} & Integration method for computing moments from \texttt{.\allowbreak{}mie}. Aliases of \texttt{gauss}: \texttt{quadrature}, \texttt{gauss-\allowbreak{}mu}. Alias of \texttt{dense}: \texttt{pchip-\allowbreak{}theta}; changing the default requires \texttt{OCRT\_\allowbreak{}ADVANCED=\allowbreak{}1}. \\
+\texttt{-\allowbreak{}-\allowbreak{}ocrt-\allowbreak{}mie-\allowbreak{}moment-\allowbreak{}nmu N}, \texttt{-\allowbreak{}-\allowbreak{}iop-\allowbreak{}mie-\allowbreak{}moment-\allowbreak{}nmu N} & Default \texttt{400}; integer \texttt{N>1} & Number of \ensuremath{\mu} quadrature points for moment integration. Different from atmospheric/underwater RT quadrature counts. Values other than 400 require \texttt{OCRT\_\allowbreak{}ADVANCED=\allowbreak{}1}. \\
+\texttt{-\allowbreak{}-\allowbreak{}ocrt-\allowbreak{}mie-\allowbreak{}truncation} & Default OFF & Explicitly enables broad forward-peak truncation of the OCRT particle phase function. Always requires \texttt{OCRT\_\allowbreak{}ADVANCED=\allowbreak{}1}. \\
+\texttt{-\allowbreak{}-\allowbreak{}iop-\allowbreak{}mie-\allowbreak{}truncation} & Default OFF & Enables truncation of the directly supplied underwater vector phase function. The current parser does not require a separate ADVANCED environment variable. \\
+\texttt{-\allowbreak{}-\allowbreak{}ocrt-\allowbreak{}mie-\allowbreak{}ss-\allowbreak{}mode N}, \texttt{-\allowbreak{}-\allowbreak{}iop-\allowbreak{}mie-\allowbreak{}ss-\allowbreak{}mode N} & \texttt{0}, \texttt{1}, \texttt{2}; default \texttt{0} & Single-scattering source correction after truncation. \texttt{0}: none; \texttt{1}: IMS; \texttt{2}: NT-TMS. 1 or 2 must accompany the same model's truncation flag. \\
+\end{longtable}
+}
+
+The underwater FR631 scientific baseline is the raw phase function with \textbf{truncation OFF}. Broad truncation does more than change calculation speed: it changes b, single-scattering albedo, optical thickness, and source terms. Comparisons with another model must align truncation, physical depth, optical-property transformations, and source corrections as well as phase functions. See the \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_C/docs/OCRT_MIE_GRID_TRUNCATION_AND_VALIDATION_ARTIFACT_POLICY_2026-08-21.md}{Mie/truncation policy} for the detailed baseline.
+
+\clearpage
+\section{Angular Grids, Batches, and Output}
+\label{sec:auto:03_options:7}
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3000\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2300\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.4700\linewidth-5.33pt\relax}@{}}
+\toprule
+\textbf{Option} & \textbf{Value / default} & \textbf{Description and conditions} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Option} & \textbf{Value / default} & \textbf{Description and conditions} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{-\allowbreak{}-\allowbreak{}output-\allowbreak{}full-\allowbreak{}grid FILE} & Automatic default \texttt{result<N>.\allowbreak{}csv} & Explicitly selects angular-grid mode and its file. In non-batch runs, \texttt{.\allowbreak{}csv} is appended if no extension is supplied; any extension other than lowercase \texttt{.\allowbreak{}csv} is an error. An existing specified file may be overwritten. Create the parent directory first. \\
+\texttt{-\allowbreak{}-\allowbreak{}lut-\allowbreak{}vza-\allowbreak{}step DEG}, \texttt{-\allowbreak{}-\allowbreak{}vza-\allowbreak{}gap DEG} & Default \texttt{2.\allowbreak{}5\textdegree{}} & Output viewing-zenith-angle spacing. For ocean grids, \texttt{(0,\allowbreak{}90]}, with at most 512 VZA values. Does not change the integration quadrature count. \\
+\texttt{-\allowbreak{}-\allowbreak{}lut-\allowbreak{}raa-\allowbreak{}step DEG}, \texttt{-\allowbreak{}-\allowbreak{}raa-\allowbreak{}gap DEG} & Default \texttt{2.\allowbreak{}5\textdegree{}} & Output relative-azimuth-angle spacing. For ocean grids, \texttt{(0,\allowbreak{}180]}. A value that divides 360 exactly is recommended. \\
+\texttt{-\allowbreak{}-\allowbreak{}lut-\allowbreak{}vza-\allowbreak{}max DEG} & Default \texttt{85\textdegree{}} & Upper output VZA limit. Physically, \texttt{0<value<90}. The ocean path replaces out-of-range values with 85, so invalid inputs do not always produce errors. \\
+\texttt{-\allowbreak{}-\allowbreak{}batch FILE} & None by default & Atmospheric case input CSV. Requires \texttt{-\allowbreak{}-\allowbreak{}output}. Does not parse water-property CSVs. \\
+\texttt{-\allowbreak{}-\allowbreak{}output FILE} & None by default & Result CSV for \texttt{-\allowbreak{}-\allowbreak{}batch} or diagnostic comparison. It is not a flag for saving ordinary single-case results; redirect standard output to a file for single runs. \\
+\texttt{-\allowbreak{}-\allowbreak{}batch-\allowbreak{}full-\allowbreak{}grid FILE} & None by default & Ocean angular-grid batch. Produces one full-grid file for each input row's conditions. Empty cells inherit CLI defaults. \\
+\texttt{-\allowbreak{}-\allowbreak{}output-\allowbreak{}advanced} & Default OFF & Adds detailed columns to \texttt{-\allowbreak{}-\allowbreak{}batch} CSVs, including errors against reference values, scattering orders, convergence, and timing. Does not change the ordinary ocean grid's 60-column format. \\
+\end{longtable}
+}
+
+In the current uniform ocean grid, VZA is \texttt{0,\allowbreak{} step,\allowbreak{} \ldots{},\allowbreak{} floor(max/\allowbreak{}step)\ensuremath{\times}step}. The RAA count is \texttt{floor(360/\allowbreak{}step+0.\allowbreak{}5)}; values are generated as \texttt{0,\allowbreak{} step,\allowbreak{} \ldots{}}, without a duplicate 360\textdegree{} endpoint. For example, with VZA spacing 15\textdegree{} and maximum 85\textdegree{}, the last VZA is 75\textdegree{}.
+
+\textbf{Why an explicit output filename is recommended:} The current \texttt{main.\allowbreak{}c} raises the underwater quadrature count to 96 when it parses \texttt{-\allowbreak{}-\allowbreak{}output-\allowbreak{}full-\allowbreak{}grid}. If grid mode is inferred later only because VZA/RAA were omitted, that promotion step may already have passed. Always include \texttt{-\allowbreak{}-\allowbreak{}output-\allowbreak{}full-\allowbreak{}grid FILE.\allowbreak{}csv} in scientific data-generation commands, and record the underwater quadrature count for comparison runs.
+
+The combination \texttt{-\allowbreak{}-\allowbreak{}batch} and \texttt{-\allowbreak{}-\allowbreak{}output-\allowbreak{}full-\allowbreak{}grid DIR} interprets the latter as an \textbf{output directory, not a file}, in the legacy supplemental batch LUT path. Its meaning differs from normal file output, so independent angular-grid runs are recommended for atmospheric LUT generation.
+
+\section{Numerical Convergence and Surface Experiment Options}
+\label{sec:auto:03_options:8}
+\input{figures/options_grids.tex}
+
+Start ordinary work with the defaults. \texttt{OCRT\_\allowbreak{}ADVANCED=\allowbreak{}1} permits numerical experiments beyond the validated default configuration; it does not automatically guarantee the accuracy of altered settings. Enabling the flag does not automatically change other option values.
+
+
+\begin{ManualCode}
+$env:OCRT_ADVANCED = "1"
+\end{ManualCode}
+
+
+\begin{ManualCode}
+export OCRT_ADVANCED=1
+\end{ManualCode}
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3000\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2300\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.4700\linewidth-5.33pt\relax}@{}}
+\toprule
+\textbf{Option} & \textbf{Default} & \textbf{Actual application / gate} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Option} & \textbf{Default} & \textbf{Actual application / gate} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{-\allowbreak{}-\allowbreak{}n-\allowbreak{}mu N} & \texttt{24} & Atmospheric Gauss--Legendre quadrature count per hemisphere. Integer \texttt{N\ensuremath{\geq}2}. Values other than 24 require ADVANCED. Different from the number of output VZA points. \\
+\texttt{-\allowbreak{}-\allowbreak{}n-\allowbreak{}layers N} & \texttt{40} for AOD 0; \texttt{400} for AOD>0 & Atmospheric layer count. Integer \texttt{N\ensuremath{\geq}2}. Departures from the applicable default require ADVANCED. Does not change the underwater layer count. \\
+\texttt{-\allowbreak{}-\allowbreak{}m-\allowbreak{}max M} & \texttt{2} for AOD 0; \texttt{16} for AOD>0 & Maximum atmospheric azimuthal Fourier mode. Integer \texttt{0\ensuremath{\leq}M\ensuremath{\leq}32}. Departures from the applicable default require ADVANCED. \\
+\texttt{-\allowbreak{}-\allowbreak{}sos-\allowbreak{}max-\allowbreak{}orders N} & \texttt{20} & \textbf{Actual maximum atmospheric SOS scattering order}. \texttt{N\ensuremath{\geq}1}. Values other than 20 require ADVANCED. Separate from automatic underwater order limits. \\
+\texttt{-\allowbreak{}-\allowbreak{}sos-\allowbreak{}tolerance X} & \texttt{1e-\allowbreak{}7} & \textbf{Actual atmospheric SOS convergence tolerance}, positive. Departures from the default require ADVANCED. \\
+\texttt{-\allowbreak{}-\allowbreak{}sos-\allowbreak{}acceleration STR\allowbreak{}} & \texttt{plain} & Only \texttt{plain} is implemented. \texttt{geometric} produces an explicit not-implemented error. \\
+\texttt{-\allowbreak{}-\allowbreak{}integration-\allowbreak{}method STR} & \texttt{linear} & Linear integration of the source within a layer. \texttt{constant} is diagnostic and requires DEBUG. \\
+\texttt{-\allowbreak{}-\allowbreak{}n-\allowbreak{}mu-\allowbreak{}water N} & \texttt{48} for ordinary underwater runs; \texttt{96} for explicit ocean grids & Underwater \ensuremath{\mu} quadrature count per hemisphere. Positive integer. \textbf{Explicit use always requires ADVANCED}. Do not reduce the count for large-scale calculations without checking convergence. \\
+\texttt{-\allowbreak{}-\allowbreak{}n-\allowbreak{}mu-\allowbreak{}water-\allowbreak{}sky N} & \texttt{0} = default underwater grid & Diagnostic numerical option selecting a smaller underwater quadrature count only for the coupling path of incoming atmospheric sky beams. Separate from the direct solar-beam grid, and consumed only by some coupled paths. No current CLI gate. \\
+\texttt{-\allowbreak{}-\allowbreak{}water-\allowbreak{}m-\allowbreak{}max M} & Automatic & Overrides the underwater Fourier-mode upper limit with a positive value. Explicit use always requires ADVANCED. 0 does not override the actual solver. \\
+\texttt{-\allowbreak{}-\allowbreak{}water-\allowbreak{}shared-\allowbreak{}grid} & OFF & Matches the underwater quadrature count to atmospheric \texttt{-\allowbreak{}-\allowbreak{}n-\allowbreak{}mu}. Sharing the default atmospheric value 24 reduces it below the independent underwater defaults 48/96, so convergence must be checked for comparisons. Do not combine with \texttt{-\allowbreak{}-\allowbreak{}n-\allowbreak{}mu-\allowbreak{}water}. \\
+\texttt{-\allowbreak{}-\allowbreak{}water-\allowbreak{}view-\allowbreak{}as-\allowbreak{}node} & Currently ON in the CLI & Enables node extraction for the requested underwater viewing direction. The help's “default OFF” differs from the current initial value. \\
+\texttt{-\allowbreak{}-\allowbreak{}water-\allowbreak{}view-\allowbreak{}as-\allowbreak{}node-\allowbreak{}off} & Default OFF & Diagnostic option disabling node extraction in a single case to compare the continuous reconstruction/interpolation path. Distinguish this from the grid's own multiple-viewing-node processing. \\
+\texttt{-\allowbreak{}-\allowbreak{}sigma-\allowbreak{}model STR} & \texttt{ocrt-\allowbreak{}floor} & Sea-surface slope-variance formula. \texttt{ocrt\_\allowbreak{}floor} is also recognized. \texttt{nakajima-\allowbreak{}tanaka}/\texttt{nakajima\_\allowbreak{}tanaka} requires ADVANCED. \\
+\texttt{-\allowbreak{}-\allowbreak{}sigma-\allowbreak{}type N} & \texttt{1} & Compatible numeric selection of the model above. \texttt{1}: OCRT floor; \texttt{0}: Nakajima--Tanaka. Values other than 1 require ADVANCED. Use the string option in new commands. \\
+\texttt{-\allowbreak{}-\allowbreak{}q-\allowbreak{}convention N} & \texttt{1} & Fresnel-boundary Q convention. \texttt{1}: \texttt{(Rp-Rs)/\allowbreak{}2}; \texttt{0}: the older \texttt{(Rs-Rp)/\allowbreak{}2}. Values other than 1 require ADVANCED. Do not treat this as a post-processing option that simply reverses every output Q. \\
+\end{longtable}
+}
+
+The implemented slope variance is \texttt{0.\allowbreak{}003+0.\allowbreak{}00512\ensuremath{\times}max(0.\allowbreak{}01,\allowbreak{}U)} for OCRT floor and \texttt{(0.\allowbreak{}0731\ensuremath{\sqrt{}}max(0,\allowbreak{}U))\textsuperscript{2}} for Nakajima--Tanaka. The upper-level path selects the flat Fresnel branch at wind speed 0, so do not interpret results at wind speed 0 solely through the rough-surface slope-variance formula.
+
+The following three options remain in the parser, but \textbf{their effect in current runs is not equivalent to that of other numerical options}.
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3000\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2300\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.4700\linewidth-5.33pt\relax}@{}}
+\toprule
+\textbf{Option} & \textbf{Default / gate} & \textbf{Current status} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Option} & \textbf{Default / gate} & \textbf{Current status} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{-\allowbreak{}-\allowbreak{}max-\allowbreak{}orders N} & Default \texttt{20}; changes require ADVANCED & Stored in the legacy \texttt{opts.\allowbreak{}max\_\allowbreak{}orders} field. The current atmospheric solver limits orders with \texttt{opts.\allowbreak{}sos.\allowbreak{}max\_\allowbreak{}iterations}. Use \texttt{-\allowbreak{}-\allowbreak{}sos-\allowbreak{}max-\allowbreak{}orders} for actual control. \\
+\texttt{-\allowbreak{}-\allowbreak{}conv-\allowbreak{}tol X} & Default \texttt{1e-\allowbreak{}6}; changes require ADVANCED & Stored in legacy \texttt{opts.\allowbreak{}conv\_\allowbreak{}tol}. Current atmospheric SOS uses \texttt{-\allowbreak{}-\allowbreak{}sos-\allowbreak{}tolerance}. \\
+\texttt{-\allowbreak{}-\allowbreak{}l-\allowbreak{}max auto\textbackslash{}|N} & Default \texttt{auto}; numeric specification requires ADVANCED & The current atmospheric solver determines its working order from the Fourier upper limit, Rayleigh order, and aerosol L rather than \texttt{opts.\allowbreak{}l\_\allowbreak{}max}. Do not confuse this with \texttt{-\allowbreak{}-\allowbreak{}aer-\allowbreak{}l-\allowbreak{}max}. \\
+\end{longtable}
+}
+
+The default maximum underwater order depends on the medium. The ordinary pure-water path starts at 20, the constituent path at a minimum of 140, and the direct IOP path at a minimum of 160. Positive particulate constituents, direct IOP \texttt{b>0.\allowbreak{}02 m\textsuperscript{-}\textsuperscript{1}}, or \texttt{bb>0.\allowbreak{}0005 m\textsuperscript{-}\textsuperscript{1}} raise it again to the current code's high-particle safety floor of \textbf{10000}. The older comment's 100 differs from the actual constant. The solver need not iterate to the limit: it exits early upon convergence. Additional automatic policies apply to depth and phase processing. Check the actual \texttt{water\_\allowbreak{}orders} and \texttt{water\_\allowbreak{}converged} in logs/output. Do not expect increasing only \texttt{-\allowbreak{}-\allowbreak{}sos-\allowbreak{}max-\allowbreak{}orders} to resolve underwater nonconvergence.
+
+\section{Complete Diagnostic Option List}
+\label{sec:auto:03_options:9}
+DEBUG options are allowed by the \texttt{OCRT\_\allowbreak{}DEBUG=\allowbreak{}1} environment variable or \texttt{-\allowbreak{}-\allowbreak{}debug} at the beginning of the command. \texttt{-\allowbreak{}-\allowbreak{}debug} takes effect when encountered, so put it before related options. DEBUG and ADVANCED are separate; set both when both gates are required.
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3000\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2300\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.4700\linewidth-5.33pt\relax}@{}}
+\toprule
+\textbf{Option} & \textbf{Value / default} & \textbf{Purpose / conditions} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Option} & \textbf{Value / default} & \textbf{Purpose / conditions} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{-\allowbreak{}-\allowbreak{}debug} & Flag & Sets \texttt{OCRT\_\allowbreak{}DEBUG=\allowbreak{}1} for the process. Omit from ordinary production data-generation commands. \\
+\texttt{-\allowbreak{}-\allowbreak{}debug-\allowbreak{}fixed-\allowbreak{}bulk-\allowbreak{}lmax N} & 0 = automatic for each path & Maximum moment order of the IOP fixed bulk phase function. DEBUG; IOP model. Automatic values include 200 for Mie paths and 30 for LUT paths, so do not assume equal orders. \\
+\texttt{-\allowbreak{}-\allowbreak{}debug-\allowbreak{}fixed-\allowbreak{}bulk-\allowbreak{}phase-\allowbreak{}model M} & Internal \texttt{delta2bb} & IOP diagnostic phase selection. Aliases of \texttt{delta2bb}: \texttt{delta}, \texttt{bb2}; of \texttt{hg-\allowbreak{}lut}: \texttt{hg\_\allowbreak{}direct}, \texttt{hg}; of \texttt{lut}: \texttt{table}, \texttt{p11-\allowbreak{}lut}; of \texttt{lut-\allowbreak{}deltam}: \texttt{deltam}, \texttt{delta-\allowbreak{}m}. DEBUG. LUT selections require a phase file. \\
+\texttt{-\allowbreak{}-\allowbreak{}debug-\allowbreak{}high-\allowbreak{}particle-\allowbreak{}water-\allowbreak{}max-\allowbreak{}orders N} & Current safety floor \texttt{10000} when unspecified & Minimum SOS order limit for a particulate medium. Positive integer; DEBUG. Does not lower a model already requiring 140/160 below that requirement. \\
+\texttt{-\allowbreak{}-\allowbreak{}debug-\allowbreak{}water-\allowbreak{}max-\allowbreak{}orders N} & Automatic & Directly changes the underwater SOS upper order limit. Positive integer; DEBUG. If reduced, check actual results for nonconvergence. \\
+\texttt{-\allowbreak{}-\allowbreak{}debug-\allowbreak{}water-\allowbreak{}tau-\allowbreak{}max-\allowbreak{}target X} & Automatic by medium & Baseline target total underwater optical thickness. Positive, dimensionless; DEBUG. Deep-water policy may adjust final depth further. \\
+\texttt{-\allowbreak{}-\allowbreak{}debug-\allowbreak{}water-\allowbreak{}max-\allowbreak{}tau X} & Automatic by medium & Final upper limit on underwater optical thickness. Positive, dimensionless; DEBUG. \\
+\texttt{-\allowbreak{}-\allowbreak{}debug-\allowbreak{}water-\allowbreak{}max-\allowbreak{}depth X} & Automatic by medium & Upper limit on physical underwater depth, m, positive; DEBUG. Not a general water-depth/seabed-reflection model input. \\
+\texttt{-\allowbreak{}-\allowbreak{}debug-\allowbreak{}water-\allowbreak{}min-\allowbreak{}depth X} & Same as above & Legacy alias stored in exactly the same field as \texttt{-\allowbreak{}-\allowbreak{}debug-\allowbreak{}water-\allowbreak{}max-\allowbreak{}depth} in the current code. Despite its name, it does not specify a minimum depth. \\
+\texttt{-\allowbreak{}-\allowbreak{}debug-\allowbreak{}water-\allowbreak{}bottom-\allowbreak{}tol X} & \texttt{1e-\allowbreak{}8} & Target transport attenuation to the bottom. \texttt{0<X<1}; DEBUG. \\
+\texttt{-\allowbreak{}-\allowbreak{}debug-\allowbreak{}water-\allowbreak{}layer-\allowbreak{}dtau X} & \texttt{0.\allowbreak{}05} & Target optical thickness per layer, positive; DEBUG. \\
+\texttt{-\allowbreak{}-\allowbreak{}debug-\allowbreak{}water-\allowbreak{}n-\allowbreak{}layers N} & Automatic & Fixes the underwater layer count, positive integer; DEBUG. Disables automatic \ensuremath{\Delta}\ensuremath{\tau}-based layer-count increases when specified. \\
+\texttt{-\allowbreak{}-\allowbreak{}ccrr-\allowbreak{}particle-\allowbreak{}phase-\allowbreak{}lut FILE} & None & Replacement scalar LUT for the CCRR particle phase. DEBUG. Chl or TSM>0; mutually exclusive with \texttt{-\allowbreak{}-\allowbreak{}ccrr-\allowbreak{}phase-\allowbreak{}moments}. \\
+\texttt{-\allowbreak{}-\allowbreak{}ccrr-\allowbreak{}particle-\allowbreak{}phase-\allowbreak{}case-\allowbreak{}id ID} & None & Case ID to select in the LUT above. DEBUG; requires the LUT option. \\
+\texttt{-\allowbreak{}-\allowbreak{}ccrr-\allowbreak{}particle-\allowbreak{}phase-\allowbreak{}lmax N} & \texttt{10} & Moment order for the LUT above, positive; DEBUG; requires the LUT option. \\
+\texttt{-\allowbreak{}-\allowbreak{}ccrr-\allowbreak{}particle-\allowbreak{}phase-\allowbreak{}nphi N} & \texttt{720} & Azimuthal integration count for the LUT above, positive; DEBUG; requires the LUT option. \\
+\texttt{-\allowbreak{}-\allowbreak{}trunc-\allowbreak{}aer-\allowbreak{}fit DEG} & OFF & Boundary angle in degrees for research aerosol delta-fit truncation. DEBUG; AOD>0. \\
+\texttt{-\allowbreak{}-\allowbreak{}trunc-\allowbreak{}aer-\allowbreak{}m N} & OFF & Research aerosol delta-M truncation order. DEBUG; AOD>0. Use as an experiment distinct from the option above. \\
+\texttt{-\allowbreak{}-\allowbreak{}nt-\allowbreak{}tau} & OFF & NT optical-thickness/albedo transformation for research truncation. DEBUG; AOD>0. Do not assume the same physics as the normal automatic loglin path. \\
+\texttt{-\allowbreak{}-\allowbreak{}sos-\allowbreak{}save-\allowbreak{}orders} & OFF & DEBUG. The current parser sets the \texttt{save\_\allowbreak{}orders} field, but production SOS does not read it to write separate files by order. Do not expect this option alone to create order-resolved output files. \\
+\texttt{-\allowbreak{}-\allowbreak{}ccrr-\allowbreak{}compare FILE}, \texttt{-\allowbreak{}-\allowbreak{}simple-\allowbreak{}compare FILE} & None & Diagnostic comparison against CCRR reference CSV. DEBUG. Cannot be mixed with a single \texttt{-\allowbreak{}-\allowbreak{}water-\allowbreak{}model} branch. \\
+\texttt{-\allowbreak{}-\allowbreak{}ccrr-\allowbreak{}output FILE}, \texttt{-\allowbreak{}-\allowbreak{}simple-\allowbreak{}output FILE} & None & Output file for the comparison above. Uses \texttt{-\allowbreak{}-\allowbreak{}output} if unspecified. Errors if neither path is provided. \\
+\end{longtable}
+}
+
+\subsection{Fournier--Forand Scalar Phase Research Path}
+\label{sec:auto:03_options:9.1}
+The following is a research path within \texttt{-\allowbreak{}-\allowbreak{}water-\allowbreak{}model iop}, not an independent model added to the ordinary water-model choices. It can read a,b from a table and calculate bb from a user-specified backscattering ratio.
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3000\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2300\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.4700\linewidth-5.33pt\relax}@{}}
+\toprule
+\textbf{Option and all aliases} & \textbf{Value / default} & \textbf{Description} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Option and all aliases} & \textbf{Value / default} & \textbf{Description} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{-\allowbreak{}-\allowbreak{}scalar-\allowbreak{}ff-\allowbreak{}iop FILE}, \texttt{-\allowbreak{}-\allowbreak{}ff-\allowbreak{}iop FILE}, \texttt{-\allowbreak{}-\allowbreak{}ff-\allowbreak{}scalar-\allowbreak{}iop FILE} & None & \texttt{wavelength\_\allowbreak{}nm,\allowbreak{}a,\allowbreak{}b} table. DEBUG. The run wavelength must lie within the table range; interpolation is linear, without extrapolation. This file replaces the requirement for \texttt{-\allowbreak{}-\allowbreak{}iop-\allowbreak{}a/\allowbreak{}b/\allowbreak{}bb}. \\
+\texttt{-\allowbreak{}-\allowbreak{}scalar-\allowbreak{}ff-\allowbreak{}bbfrac X}, \texttt{-\allowbreak{}-\allowbreak{}scalar-\allowbreak{}ff-\allowbreak{}bb-\allowbreak{}over-\allowbreak{}b X}, \texttt{-\allowbreak{}-\allowbreak{}ff-\allowbreak{}bbfrac X} & Unspecified \texttt{0} & bb/b with \texttt{0<X<0.\allowbreak{}5}. Required for the file path. \\
+\texttt{-\allowbreak{}-\allowbreak{}scalar-\allowbreak{}ff-\allowbreak{}n X}, \texttt{-\allowbreak{}-\allowbreak{}ff-\allowbreak{}n X} & \texttt{1.\allowbreak{}18} & FF particle relative refractive index \texttt{>1}. \\
+\texttt{-\allowbreak{}-\allowbreak{}scalar-\allowbreak{}ff-\allowbreak{}mu X}, \texttt{-\allowbreak{}-\allowbreak{}ff-\allowbreak{}mu X} & Automatic & Junge exponent. Estimated from bb/b if unspecified; when supplied directly, use a valid FF exponent (\texttt{>3}). \\
+\texttt{-\allowbreak{}-\allowbreak{}scalar-\allowbreak{}ff-\allowbreak{}lmax N}, \texttt{-\allowbreak{}-\allowbreak{}ff-\allowbreak{}lmax N} & \texttt{10} in the file path & Retained FF moment order. Positive integer. \\
+\texttt{-\allowbreak{}-\allowbreak{}scalar-\allowbreak{}ff-\allowbreak{}phase-\allowbreak{}nphi N}, \texttt{-\allowbreak{}-\allowbreak{}scalar-\allowbreak{}ff-\allowbreak{}nphi N}, \texttt{-\allowbreak{}-\allowbreak{}ff-\allowbreak{}phase-\allowbreak{}nphi N}, \texttt{-\allowbreak{}-\allowbreak{}ff-\allowbreak{}nphi N} & \texttt{720} & FF azimuthal integration count. Explicit use always requires ADVANCED. \\
+\end{longtable}
+}
+
+The current implementation requires DEBUG for the FF file option and ADVANCED for nphi, but has no individual DEBUG gates for the other FF parameters. Nevertheless, this group is a diagnostic path: do not mix only some of its flags into ordinary IOP calculations and expect them to apply.
+
+\section{Run Information and Environment Variables}
+\label{sec:auto:03_options:10}
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3400\linewidth-4.00pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.6600\linewidth-4.00pt\relax}@{}}
+\toprule
+\textbf{Option} & \textbf{Behavior} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Option} & \textbf{Behavior} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{-\allowbreak{}-\allowbreak{}help}, \texttt{-\allowbreak{}h} & Prints general help and exits. Does not enumerate every hidden numerical/diagnostic option. \\
+\texttt{-\allowbreak{}-\allowbreak{}examples} & Prints older validation run examples embedded in the program and exits. Prefer Appendix~\ref{chap:04_examples} for current reproducible examples. \\
+\texttt{-\allowbreak{}-\allowbreak{}version} & Prints the build string and exits. The repository release number may differ from the string's old \texttt{v1.\allowbreak{}2} label, so also record the source revision. \\
+\texttt{-\allowbreak{}-\allowbreak{}verbose} & Prints additional run information, default-selection details, and aerosol diagnostics to standard error. Store file data separately from logs. \\
+\end{longtable}
+}
+
+The following environment variables are used in actual operation. Unless stated otherwise, set them before starting the program. Variables left in the same shell can affect later runs. Some internal diagnostic variables treat even the string \texttt{0} as “present,” so remove the variable to turn them off.
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3000\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2300\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.4700\linewidth-5.33pt\relax}@{}}
+\toprule
+\textbf{Environment variable} & \textbf{Value / default} & \textbf{Purpose} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Environment variable} & \textbf{Value / default} & \textbf{Purpose} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{OMP\_\allowbreak{}NUM\_\allowbreak{}THREADS} & Positive integer; OpenMP runtime default & Number of OpenMP workers. Start reproducibility comparisons at \texttt{1}. The build must support OpenMP. \\
+\texttt{OCRT\_\allowbreak{}ADVANCED} & OFF when unset; usually \texttt{1} & ADVANCED gate in the tables above. \\
+\texttt{OCRT\_\allowbreak{}DEBUG} & OFF when unset; usually \texttt{1} & DEBUG gate in the tables above. Can also be set with \texttt{-\allowbreak{}-\allowbreak{}debug}. \\
+\texttt{OCRT\_\allowbreak{}TSM\_\allowbreak{}DIR} & Searches distributed TSM locations when unset & Overrides the Ahn inorganic-particle data directory. All required coefficients and phase files for the four species must be present. \\
+\texttt{OCRT\_\allowbreak{}ORGANIC\_\allowbreak{}DIR} & Searches distributed organic-particle locations when unset & Overrides the organic-particle data directory. Requires common phytoplankton absorption and detritus data. \\
+\texttt{OCRT\_\allowbreak{}SURFACE\_\allowbreak{}PERSIST\_\allowbreak{}CACHE\_\allowbreak{}MODE} & Default \texttt{off} & Sea-surface kernel disk cache. \texttt{readonly}: reads, calculates on a miss; \texttt{required}: errors if a required cache is absent; \texttt{build}: calculates and saves. Aliases: \texttt{0}; \texttt{read-\allowbreak{}only/\allowbreak{}ro/\allowbreak{}optional}; \texttt{require/\allowbreak{}strict}; \texttt{prime/\allowbreak{}prebuild}. \\
+\texttt{OCRT\_\allowbreak{}SURFACE\_\allowbreak{}PERSIST\_\allowbreak{}CACHE\_\allowbreak{}DIR} & Required when cache is ON & Cache directory. Create it and check write permission before use. \\
+\texttt{OCRT\_\allowbreak{}SURFACE\_\allowbreak{}PERSIST\_\allowbreak{}CACHE\_\allowbreak{}TRACE} & Default OFF; \texttt{1} & Cache hit/miss and configuration diagnostics. \\
+\texttt{OCRT\_\allowbreak{}WATER\_\allowbreak{}VALUE\_\allowbreak{}GEOM\_\allowbreak{}CACHE\_\allowbreak{}MAX\_\allowbreak{}MB} & Default \texttt{64} MiB; maximum \texttt{4096} & Value-kernel geometry cache size. \texttt{0} suppresses allocation. \\
+\texttt{OCRT\_\allowbreak{}COXMUNK\_\allowbreak{}FOURIER\_\allowbreak{}NPHI} & Default \texttt{1024} & Azimuthal quadrature count for rough-surface Fourier integration. Integer override \texttt{64.\allowbreak{}.\allowbreak{}4096}. For convergence comparisons. \\
+\texttt{OCRT\_\allowbreak{}IPSS\_\allowbreak{}NQUAD} & Current default \texttt{2} per layer panel & IPSS path-integration convergence comparisons. Does not mean only 2 points along the entire line of sight. Overrides accept integers \texttt{8.\allowbreak{}.\allowbreak{}4096} only; out-of-range values retain the default. \\
+\texttt{OCRT\_\allowbreak{}IPSS\_\allowbreak{}TRACE} & OFF when unset & IPSS correction diagnostics. \\
+\texttt{OCRT\_\allowbreak{}IPSS\_\allowbreak{}DUMP} & None when unset; output file path & Appends IPSS grid diagnostics to a file. 6 columns without a header: \texttt{vza,\allowbreak{}raa,\allowbreak{}kappa,\allowbreak{}i\_\allowbreak{}nadir/\allowbreak{}i\_\allowbreak{}pp,\allowbreak{}i\_\allowbreak{}spherical,\allowbreak{}i\_\allowbreak{}pp}. Use a new filename for each run to avoid mixing with previous results. \\
+\texttt{OCRT\_\allowbreak{}IPSS\_\allowbreak{}PROFILE\_\allowbreak{}DUMP} & None when unset; output file path & Writes IPSS atmospheric-profile and phase-function diagnostics to the specified file. \\
+\end{longtable}
+}
+
+Performance/regression diagnostic variables include \texttt{OCRT\_\allowbreak{}TRANSPORT\_\allowbreak{}CACHE\_\allowbreak{}OFF}, \texttt{OCRT\_\allowbreak{}SOS\_\allowbreak{}ZERO\_\allowbreak{}COL\_\allowbreak{}SKIP\_\allowbreak{}OFF}, \texttt{OCRT\_\allowbreak{}DISABLE\_\allowbreak{}MIE\_\allowbreak{}MODEL\_\allowbreak{}CACHE}, \texttt{OCRT\_\allowbreak{}DISABLE\_\allowbreak{}WATER\_\allowbreak{}COMPONENT\_\allowbreak{}PHASE\_\allowbreak{}CACHE}, \texttt{OCRT\_\allowbreak{}AIR\_\allowbreak{}SURFACE\_\allowbreak{}CACHE\_\allowbreak{}OFF}, \texttt{OCRT\_\allowbreak{}AIR\_\allowbreak{}FKC\_\allowbreak{}OFF}, \texttt{OCRT\_\allowbreak{}TWA\_\allowbreak{}FKC\_\allowbreak{}OFF}, and \texttt{OCRT\_\allowbreak{}NO\_\allowbreak{}PHASE\_\allowbreak{}CACHE}. They disable specific caches or skip optimizations to compare result equivalence and timing. \texttt{OCRT\_\allowbreak{}MIE\_\allowbreak{}MODEL\_\allowbreak{}CACHE\_\allowbreak{}TRACE}, \texttt{OCRT\_\allowbreak{}DUMP\_\allowbreak{}WATER\_\allowbreak{}COMPONENT\_\allowbreak{}PHASE\_\allowbreak{}CACHE}, \texttt{OCRT\_\allowbreak{}DUMP\_\allowbreak{}SOS\_\allowbreak{}PHASE\_\allowbreak{}CACHE}, \texttt{OCRT\_\allowbreak{}AIR\_\allowbreak{}SURFACE\_\allowbreak{}CACHE\_\allowbreak{}DIAG}, \texttt{OCRT\_\allowbreak{}VALUE\_\allowbreak{}GEOM\_\allowbreak{}CACHE\_\allowbreak{}TRACE}, \texttt{OCRT\_\allowbreak{}VALUE\_\allowbreak{}KERNEL\_\allowbreak{}CACHE\_\allowbreak{}TRACE}, and \texttt{OCRT\_\allowbreak{}BATCH\_\allowbreak{}DIAG} produce the corresponding diagnostics.
+
+Other source variables such as \texttt{OCRT\_\allowbreak{}DUMP\_\allowbreak{}*}, \texttt{OCRT\_\allowbreak{}D3\_\allowbreak{}*}, \texttt{OCRT\_\allowbreak{}TWA\_\allowbreak{}*}, \texttt{OCRT\_\allowbreak{}DTP\_\allowbreak{}*}, and \texttt{OCRT\_\allowbreak{}FINAL\_\allowbreak{}MODE\_\allowbreak{}QUEUE\_\allowbreak{}*} serve internal cause-isolation and modification experiments; they are not stable user options. Some change solver paths or physical terms rather than merely adding output. Do not copy all environment variables from an old validation script into a new production command. The \hyperref[chap:03_environment_index]{environment-variable source index} lists the read locations of all internal variables.
+
+\section{Removed Options and Replacements}
+\label{sec:auto:03_options:11}
+The current parser explicitly rejects the names below. Reproducing commands from older documents requires checking surface and physical defaults as well as substituting names.
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3400\linewidth-4.00pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.6600\linewidth-4.00pt\relax}@{}}
+\toprule
+\textbf{Rejected name} & \textbf{Replacement or current meaning} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Rejected name} & \textbf{Replacement or current meaning} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{-\allowbreak{}-\allowbreak{}cdom-\allowbreak{}a440}, \texttt{-\allowbreak{}-\allowbreak{}cdom-\allowbreak{}slope}, \texttt{-\allowbreak{}-\allowbreak{}cdom-\allowbreak{}ref-\allowbreak{}lambda} & \texttt{-\allowbreak{}-\allowbreak{}water-\allowbreak{}model ocrt}/\texttt{ccrr} with \texttt{-\allowbreak{}-\allowbreak{}ocrt-\allowbreak{}adom440}/\texttt{-\allowbreak{}-\allowbreak{}ccrr-\allowbreak{}adom440} and the corresponding slope. Reference wavelength fixed at 440 nm. \\
+\texttt{-\allowbreak{}-\allowbreak{}simple-\allowbreak{}mode}, \texttt{-\allowbreak{}-\allowbreak{}ccrr-\allowbreak{}mode} & \texttt{-\allowbreak{}-\allowbreak{}water-\allowbreak{}model ocrt\textbackslash{}|ccrr\allowbreak{}\textbackslash{}|iop} \\
+\texttt{-\allowbreak{}-\allowbreak{}chl}, \texttt{-\allowbreak{}-\allowbreak{}simple-\allowbreak{}chl}, \texttt{-\allowbreak{}-\allowbreak{}ccrr-\allowbreak{}chl-\allowbreak{}mg-\allowbreak{}m3} & Model-appropriate \texttt{-\allowbreak{}-\allowbreak{}ocrt-\allowbreak{}chl} or \texttt{-\allowbreak{}-\allowbreak{}ccrr-\allowbreak{}chl} \\
+\texttt{-\allowbreak{}-\allowbreak{}tsm}, \texttt{-\allowbreak{}-\allowbreak{}simple-\allowbreak{}min}, \texttt{-\allowbreak{}-\allowbreak{}ccrr-\allowbreak{}min}, \texttt{-\allowbreak{}-\allowbreak{}ccrr-\allowbreak{}min-\allowbreak{}g-\allowbreak{}m3} & \texttt{-\allowbreak{}-\allowbreak{}ocrt-\allowbreak{}tsm} or \texttt{-\allowbreak{}-\allowbreak{}ccrr-\allowbreak{}tsm} \\
+\texttt{-\allowbreak{}-\allowbreak{}adom440}, \texttt{-\allowbreak{}-\allowbreak{}simple-\allowbreak{}adom440}, \texttt{-\allowbreak{}-\allowbreak{}ccrr-\allowbreak{}adom-\allowbreak{}440} & \texttt{-\allowbreak{}-\allowbreak{}ocrt-\allowbreak{}adom440} or \texttt{-\allowbreak{}-\allowbreak{}ccrr-\allowbreak{}adom440} \\
+\texttt{-\allowbreak{}-\allowbreak{}adom-\allowbreak{}slope}, \texttt{-\allowbreak{}-\allowbreak{}simple-\allowbreak{}adom-\allowbreak{}s}, \texttt{-\allowbreak{}-\allowbreak{}simple-\allowbreak{}adom-\allowbreak{}slope}, \texttt{-\allowbreak{}-\allowbreak{}ccrr-\allowbreak{}adom-\allowbreak{}s} & \texttt{-\allowbreak{}-\allowbreak{}ocrt-\allowbreak{}adom-\allowbreak{}slope} or \texttt{-\allowbreak{}-\allowbreak{}ccrr-\allowbreak{}adom-\allowbreak{}slope} \\
+\texttt{-\allowbreak{}-\allowbreak{}phyto-\allowbreak{}group}, \texttt{-\allowbreak{}-\allowbreak{}chl-\allowbreak{}group} & Older names for species selection. Omit: current \texttt{-\allowbreak{}-\allowbreak{}ocrt-\allowbreak{}phyto-\allowbreak{}group} is also inactive in the production path. \\
+\texttt{-\allowbreak{}-\allowbreak{}tsm-\allowbreak{}species} & \texttt{-\allowbreak{}-\allowbreak{}ocrt-\allowbreak{}tsm-\allowbreak{}species} \\
+\texttt{-\allowbreak{}-\allowbreak{}detritus-\allowbreak{}a440}, \texttt{-\allowbreak{}-\allowbreak{}detritus-\allowbreak{}slope} & \texttt{-\allowbreak{}-\allowbreak{}ocrt-\allowbreak{}detritus-\allowbreak{}a440}, \texttt{-\allowbreak{}-\allowbreak{}ocrt-\allowbreak{}detritus-\allowbreak{}slope} \\
+\texttt{-\allowbreak{}-\allowbreak{}fixed-\allowbreak{}bulk-\allowbreak{}iop}, \texttt{-\allowbreak{}-\allowbreak{}water-\allowbreak{}fixed-\allowbreak{}bulk-\allowbreak{}iop} & \texttt{-\allowbreak{}-\allowbreak{}water-\allowbreak{}model iop -\allowbreak{}-\allowbreak{}iop-\allowbreak{}a A -\allowbreak{}-\allowbreak{}iop-\allowbreak{}b B -\allowbreak{}-\allowbreak{}iop-\allowbreak{}bb BB} \\
+\texttt{-\allowbreak{}-\allowbreak{}fixed-\allowbreak{}bulk-\allowbreak{}phase-\allowbreak{}lut}, \texttt{-\allowbreak{}-\allowbreak{}fixed-\allowbreak{}bulk-\allowbreak{}phase-\allowbreak{}nphi} & \texttt{-\allowbreak{}-\allowbreak{}iop-\allowbreak{}phase-\allowbreak{}lut}, \texttt{-\allowbreak{}-\allowbreak{}iop-\allowbreak{}phase-\allowbreak{}nphi} \\
+\texttt{-\allowbreak{}-\allowbreak{}water-\allowbreak{}mie-\allowbreak{}phase} & \texttt{-\allowbreak{}-\allowbreak{}iop-\allowbreak{}mie-\allowbreak{}phase} \\
+\texttt{-\allowbreak{}-\allowbreak{}water-\allowbreak{}mie-\allowbreak{}moment-\allowbreak{}mode}, \texttt{-\allowbreak{}-\allowbreak{}water-\allowbreak{}mie-\allowbreak{}moment-\allowbreak{}nmu}, \texttt{-\allowbreak{}-\allowbreak{}water-\allowbreak{}mie-\allowbreak{}truncation}, \texttt{-\allowbreak{}-\allowbreak{}water-\allowbreak{}mie-\allowbreak{}ss-\allowbreak{}mode} & Selected model's \texttt{-\allowbreak{}-\allowbreak{}ocrt-\allowbreak{}mie-\allowbreak{}*} or \texttt{-\allowbreak{}-\allowbreak{}iop-\allowbreak{}mie-\allowbreak{}*} \\
+\texttt{-\allowbreak{}-\allowbreak{}aod-\allowbreak{}band} & \texttt{-\allowbreak{}-\allowbreak{}aod-\allowbreak{}555}, \texttt{-\allowbreak{}-\allowbreak{}aod-\allowbreak{}865}, or \texttt{-\allowbreak{}-\allowbreak{}aod} with an explicit reference wavelength \\
+\texttt{-\allowbreak{}-\allowbreak{}pssa-\allowbreak{}mode} & Removed Chapman PSSA selection. Currently \texttt{-\allowbreak{}-\allowbreak{}pssa} enables IPSS. \\
+\end{longtable}
+}
+
+The following older names have no branch in the current parser and produce an \texttt{unknown argument\allowbreak{}} error.
+
+\begin{itemize}
+\item \texttt{-\allowbreak{}-\allowbreak{}use-\allowbreak{}absorption}, \texttt{-\allowbreak{}-\allowbreak{}afgl-\allowbreak{}dir}, \texttt{-\allowbreak{}-\allowbreak{}xsec-\allowbreak{}dir}: Gas absorption is enabled by default in normal runs, and input directories are fixed.
+\item \texttt{-\allowbreak{}-\allowbreak{}water-\allowbreak{}aw-\allowbreak{}lut}, \texttt{-\allowbreak{}-\allowbreak{}water-\allowbreak{}psi-\allowbreak{}T-\allowbreak{}lut}, \texttt{-\allowbreak{}-\allowbreak{}f-\allowbreak{}sun}: Uses distributed pure-seawater inputs and the internal solar-normalization convention.
+\item \texttt{-\allowbreak{}-\allowbreak{}trunc-\allowbreak{}aer-\allowbreak{}loglin}, \texttt{-\allowbreak{}-\allowbreak{}aer-\allowbreak{}phase-\allowbreak{}kernel}, \texttt{-\allowbreak{}-\allowbreak{}no-\allowbreak{}aerosol}: Uses automatic aerosol settings for positive AOD; AOD 0 disables aerosols.
+\item \texttt{-\allowbreak{}-\allowbreak{}output-\allowbreak{}mode}, \texttt{-\allowbreak{}-\allowbreak{}lut}, \texttt{-\allowbreak{}-\allowbreak{}lut-\allowbreak{}output}: Current output controls are \texttt{-\allowbreak{}-\allowbreak{}output-\allowbreak{}advanced}, grid selection by omitting angles, and \texttt{-\allowbreak{}-\allowbreak{}output-\allowbreak{}full-\allowbreak{}grid}.
+\item \texttt{-\allowbreak{}-\allowbreak{}tau-\allowbreak{}r}, \texttt{-\allowbreak{}-\allowbreak{}tau-\allowbreak{}r-\allowbreak{}from-\allowbreak{}input}, \texttt{-\allowbreak{}-\allowbreak{}with-\allowbreak{}rayleigh}: Rayleigh optical thickness is calculated from \texttt{-\allowbreak{}-\allowbreak{}pressure} and the internal model. Do not confuse these with current compatibility options \texttt{-\allowbreak{}-\allowbreak{}no-\allowbreak{}rayleigh}/\texttt{-\allowbreak{}-\allowbreak{}rayleigh}.
+\item \texttt{-\allowbreak{}-\allowbreak{}view-\allowbreak{}as-\allowbreak{}node}, \texttt{-\allowbreak{}-\allowbreak{}vector}, \texttt{-\allowbreak{}-\allowbreak{}no-\allowbreak{}decouple-\allowbreak{}sunglint}: Viewing nodes for single geometry and vector calculations are default behavior, and direct glint inclusion is the default in the ordinary path.
+\end{itemize}
+
+\section{Source Review Scope for This Chapter}
+\label{sec:auto:03_options:12}
+Option names were exhaustively extracted from names compared by \texttt{strcmp(a,\allowbreak{}".\allowbreak{}.\allowbreak{}.\allowbreak{}")} in the argument loop of \texttt{main.\allowbreak{}c}. There are \textbf{168} in total, including aliases and explicitly rejected older names. The tables above include all 168. Execution semantics were cross-checked in \texttt{rt\_\allowbreak{}solver.\allowbreak{}c}, \texttt{rt\_\allowbreak{}water\_\allowbreak{}rt.\allowbreak{}c}, \texttt{rt\_\allowbreak{}absorption.\allowbreak{}c}, \texttt{rt\_\allowbreak{}atm.\allowbreak{}c}, \texttt{rt\_\allowbreak{}ipss.\allowbreak{}c}, \texttt{shared/\allowbreak{}surface.\allowbreak{}c}, and other sources.
+
+This document does not imply new scientific validation of every combination of numerical options. Where older help and actual code differ, the behavior is explicitly explained. Follow Appendix~\ref{chap:04_examples} for reproducible baseline commands and output checks.
+

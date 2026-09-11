@@ -1,0 +1,40 @@
+% Authoritative English source. Edit chapter files in en/, then run build.py.
+\documentclass[11pt,a4paper,oneside]{report}
+\newcommand{\EditionShort}{EN}
+\input{common/preamble}
+\hypersetup{pdftitle={OCRT User Manual},pdfsubject={Installation, geometry, complete options, LUTs, simulations and file formats},pdfauthor={OCRT project},pdflang={en}}
+\begin{document}
+\ManualTitlePage{User Manual}{English edition}{}{}
+\pagenumbering{roman}
+\chapter*{About this manual}
+\addcontentsline{toc}{chapter}{About this manual}
+OCRT is a radiative transfer code for ocean-colour atmospheric correction and coupled atmosphere--ocean simulations. The main chapters explain OCRT concepts, installation, options, input formats and output interpretation. The opening Quick start walks through a first calculation. Detailed applications, LUT generation, simulation data generation, Python usage and supporting code are covered in the appendices.
+
+The documentation baseline is C reference release v1.11.1, reviewed on 2026-09-11 at source commit:
+
+\texttt{54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d}
+
+The executable version string alone does not identify the current source revision. Python support is documented separately from C.
+
+\textbf{In OCRT, RAA=180 degrees is the direct-sunglint branch.} Read Chapter~\ref{chap:01_concepts_geometry} before converting satellite azimuths or comparing signed Stokes U. For an atmospheric-correction Rayleigh LUT, decide first whether gas absorption, aerosol and direct sunglint are included.
+
+This manual describes the current implementation. Outdated help text, options whose effective behaviour differs from older descriptions, unsupported combinations and untested conditions are identified in the relevant chapters. Successful example runs do not establish scientific accuracy for an entire production grid.
+
+The Korean and English editions use the same chapter structure and option names. LaTeX files in this directory are the source for future revisions; the earlier Markdown files are retained as an initial draft record. Consult the repository \href{https://github.com/brtnt/OCRT/blob/main/LICENSE}{LICENSE} for use and citation conditions.
+\tableofcontents
+\clearpage
+\input{en/00_quick_start}
+\clearpage\pagenumbering{arabic}
+\input{en/01_concepts_geometry}
+\input{en/02_installation}
+\input{en/03_options}
+\input{en/08_input_formats}
+\input{en/05_output_formats}
+\input{en/07_validation_notes}
+\appendix
+\input{en/04_examples}
+\input{en/06_python_batch}
+\input{en/09_cookbook}
+\input{en/examples_readme}
+\input{en/03_environment_index}
+\end{document}

@@ -1,0 +1,29 @@
+% Direct glint is attenuated but has no atmospheric scattering along its path.
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[x=1cm,y=1cm,font=\sffamily\fontsize{9}{11}\selectfont,>=Latex]
+\fill[ocrtTeal!6] (0,1) rectangle (7.3,4.4);
+\fill[ocrtTeal!6] (8.1,1) rectangle (15.4,4.4);
+\draw[ocrtTeal,very thick] (0,1)--(7.3,1) (8.1,1)--(15.4,1);
+\node[anchor=south,align=center,font=\sffamily\bfseries\fontsize{10}{12}\selectfont] at (3.65,4.58) {\FigLang{직달 glint: 수면에서 한 번 반사}{Direct glint: one surface reflection}};
+\node[anchor=south,align=center,font=\sffamily\bfseries\fontsize{10}{12}\selectfont] at (11.75,4.58) {\FigLang{산란 + 표면 상호작용}{Scattering + surface interaction}};
+\node at (0.8,4.12) {\FigLang{태양}{Sun}};
+\node at (6.45,4.12) {\FigLang{센서}{Sensor}};
+\draw[->,orange!85!black,very thick] (1.0,3.85)--(3.65,1.05)--(6.2,3.85);
+\node[align=center,text width=3.4cm,fill=white,inner sep=3pt] at (3.65,3.63) {\FigLang{대기 산란 0회\\대기 감쇠는 적용}{No air scattering\\Attenuation retained}};
+\node[anchor=north,align=center,text width=7.1cm] at (3.65,0.78) {$\boldsymbol{\rho}_{\mathrm{glint,direct}}$};
+\node at (8.9,4.12) {\FigLang{태양}{Sun}};
+\node at (14.55,4.12) {\FigLang{센서}{Sensor}};
+\draw[->,ocrtTeal,very thick] (9.1,3.85)--(10.4,2.65)--(11.3,1.05)--(12.9,2.6)--(14.35,3.85);
+\fill[ocrtTeal] (10.4,2.65) circle (3pt);
+\fill[ocrtTeal] (12.9,2.6) circle (3pt);
+\node[anchor=south west] at (10.5,2.7) {\FigLang{산란}{Scattering}};
+\node[anchor=north,align=center,text width=7.1cm] at (11.75,0.78) {\FigLang{분리 후에도 남는 경로의 예}{Example of a path retained after separation}};
+\draw[ocrtLine] (0,-0.05)--(15.4,-0.05);
+\node[anchor=north west,align=left,text width=15cm] at (0.1,-0.25) {\FigLang{일반 비해양 표면 경로: \texttt{--decouple-sunglint}가 직달 단일반사 항을 사후 제외한다.}{Ordinary non-ocean surface path: \texttt{--decouple-sunglint} subtracts the direct single-reflection term.}\\[4pt]
+\FigLang{결합 \texttt{ocean}: 기본 TOA는 이미 직달 glint를 분리한다. 단일 결과에서}{Coupled \texttt{ocean}: base TOA already separates direct glint. In single-case output,}\\[3pt]
+$\displaystyle \boldsymbol{\rho}_{\mathrm{TOA,glint\_on}}=\boldsymbol{\rho}_{\mathrm{TOA}}+\boldsymbol{\rho}_{\mathrm{glint,direct}}$.};
+\end{tikzpicture}
+\caption{\FigLang{\texttt{--decouple-sunglint}는 모든 표면 반사를 끄는 옵션이 아니다. 수면 반사와 대기 산란이 섞인 경로는 남는다. 해양 TOA의 기본 합성과 직접 IOP 경로의 강제 분리 때문에 단순히 플래그 OFF를 ``직달 glint 포함''으로 읽을 수 없다. 벡터 표기는 해당 I, Q, U 성분을 함께 뜻한다.}{\texttt{--decouple-sunglint} does not disable every surface reflection: paths involving both atmospheric scattering and surface reflection remain. The ocean TOA composition and forced separation in the direct-IOP path prevent a universal ``flag OFF means included'' rule. Bold reflectances denote the corresponding I, Q, and U components.}}
+\label{fig:options-glint}
+\end{figure}

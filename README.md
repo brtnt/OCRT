@@ -2,6 +2,8 @@
 
 Repository: https://github.com/brtnt/OCRT (public; academic and non-commercial license)
 
+**Documentation:** [directory guide](docs/README.md) · [Korean PDF](docs/manual/OCRT_Manual_KO.pdf) · [English PDF](docs/manual/OCRT_Manual_EN.pdf) · [LaTeX sources](docs/manual/latex/README.md)
+
 OCRT is a coupled atmosphere–ocean vector radiative transfer code for ocean-colour
 atmospheric correction (GOCI-II / GOCI-III). It solves the polarized radiative transfer
 equation with the successive-orders-of-scattering (SOS) method. The package has two parts:
@@ -24,6 +26,7 @@ constituent phase functions in mixed atmospheres. Details:
 | `code/campaign_runner/`, `code/run_tools/`, `code/validation_05/` | Campaign runner, run tools, validation harness and bit baselines |
 | `docs/technical/`, `docs/validation/` | Technical reports and validation records |
 | `docs/reports/` | Session reports (validation documents and figures) |
+| `docs/manual/` | User manual: installation, all CLI options, RAA, Rayleigh LUT and simulation examples, output formats |
 | `scripts/` | Data installation scripts (`fetch_data.sh` / `.ps1`) and SHA-256 manifests |
 | `OCRT_MIGRATION_STATUS_2026-08-23.md` | Cumulative development status |
 | `MIGRATION_README_2026-09-05_KO.md` | **How to start a new work session; inventory of what is where** |
@@ -93,6 +96,8 @@ algorithm for vector radiative transfer. *JQSRT* 282, 108132.
 
 저장소: https://github.com/brtnt/OCRT (공개, 학술·비상업 라이선스)
 
+**문서:** [디렉토리 안내](docs/README.md) · [한글판 PDF](docs/manual/OCRT_Manual_KO.pdf) · [영문판 PDF](docs/manual/OCRT_Manual_EN.pdf) · [LaTeX 원본](docs/manual/latex/README.md)
+
 OCRT 는 해색 위성(GOCI-II / GOCI-III) 대기보정을 위한 대기–해양 결합 벡터 복사전달 코드다.
 연속차수산란(SOS) 방법으로 편광 복사전달 방정식을 푼다. 패키지는 두 부분으로 구성된다.
 C 참조 구현과, 같은 물리를 배치 자료생산용으로 재현한 Python 패키지다. 파장 범위는 330–1100 nm 다.
@@ -111,6 +116,7 @@ C 참조 구현과, 같은 물리를 배치 자료생산용으로 재현한 Pyth
 | `code/campaign_runner/`, `code/run_tools/`, `code/validation_05/` | 캠페인 실행기, 실행 도구, 검증 하니스와 비트 기준선 |
 | `docs/technical/`, `docs/validation/` | 기술 보고서와 검증 기록 |
 | `docs/reports/` | 작업 세션 산출 기록(검증 문서·그림) |
+| `docs/manual/` | 사용자 매뉴얼: 설치, 전체 CLI 옵션, RAA, Rayleigh LUT·시뮬레이션 예시, 출력 형식 |
 | `scripts/` | 자료 설치 스크립트(`fetch_data.sh` / `.ps1`)와 SHA-256 매니페스트 |
 | `OCRT_MIGRATION_STATUS_2026-08-23.md` | 개발 상태 문서(누적) |
 | `MIGRATION_README_2026-09-05_KO.md` | **새 작업 세션 시작 절차와 자료 위치 목록** |

@@ -1,0 +1,57 @@
+% Authoritative LaTeX chapter. Edit this file for future revisions.
+% Initially migrated 2026-09-11; no Markdown import occurs during PDF builds.
+\chapter{C LUT 예시 도구}
+\label{chap:examples_readme}
+\href{https://github.com/brtnt/OCRT/blob/main/docs/manual/examples/make_c_luts.py}{make\_c\_luts.py}는 \textbf{Python 표준 라이브러리로 C 실행 파일을 호출}한다. OCRT Python 물리 구현을 실행하는 도구가 아니다. 설치된 Python 3과 빌드된 OCRT C가 필요하다.
+
+전체 옵션은 \texttt{python make\_\allowbreak{}c\_\allowbreak{}luts.\allowbreak{}py -\allowbreak{}-\allowbreak{}help}로 본다. 기본 격자는 테스트용으로 작다. 생산 정확도나 최적 격자를 뜻하지 않는다.
+
+현재 해양 출력기의 배열 크기에 맞춰 simulation의 RAA 표본은 512개 이하로 제한한다. 이 제약은 방위각 간격과 관련되며 내부 Fourier 차수와는 다르다.
+
+저장소 최상위에서 먼저 계획을 만든다.
+
+
+\begin{ManualCode}
+python3 docs/manual/examples/make_c_luts.py rayleigh \
+  --ocrt-root code/OCRT_C --exe code/OCRT_C/build/ocrt \
+  --outdir task/rayleigh_demo
+\end{ManualCode}
+
+생성된 \texttt{jobs.\allowbreak{}csv}와 \texttt{manifest.\allowbreak{}json}을 확인한 뒤 같은 명령에 \texttt{-\allowbreak{}-\allowbreak{}run}을 붙인다. \texttt{-\allowbreak{}-\allowbreak{}run} 없이도 버전 확인을 위해 \texttt{-\allowbreak{}-\allowbreak{}version}만 호출하지만 복사전달 계산은 수행하지 않는다. Windows는 \texttt{python3} 대신 \texttt{python}, 실행 파일은 \texttt{code/\allowbreak{}OCRT\_\allowbreak{}C/\allowbreak{}build/\allowbreak{}ocrt\_\allowbreak{}x86-\allowbreak{}64-\allowbreak{}v3.\allowbreak{}exe}를 사용한다.
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3400\linewidth-4.00pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.6600\linewidth-4.00pt\relax}@{}}
+\toprule
+\textbf{옵션} & \textbf{의미·기본값} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{옵션} & \textbf{의미·기본값} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{rayleigh} / \texttt{simulation} & 필수 위치 인자. 해면 포함 Rayleigh / 결합 해양 CDOM 모의자료 \\
+\texttt{-\allowbreak{}-\allowbreak{}ocrt-\allowbreak{}root}, \texttt{-\allowbreak{}-\allowbreak{}exe}, \texttt{-\allowbreak{}-\allowbreak{}outdir} & 필수. C 작업 폴더, 실행 파일, 결과 폴더. 상대 경로는 호출 당시 폴더 기준 \\
+\texttt{-\allowbreak{}-\allowbreak{}wavelengths} & 쉼표 구분 nm, 기본 \texttt{443,\allowbreak{}555} \\
+\texttt{-\allowbreak{}-\allowbreak{}szas} & 쉼표 구분 도, 기본 \texttt{30} \\
+\texttt{-\allowbreak{}-\allowbreak{}pressures} & 쉼표 구분 hPa, 기본 \texttt{1013.\allowbreak{}25} \\
+\texttt{-\allowbreak{}-\allowbreak{}winds} & 쉼표 구분 m/s, 기본 \texttt{5} \\
+\texttt{-\allowbreak{}-\allowbreak{}aods} & simulation의 AOD555, 기본 \texttt{0}; 양수에는 \texttt{-\allowbreak{}-\allowbreak{}mie} 필수 \\
+\texttt{-\allowbreak{}-\allowbreak{}adom440} & simulation의 aDOM440(m\textsuperscript{-}\textsuperscript{1}), 기본 \texttt{0.\allowbreak{}1}; Chl/TSM은 이 도구에서 0 고정 \\
+\texttt{-\allowbreak{}-\allowbreak{}mie} & 에어로졸 파일. 상대 경로는 C 작업 폴더 기준 \\
+\texttt{-\allowbreak{}-\allowbreak{}vza-\allowbreak{}step}, \texttt{-\allowbreak{}-\allowbreak{}vza-\allowbreak{}max}, \texttt{-\allowbreak{}-\allowbreak{}raa-\allowbreak{}step} & 도 단위, 기본 \texttt{30}, \texttt{60}, \texttt{90}; VZA 간격은 최대각을, RAA 간격은 360을 정확하게 나누도록 선택 \\
+\texttt{-\allowbreak{}-\allowbreak{}pssa} & rayleigh에 IPSS 적용. 결합 해양에는 사용 불가 \\
+\texttt{-\allowbreak{}-\allowbreak{}include-\allowbreak{}direct-\allowbreak{}glint} & rayleigh의 직달 선글린트 포함. 기본은 decouple. simulation의 해양 격자 TOA는 직달 선글린트가 분리된 값이며 해당 항은 CSV에 별도 기록되지 않음 \\
+\texttt{-\allowbreak{}-\allowbreak{}gas-\allowbreak{}off} & simulation의 6기체 총량을 0으로 설정. rayleigh는 항상 0 \\
+\texttt{-\allowbreak{}-\allowbreak{}threads} & 각 프로세스 OMP 스레드 수, 기본 \texttt{1}; 사례는 순차 실행 \\
+\texttt{-\allowbreak{}-\allowbreak{}timeout} & 사례당 제한 초, 기본 \texttt{900} \\
+\texttt{-\allowbreak{}-\allowbreak{}run} & 실제 계산. 기존 사례 CSV가 있으면 덮어쓰지 않고 종료 \\
+\end{longtable}
+}
+
+각 사례는 CSV, 표준출력, 표준에러 로그를 저장한다. 행 수·주요 관측량의 유한수·해수 수렴 플래그를 검사하지만 수렴 정확도나 I/Q/U 대칭까지 자동 보장하지 않는다. 상향 전달비의 유효성은 사용자가 \texttt{T\_\allowbreak{}up\_\allowbreak{}rt\_\allowbreak{}valid}로 확인한다. 실패한 폴더를 그대로 재개하지 않으며 새 폴더를 사용한다. 외부에서 설정한 \texttt{OCRT\_\allowbreak{}*} 환경변수는 상속되고 manifest에 기록되므로, 진단·실험 변수가 켜진 셸인지 확인한다.
+
+\texttt{jobs.\allowbreak{}csv}는 \textbf{이 도구의 계획표}이며 C의 \texttt{-\allowbreak{}-\allowbreak{}batch} 또는 \texttt{-\allowbreak{}-\allowbreak{}batch-\allowbreak{}full-\allowbreak{}grid} 입력 형식이 아니다. 전체 C 인자 배열은 \texttt{manifest.\allowbreak{}json}의 \texttt{argv}에 있다. 실행 파일 해시 외에도 사용 소스 커밋과 입력 자료 해시는 따로 보관한다.
+

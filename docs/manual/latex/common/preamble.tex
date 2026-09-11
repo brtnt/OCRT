@@ -1,0 +1,91 @@
+% Shared typography for both authoritative language editions.
+\usepackage[a4paper,left=20mm,right=18mm,top=22mm,bottom=22mm,headheight=16pt,headsep=7mm]{geometry}
+\usepackage{fontspec}
+\usepackage{kotex}
+\setmainfont{TeX Gyre Pagella}
+\setsansfont{TeX Gyre Heros}
+\setmonofont{DejaVu Sans Mono}[Scale=0.83]
+\setmainhangulfont{Noto Serif CJK KR}
+\setsanshangulfont{Noto Sans CJK KR}
+\setmonohangulfont{Noto Sans CJK KR}
+\setmainhanjafont{Noto Serif CJK KR}
+\usepackage{amsmath,amssymb}
+\usepackage{fix-cm}
+\usepackage{xcolor}
+\definecolor{ocrtNavy}{HTML}{18384D}
+\definecolor{ocrtTeal}{HTML}{167C89}
+\definecolor{ocrtLine}{HTML}{C8D5DC}
+\definecolor{ocrtGray}{HTML}{52616B}
+\usepackage{array,longtable,booktabs}
+% LaTeX 2025 mark extraction can report infinite shrink from longtable's
+% trailing \vss. Keep its stretch and replace infinite with finite shrink.
+% No-op for package versions that do not contain these two occurrences.
+\usepackage{etoolbox}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,calc,angles,quotes,positioning,decorations.pathreplacing}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepackage{caption}
+\usepackage{float}
+\captionsetup{font=small,labelfont=bf,labelsep=period,justification=raggedright,singlelinecheck=false}
+\usepackage[section]{placeins}
+\newcommand{\FigLang}[2]{\ifdefstring{\EditionShort}{KO}{#1}{#2}}
+\makeatletter
+\patchcmd{\LT@output}{\vss}{\vskip 0pt plus 1fil minus \textheight\relax}{}{}
+\patchcmd{\LT@output}{\vss}{\vskip 0pt plus 1fil minus \textheight\relax}{}{}
+\makeatother
+\usepackage{enumitem}
+\setlist{nosep,leftmargin=1.5em,topsep=4pt,parsep=2pt,itemsep=2pt}
+\usepackage{fvextra}
+\usepackage{titlesec}
+\usepackage{needspace}
+\titleformat{\chapter}[display]{\sffamily\bfseries\raggedright\color{ocrtNavy}}{\fontsize{11}{14}\selectfont\chaptertitlename\ \thechapter}{5pt}{\fontsize{23}{28}\selectfont}
+\titlespacing*{\chapter}{0pt}{0pt}{15pt}
+\titleformat{\section}{\sffamily\bfseries\large\color{ocrtNavy}}{\thesection}{0.7em}{}
+\titleformat{\subsection}{\sffamily\bfseries\normalsize\color{ocrtNavy}}{\thesubsection}{0.7em}{}
+\titleformat{\subsubsection}{\sffamily\bfseries\normalsize\color{ocrtNavy}}{}{0em}{}
+\titlespacing*{\section}{0pt}{14pt}{6pt}
+\titlespacing*{\subsection}{0pt}{10pt}{4pt}
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\scriptsize\sffamily\color{ocrtGray}\nouppercase{\leftmark}}
+\fancyhead[R]{\scriptsize\sffamily\color{ocrtGray}OCRT | \EditionShort}
+\fancyfoot[C]{\small\sffamily\thepage}
+\renewcommand{\headrulewidth}{0.3pt}
+\fancypagestyle{plain}{\fancyhf{}\fancyfoot[C]{\small\sffamily\thepage}\renewcommand{\headrulewidth}{0pt}}
+\usepackage{xurl}
+\usepackage[unicode,colorlinks=true,linkcolor=ocrtTeal,urlcolor=ocrtTeal,bookmarksopen=false,pdfencoding=auto]{hyperref}
+\usepackage{bookmark}
+\setcounter{tocdepth}{1}
+\setcounter{secnumdepth}{2}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{5pt}
+\setlength{\emergencystretch}{3em}
+\setlength{\LTpre}{6pt}
+\setlength{\LTpost}{8pt}
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.16}
+\raggedbottom
+\widowpenalty=10000
+\clubpenalty=10000
+\newcommand{\TableFont}{\fontsize{8.5}{11.8}\selectfont}
+\newcommand{\CodeFont}{\fontsize{8}{10.4}\selectfont}
+\newenvironment{ManualCode}{\VerbatimEnvironment\begin{Verbatim}[fontsize=\CodeFont,breaklines=true,breakanywhere=true,breaksymbolleft={},breaksymbolright={},frame=single,rulecolor=\color{ocrtLine},framesep=2.5mm]}{\end{Verbatim}}
+\newcommand{\ManualTitlePage}[4]{%
+  \begin{titlepage}\thispagestyle{empty}
+  {\sffamily\small\color{ocrtTeal}OCRT / USER DOCUMENTATION\par}
+  \vspace{23mm}
+  {\sffamily\bfseries\fontsize{46}{51}\selectfont\color{ocrtNavy}OCRT\par}
+  \vspace{5mm}
+  {\sffamily\bfseries\fontsize{27}{34}\selectfont\color{ocrtNavy}#1\par}
+  \vspace{6mm}
+  {\sffamily\large\color{ocrtGray}Ocean Colour vector Radiative Transfer\par}
+  \vspace{9mm}\color{ocrtTeal}\hrule height 1.2pt\color{black}
+  \vspace{8mm}{\large #2\par}
+  \ifstrempty{#3}{}{\vspace{7mm}{#3\par}}
+  \vfill
+  {\sffamily\small\color{ocrtGray}C reference release v1.11.1\par}
+  \vspace{2mm}{\sffamily\small\color{ocrtGray}2026-09-12\par}
+  \ifstrempty{#4}{}{\vspace{5mm}{\small #4\par}}
+  \end{titlepage}}

@@ -1,0 +1,351 @@
+% Authoritative LaTeX chapter. Edit this file for future revisions.
+% Initially migrated 2026-09-11; no Markdown import occurs during PDF builds.
+\chapter{입력 파일과 배치 CSV 계약}
+\label{chap:08_input_formats}
+매뉴얼 목차 · \hyperref[chap:03_options]{C 옵션} · \hyperref[chap:04_examples]{실행 예시} · \hyperref[chap:05_output_formats]{출력 포맷}
+
+이 장은 커밋 \texttt{54861c68e35ec5aa\allowbreak{}a3938fad53e93dc2\allowbreak{}dfa7eb1d}의 C 파서를 기준으로 한다. \texttt{-\allowbreak{}-\allowbreak{}batch-\allowbreak{}full-\allowbreak{}grid}와 \texttt{-\allowbreak{}-\allowbreak{}batch}는 \textbf{서로 다른 CSV 형식과 실행 경로}를 사용한다. 다른 프로그램에서 출력한 CSV의 파일명만 바꾸거나 열 이름을 대충 맞추어 넣지 않는다.
+
+\Needspace{12\baselineskip}
+\section{어떤 입력 방식을 사용할 것인가}
+\label{sec:auto:08_input_formats:1}
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3400\linewidth-4.00pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.6600\linewidth-4.00pt\relax}@{}}
+\toprule
+\textbf{목적} & \textbf{입력 방식} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{목적} & \textbf{입력 방식} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+기체흡수·압력·에어로졸을 명확히 통제하는 대기/Rayleigh LUT & \hyperref[chap:04_examples]{부록~\ref*{chap:04_examples}}의 일반 C 격자 명령을 사례별 반복 \\
+하나의 공통 대기·표면 설정 아래에서 여러 해양 수질·파장·SZA의 각도 격자 & 이 장의 \texttt{-\allowbreak{}-\allowbreak{}batch-\allowbreak{}full-\allowbreak{}grid} \\
+과거 대기 검증 CSV의 파서·출력 구조 재현 & 이 장의 레거시 \texttt{-\allowbreak{}-\allowbreak{}batch}; 현재의 압력·기체흡수 제한을 반드시 확인 \\
+Python 모델/배치 입력 & \hyperref[chap:06_python_batch]{Python 부록~\ref*{chap:06_python_batch}}의 별도 API 계약 \\
+\end{longtable}
+}
+
+CSV는 UTF-8 \textbf{BOM 없음}, 소수점 \texttt{.\allowbreak{}}, 쉼표 구분으로 저장한다. OCRT의 이들 C 로더는 Excel 수준의 일반 CSV 파서가 아니다. 따옴표로 감싼 셀, 셀 안의 쉼표·줄바꿈, 수천 단위 쉼표는 사용하지 않는다. 단위는 헤더 설명에 따라 해석하며 숫자 셀에 \texttt{555 nm}, \texttt{5 m/\allowbreak{}s}처럼 단위를 붙이지 않는다.
+
+\Needspace{12\baselineskip}
+\section{해양 각도 격자 배치: \texttt{-\allowbreak{}-\allowbreak{}batch-\allowbreak{}full-\allowbreak{}grid}}
+\label{sec:auto:08_input_formats:2}
+\subsection{한 행의 의미와 CLI 기본값}
+\label{sec:auto:08_input_formats:2.1}
+한 행은 \textbf{한 파장·한 SZA·한 수질·한 대기/풍속 조건의 전체 VZA\ensuremath{\times}RAA 격자}다. 관측 방향 하나를 뜻하지 않는다. \texttt{out}은 그 격자 전체를 저장할 파일이다.
+
+실행 전에 CLI 기본 사례부터 유효해야 한다. \texttt{-\allowbreak{}-\allowbreak{}surface ocean}, \texttt{-\allowbreak{}-\allowbreak{}water-\allowbreak{}model} 하나, 해당 모델의 필수 수질 세 값, \texttt{-\allowbreak{}-\allowbreak{}sza}, \texttt{-\allowbreak{}-\allowbreak{}wavelength}를 준다. 행에 파장·SZA·수질을 모두 썼더라도 CLI 필수값 검사를 생략할 수 없다. 풍속은 \texttt{-\allowbreak{}-\allowbreak{}wind-\allowbreak{}speed} 또는 각 행의 \texttt{wind}에서 명시한다.
+
+\begin{enumerate}
+\item 실행 프로그램이 CLI 기본 사례와 기체흡수를 준비한다.
+\item 각 행이 기본 사례를 복사하고, \textbf{비어 있지 않은 셀만} 덮어쓴다.
+\item 병합된 조건으로 해당 행의 격자 파일을 쓴다.
+\end{enumerate}
+
+빈 셀은 0도, 기본 물성으로 초기화하라는 명령도 아니다. 기본 CLI 값을 그대로 유지한다. 끄고 싶은 양은 유효한 숫자 \texttt{0}을 명시한다. 경로 셀을 비워 기존 CLI 위상·Mie 파일을 해제할 수는 없다. 분기 전환은 아래 별도 규칙을 따른다.
+
+\subsection{지원 열 26개 전체}
+\label{sec:auto:08_input_formats:2.2}
+헤더 이름은 아래 철자와 대소문자가 정확히 같아야 한다. 헤더 순서는 자유지만 같은 이름을 중복 사용하지 않는다. 아래 이외의 열에는 값을 넣지 않는다. 특히 \texttt{case\_\allowbreak{}id}, \texttt{pressure}, \texttt{pressure\_\allowbreak{}hpa}, \texttt{aod\_\allowbreak{}555}, \texttt{aod\_\allowbreak{}865}, \texttt{vza\_\allowbreak{}step}, \texttt{vza\_\allowbreak{}max}, \texttt{iop\_\allowbreak{}phase\_\allowbreak{}lut}, \texttt{gas\_\allowbreak{}column\_\allowbreak{}h2o}는 이 입력 형식의 지원 열이 아니다.
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.2300\linewidth-6.00pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2400\linewidth-6.00pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2300\linewidth-6.00pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.3000\linewidth-6.00pt\relax}@{}}
+\toprule
+\textbf{열} & \textbf{단위·허용 입력} & \textbf{빈 셀 또는 생략 시} & \textbf{역할·조건} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{열} & \textbf{단위·허용 입력} & \textbf{빈 셀 또는 생략 시} & \textbf{역할·조건} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{out} & 출력 파일 경로 & \textbf{허용 안 됨} & 모든 행에서 필수. 다른 행과 중복하지 않는다. \\
+\texttt{wavelength} & nm, 330--1100 & CLI \texttt{-\allowbreak{}-\allowbreak{}wavelength} & 계산 파장. 열 이름은 \texttt{wavelength\_\allowbreak{}nm}이 아니다. 행별 굴절률 동작 차이는 아래 참고. \\
+\texttt{sza} & 도, \texttt{0\ensuremath{\leq}SZA<90} & CLI \texttt{-\allowbreak{}-\allowbreak{}sza} & 태양 천정각. \\
+\texttt{wind} & m s\textsuperscript{-}\textsuperscript{1}, \texttt{\ensuremath{\geq}0} & CLI \texttt{-\allowbreak{}-\allowbreak{}wind-\allowbreak{}speed} & 둘 다 없으면 그 행 실패. 0도 명시적 입력이다. \\
+\texttt{aod} & 무차원, \texttt{\ensuremath{\geq}0} & CLI AOD & \textbf{CLI가 정한 기준 파장}의 AOD. 기준 파장을 바꾸는 행별 열은 없다. \\
+\texttt{aer\_\allowbreak{}h\_\allowbreak{}km} & km, \texttt{>0} & CLI \texttt{-\allowbreak{}-\allowbreak{}aer-\allowbreak{}h-\allowbreak{}km}, 통상 2 & 에어로졸 지수 분포 척도 높이. \\
+\texttt{mie} & 에어로졸 \texttt{.\allowbreak{}mie} 경로 & CLI \texttt{-\allowbreak{}-\allowbreak{}mie} & 병합 후 AOD>0이면 필요. \\
+\texttt{water\_\allowbreak{}model} & \texttt{ocrt}, \texttt{ccrr}, \texttt{iop} & CLI \texttt{-\allowbreak{}-\allowbreak{}water-\allowbreak{}model} & 수중 입력 분기. 변경하면 필수 수질을 완전히 대체해야 한다. \\
+\texttt{ocrt\_\allowbreak{}chl} & mg m\textsuperscript{-}\textsuperscript{3}, \texttt{\ensuremath{\geq}0} & OCRT CLI Chl & \texttt{water\_\allowbreak{}model=\allowbreak{}ocrt} 전용. \\
+\texttt{ocrt\_\allowbreak{}tsm} & g m\textsuperscript{-}\textsuperscript{3}, \texttt{\ensuremath{\geq}0} & OCRT CLI TSM & 무기 TSM 건조 질량 농도. \\
+\texttt{ocrt\_\allowbreak{}adom440} & m\textsuperscript{-}\textsuperscript{1}, \texttt{\ensuremath{\geq}0} & OCRT CLI aDOM440 & 440 nm 용존유기물 흡수. \\
+\texttt{ocrt\_\allowbreak{}adom\_\allowbreak{}slope} & nm\textsuperscript{-}\textsuperscript{1}, \texttt{>0} & OCRT CLI slope, 통상 0.014 & aDOM 지수 기울기. \\
+\texttt{ocrt\_\allowbreak{}tsm\_\allowbreak{}species} & \texttt{red\_\allowbreak{}clay}, \texttt{brown\_\allowbreak{}earth}, \texttt{yellow\_\allowbreak{}clay}, \texttt{calcareous\_\allowbreak{}sand} & CLI 종, 통상 \texttt{red\_\allowbreak{}clay} & 명시하면 병합 후 TSM>0 필요. \\
+\texttt{ocrt\_\allowbreak{}phyto\_\allowbreak{}group} & 과거 \texttt{pico}, \texttt{nano}, \texttt{micro} 및 인식 가능한 EAP 종명 & CLI 기본 내부 종 & \textbf{현재 사용하지 않는다.} 행 파서가 받아들일 수 있어도 생산 EAP 종별 산란이 활성화되지 않는다. 단일 CLI와 거부 지점도 다르다. \\
+\texttt{ocrt\_\allowbreak{}detritus\_\allowbreak{}a440} & m\textsuperscript{-}\textsuperscript{1}, \texttt{\ensuremath{\geq}0} & CLI 값, 통상 0 & 명시하면 병합 후 OCRT Chl>0 필요. 0은 흡수만 0이고 Chl로 정한 detritus 산란까지 없애지 않는다. \\
+\texttt{ocrt\_\allowbreak{}detritus\_\allowbreak{}slope} & nm\textsuperscript{-}\textsuperscript{1}, \texttt{>0} & CLI 값, 통상 0.0109 & 명시하면 병합 후 OCRT Chl>0 필요. \\
+\texttt{ccrr\_\allowbreak{}chl} & mg m\textsuperscript{-}\textsuperscript{3}, \texttt{\ensuremath{\geq}0} & CCRR CLI Chl & \texttt{water\_\allowbreak{}model=\allowbreak{}ccrr} 전용. \\
+\texttt{ccrr\_\allowbreak{}tsm} & g m\textsuperscript{-}\textsuperscript{3}, \texttt{\ensuremath{\geq}0} & CCRR CLI TSM & CCRR 구성성분 TSM 입력. \\
+\texttt{ccrr\_\allowbreak{}adom440} & m\textsuperscript{-}\textsuperscript{1}, \texttt{\ensuremath{\geq}0} & CCRR CLI aDOM440 & 440 nm aDOM 흡수. \\
+\texttt{ccrr\_\allowbreak{}adom\_\allowbreak{}slope} & nm\textsuperscript{-}\textsuperscript{1}, \texttt{>0} & CCRR CLI slope, 통상 0.014 & aDOM 지수 기울기. \\
+\texttt{iop\_\allowbreak{}a} & m\textsuperscript{-}\textsuperscript{1}, \texttt{a\ensuremath{\geq}0} & IOP CLI a & 총 흡수. 같은 행에서 아래 b,bb도 함께 채워야 한다. \\
+\texttt{iop\_\allowbreak{}b} & m\textsuperscript{-}\textsuperscript{1}, \texttt{b>0} & IOP CLI b & 총 산란. \\
+\texttt{iop\_\allowbreak{}bb} & m\textsuperscript{-}\textsuperscript{1}, \texttt{0<bb<0.\allowbreak{}5b} & IOP CLI bb & 총 후방산란. 세 IOP 셀은 모두 채우거나 모두 비운다. \\
+\texttt{iop\_\allowbreak{}mie\_\allowbreak{}phase} & 수중 벡터 \texttt{.\allowbreak{}mie} 경로 & IOP CLI \texttt{-\allowbreak{}-\allowbreak{}iop-\allowbreak{}mie-\allowbreak{}phase} & IOP 모델의 위상 형상. a,b,bb는 위 세 값에서 가져온다. 에어로졸 \texttt{mie}와 별개다. \\
+\texttt{n\_\allowbreak{}mu\_\allowbreak{}water} & 양의 정수 & CLI 수중 구적 설정 & 값이 있으면 항상 \texttt{OCRT\_\allowbreak{}ADVANCED=\allowbreak{}1} 필요. \texttt{-\allowbreak{}-\allowbreak{}water-\allowbreak{}shared-\allowbreak{}grid}와 충돌한다. \\
+\texttt{raa\_\allowbreak{}step} & 도, \texttt{(0,\allowbreak{}180]} 및 아래 격자 크기 제한 & CLI \texttt{-\allowbreak{}-\allowbreak{}lut-\allowbreak{}raa-\allowbreak{}step}, 통상 2.5 & RAA 출력 간격. 수중 RT 구적 수가 아니다. \\
+\end{longtable}
+}
+
+숫자는 \texttt{atof}/\texttt{atoi} 계열로 읽기 때문에 잘못된 문자열이 0처럼 처리될 수 있다. 유한한 숫자인지, 실제 물리 범위를 지켰는지는 파일 생성 단계에서 검사한다. 형식 검사를 통과한 모든 값의 과학적 타당성을 프로그램이 보증하지는 않는다.
+
+\subsection{같은 모델의 일부 변경과 모델 전환}
+\label{sec:auto:08_input_formats:2.3}
+기본 CLI가 OCRT 모델이면 행의 \texttt{ocrt\_\allowbreak{}adom440}만 바꾸고 나머지 수질을 계승할 수 있다. 동일 모델에서는 구성성분별 독립 override가 가능하다. 단, 직접 IOP의 a,b,bb는 일부만 덮어쓸 수 없다.
+
+다른 모델로 바꾸는 행은 다음 전체 입력이 필요하다.
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3400\linewidth-4.00pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.6600\linewidth-4.00pt\relax}@{}}
+\toprule
+\textbf{행의 모델 변경} & \textbf{행에서 반드시 채울 열} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{행의 모델 변경} & \textbf{행에서 반드시 채울 열} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+OCRT 또는 IOP \ensuremath{\rightarrow} CCRR & \texttt{water\_\allowbreak{}model=\allowbreak{}ccrr}, \texttt{ccrr\_\allowbreak{}chl}, \texttt{ccrr\_\allowbreak{}tsm}, \texttt{ccrr\_\allowbreak{}adom440} \\
+CCRR 또는 IOP \ensuremath{\rightarrow} OCRT & \texttt{water\_\allowbreak{}model=\allowbreak{}ocrt}, \texttt{ocrt\_\allowbreak{}chl}, \texttt{ocrt\_\allowbreak{}tsm}, \texttt{ocrt\_\allowbreak{}adom440} \\
+OCRT 또는 CCRR \ensuremath{\rightarrow} IOP & \texttt{water\_\allowbreak{}model=\allowbreak{}iop}, \texttt{iop\_\allowbreak{}a}, \texttt{iop\_\allowbreak{}b}, \texttt{iop\_\allowbreak{}bb} \\
+\end{longtable}
+}
+
+변경 시 구성성분 값과 직접 IOP·위상 파일 등 주요 물성은 중립 상태로 재설정한다. 다른 모델에서 사용한 기본 수질을 그대로 재활용하지 않는다. 다만 모든 저수준 수치·위상 제어 필드가 재설정되는 계약은 아니므로, 생산 작업은 \textbf{모델별 CSV와 실행을 분리}하는 편이 재현하기 쉽다.
+
+한 행에 값이 있는 수질 열은 선택한 모델의 접두사 하나로 통일한다. 예를 들어 \texttt{water\_\allowbreak{}model=\allowbreak{}ocrt} 행에서 \texttt{ccrr\_\allowbreak{}chl=\allowbreak{}0}도 금지된 혼합이다. 서로 다른 모델을 담는 헤더가 필요하면 해당 행에서 다른 모델 셀을 완전히 비워 둔다.
+
+\subsection{단일 실행과 달라질 수 있는 세 가지 기본값}
+\label{sec:auto:08_input_formats:2.4}
+\textbf{굴절률:} \texttt{wavelength} 셀이 채워져 있고 CLI에 \texttt{-\allowbreak{}-\allowbreak{}n-\allowbreak{}water}가 없으면 행 준비 중 파장 의존 굴절률을 다시 계산한다. 이는 일반 CLI의 경계 굴절률 기본 1.34와 다르다. 단일 실행과 같은 조건으로 비교하려면 \textbf{\texttt{-\allowbreak{}-\allowbreak{}n-\allowbreak{}water 1.\allowbreak{}34}를 명시}한다. 같은 파장을 CLI와 셀에 중복 기입하는 것만으로도 이 재계산 조건이 성립한다.
+
+\textbf{수중 구적 수:} 일반 해양 격자에서 \texttt{-\allowbreak{}-\allowbreak{}output-\allowbreak{}full-\allowbreak{}grid FILE}를 명시하면 수중 구적 수 96 승격이 적용되지만, \texttt{-\allowbreak{}-\allowbreak{}batch-\allowbreak{}full-\allowbreak{}grid}의 각 \texttt{out} 셀이 그 옵션을 대신 켜지는 않는다. 명시적 수중 override가 없으면 배치는 48 기본을 계승할 수 있다. 비교 조건을 맞출 때는 \texttt{OCRT\_\allowbreak{}ADVANCED=\allowbreak{}1 -\allowbreak{}-\allowbreak{}n-\allowbreak{}mu-\allowbreak{}water 96} 또는 각 행의 \texttt{n\_\allowbreak{}mu\_\allowbreak{}water=\allowbreak{}96}을 사용한다. \texttt{-\allowbreak{}-\allowbreak{}output-\allowbreak{}full-\allowbreak{}grid}에 가짜 공통 출력 파일을 더해 승격을 유도하는 방식은 사용하지 않는다.
+
+\textbf{에어로졸 수치 기본값:} 행의 AOD를 덮어쓴 뒤 대기 \texttt{m}, 에어로졸 \texttt{L}, 대기 층수와 loglin 절단 선택을 단일 CLI처럼 다시 결정하지 않는다. CLI AOD=0으로 시작하고 행에서 AOD>0을 켜면 일반 양수 AOD 명령의 자동 기본과 다른 구성을 물려받을 수 있다. 에어로졸 없는 배치와 있는 배치를 나누고, 에어로졸 배치에는 CLI에도 \textbf{양수 기준 AOD와 Mie 파일}을 준다. 각 행의 AOD는 실제 원하는 값으로 덮어쓴다.
+
+압력·기체흡수 프로파일/컬럼·굴절률·온도·염분·VZA 간격/상한은 행별 지원 열이 없으므로 CLI 공통 설정이다. 이들을 여러 값으로 변화시키려면 실행 묶음을 나누거나 \hyperref[chap:04_examples]{부록~\ref*{chap:04_examples}의 반복 도구}를 쓴다.
+
+\subsection{격자 크기와 512 RAA 제한}
+\label{sec:auto:08_input_formats:2.5}
+현재 해양 격자는 다음과 같이 생성된다.
+
+
+\begin{ManualCode}
+n_vza = floor(vza_max / vza_step + 1e-9) + 1
+n_raa = floor(360 / raa_step + 0.5)
+vza[i] = i * vza_step
+raa[j] = j * raa_step
+\end{ManualCode}
+
+VZA는 최대 512개이며 초과하면 오류가 난다. \textbf{RAA도 현재 native 해양 경로의 배열 크기가 512개이므로 \texttt{n\_\allowbreak{}raa\ensuremath{\leq}512}를 지켜야 한다.} RAA는 VZA와 달리 초과를 미리 차단하는 검사가 완전하지 않다. \texttt{raa\_\allowbreak{}step>0} 검사만 통과했다고 안전한 격자는 아니다.
+
+실무에서는 360을 정확히 나누는 \textbf{1\textdegree{} 이상}의 RAA 간격(예: 1, 2, 2.5, 5, 10, 15, 30, 45, 60, 90, 180\textdegree{})을 사용한다. 0.5\textdegree{}는 720개여서 현재 지원 범위를 넘는다. 아주 촘촘한 RAA를 얻기 위해 이 제한을 내부 환경변수로 우회하지 않는다. 1\textdegree{} 이상의 표준 간격은 내부 RAA 문자열 버퍼의 불필요한 길이 문제도 피한다.
+
+\subsection{파일 경로·CSV 작성 제한}
+\label{sec:auto:08_input_formats:2.6}
+\begin{itemize}
+\item \texttt{out}, \texttt{mie}, \texttt{iop\_\allowbreak{}mie\_\allowbreak{}phase} 상대 경로는 \textbf{CSV가 있는 폴더가 아니라 프로세스의 현재 디렉터리} 기준이다. 예시처럼 \texttt{code/\allowbreak{}OCRT\_\allowbreak{}C}에서 실행한다.
+\item \texttt{out}은 실제 파일명 그대로 사용한다. 일반 \texttt{-\allowbreak{}-\allowbreak{}output-\allowbreak{}full-\allowbreak{}grid}의 자동 \texttt{.\allowbreak{}csv} 추가/확장자 검사를 기대하지 말고 \texttt{.\allowbreak{}csv}까지 쓴다.
+\item \texttt{out} 상위 폴더는 미리 만든다. 서로 다른 행이 같은 \texttt{out}을 가리키면 병렬 쓰기가 충돌하며, 기존 파일은 덮어쓸 수 있다.
+\item 첫 행은 반드시 헤더다. 앞에 주석·설명을 넣지 않는다. 셀과 헤더 주변 공백을 넣지 않는다. 숫자 0과 빈 셀을 구분한다.
+\item \texttt{\#}가 첫 글자인 데이터 행은 주석으로 건너뛴다. 운영 파일에서는 빈 줄을 제거하고 각 행의 셀 수를 헤더와 같게 맞춘다.
+\item 현재 버퍼는 한 행 4096바이트, 헤더 최대 32열이다. 지원 열은 26개이며, 미지 열은 \textbf{값이 있는 셀을 만났을 때} 오류가 난다. 빈 미지 열이 우연히 통과하는 동작에 의존하지 않는다.
+\item \texttt{out}, \texttt{mie}, \texttt{iop\_\allowbreak{}mie\_\allowbreak{}phase}는 각각 최대 511바이트 문자열이다. \texttt{water\_\allowbreak{}model}은 15바이트, \texttt{ocrt\_\allowbreak{}phyto\_\allowbreak{}group}은 31바이트, \texttt{ocrt\_\allowbreak{}tsm\_\allowbreak{}species}는 63바이트다. 긴 경로는 짧게 정리한다.
+\end{itemize}
+
+배치는 시작 시 TSM와 유기물 공통 데이터를 미리 읽는다. 따라서 모든 행이 순수수나 aDOM-only이더라도 일반 단일 C Rayleigh 실행과 같은 최소 자료 조건으로 시작할 수 있다고 가정하지 않는다. \hyperref[chap:02_installation]{설치 장}의 자료 설치를 완료한다.
+
+행은 OpenMP로 병렬 실행되며 완료 순서는 입력 순서와 다를 수 있다. stdout/stderr의 실행 로그에서 각 행의 \texttt{rc}와 실패 수를 확인한다. 일부 행이 실패해도 다른 행의 파일은 만들어질 수 있으므로, 최종 종료코드와 예상 출력 파일 목록을 함께 점검한다. 디스크 해면 캐시의 \texttt{build} 모드는 이 배치에서 차단되며, 필요한 캐시는 별도 준비 후 \texttt{readonly}/\texttt{required}로 읽는다.
+
+\subsection{최소 입력 포맷}
+\label{sec:auto:08_input_formats:2.7}
+\label{sec:input_batch_sample}
+아래 CSV는 \texttt{out}과 일부 상태 열을 포함한 최소 구조를 보여준다. 상대 출력 경로는 \texttt{code/\allowbreak{}OCRT\_\allowbreak{}C} 작업 디렉터리를 기준으로 해석한다.
+
+\begin{ManualCode}
+out,wavelength,sza,wind,ocrt_adom440
+../../task/manual_examples/adom_443_s30.csv,443,30,3,0.05
+../../task/manual_examples/adom_555_s40.csv,555,40,5,0.10
+\end{ManualCode}
+
+각 데이터 행은 하나의 상태를 정의한다. 이 입력을 저장하고 실제 각도 격자를 생성하는 명령 및 결과 확인은 부록~\ref{sec:example_input_batch}에 있다.
+
+\Needspace{12\baselineskip}
+\section{레거시 대기 사례 CSV: \texttt{-\allowbreak{}-\allowbreak{}batch}}
+\label{sec:auto:08_input_formats:3}
+\subsection{현재 사용 제한}
+\label{sec:auto:08_input_formats:3.1}
+\textbf{이 경로를 일반 단일 명령을 병렬로 묶은 것이라고 취급하지 않는다.} 현재 \texttt{rt\_\allowbreak{}io\_\allowbreak{}run\_\allowbreak{}batch()}는 사례 구조체를 새로 만들면서 CLI 압력 필드를 복사하지 않는다. \texttt{pressure\_\allowbreak{}hpa}가 0으로 남아 Rayleigh 광학두께 계산에도 0이 전달된다. 따라서 CLI에 \texttt{-\allowbreak{}-\allowbreak{}pressure 1013.\allowbreak{}25}를 써도 정상 대기의 Rayleigh 결과를 보장하지 않는다. \texttt{tau\_\allowbreak{}R\_\allowbreak{}ref}를 넣어 해결할 수도 없다. 이 열은 비교 기준값이며 현재 CLI에는 그 값을 실제 광학두께로 주입하는 옵션이 없다.
+
+또한 \texttt{main.\allowbreak{}c}는 일반 기체흡수 초기화보다 먼저 \texttt{-\allowbreak{}-\allowbreak{}batch} 경로로 반환한다. \texttt{-\allowbreak{}-\allowbreak{}atm-\allowbreak{}profile}, \texttt{-\allowbreak{}-\allowbreak{}gas-\allowbreak{}column-\allowbreak{}*}를 썼다는 이유로 일반 단일 실행처럼 적용된다고 가정하면 안 된다. 수질 모델과 \texttt{-\allowbreak{}-\allowbreak{}surface ocean}의 완전한 물성도 이 배치 구조체에 전달되지 않는다. 해양은 \texttt{-\allowbreak{}-\allowbreak{}batch-\allowbreak{}full-\allowbreak{}grid}, 대기/Rayleigh 생산자료는 일반 단일·격자 명령의 반복을 사용한다.
+
+현재 코드를 바꾸지 않고 과거 파일을 읽어야 할 때를 위해 정확한 형식을 아래에 남긴다. 논문 비교용 결과가 이미 존재한다면 당시 소스·실행 파일·기압·흡수 경로를 확인한 뒤 사용한다.
+
+\subsection{헤더는 순서 기반 형식을 고르는 표지다}
+\label{sec:auto:08_input_formats:3.2}
+첫 행은 헤더이며 \textbf{열 순서가 고정}이다. 지원 열 수는 5, 6, 7, 9개이고 8개는 거부한다. 모든 데이터 셀은 숫자이며 첫 \texttt{case\_\allowbreak{}id}는 정수다. 빈 셀을 계승하는 기능은 없다. 헤더를 다른 이름으로 바꾸어도 각 숫자의 위치가 바뀌지 않는다.
+
+앞 다섯 열은 모든 형식에 공통이다.
+
+
+\begin{ManualCode}
+case_id,sza_deg,vza_deg,raa_deg,wavelength_nm
+\end{ManualCode}
+
+각도는 도, 파장은 nm다. RAA는 \hyperref[chap:01_concepts_geometry]{OCRT 규약}을 사용하며, 참조 모델의 RAA를 CSV에 넣었다고 자동 변환되지 않는다.
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3400\linewidth-4.00pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.6600\linewidth-4.00pt\relax}@{}}
+\toprule
+\textbf{열 수·판정} & \textbf{고정 순서} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{열 수·판정} & \textbf{고정 순서} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+5열 & \texttt{case\_\allowbreak{}id,\allowbreak{}sza\_\allowbreak{}deg,\allowbreak{}vza\_\allowbreak{}deg,\allowbreak{}raa\_\allowbreak{}deg,\allowbreak{}wavelength\_\allowbreak{}nm} \\
+6열, 헤더에 \texttt{rho\_\allowbreak{}I} 문자열 있음 & 공통 5열 뒤 \texttt{rho\_\allowbreak{}I\_\allowbreak{}ref} \\
+6열, 위 문자열 없음 & 공통 5열 뒤 \texttt{tau\_\allowbreak{}R\_\allowbreak{}ref} \\
+7열 & 공통 5열 뒤 \texttt{tau\_\allowbreak{}R\_\allowbreak{}ref,\allowbreak{}rho\_\allowbreak{}I\_\allowbreak{}ref} \\
+9열, 에어로졸 형식 아님 & 공통 5열 뒤 \texttt{tau\_\allowbreak{}R\_\allowbreak{}ref,\allowbreak{}rho\_\allowbreak{}I\_\allowbreak{}ref,\allowbreak{}rho\_\allowbreak{}Q\_\allowbreak{}ref,\allowbreak{}rho\_\allowbreak{}U\_\allowbreak{}ref} \\
+9열, 에어로졸 형식 & 공통 5열 뒤 \texttt{aod\_\allowbreak{}ref,\allowbreak{}rho\_\allowbreak{}I\_\allowbreak{}ref,\allowbreak{}rho\_\allowbreak{}Q\_\allowbreak{}ref,\allowbreak{}rho\_\allowbreak{}U\_\allowbreak{}ref} \\
+\end{longtable}
+}
+
+9열에서 헤더 전체에 소문자 \texttt{aod}, \texttt{os\_\allowbreak{}I}, \texttt{osoaa}, \texttt{decoup\_\allowbreak{}I} 중 하나가 들어 있으면 \textbf{에어로졸 형식}으로 판정한다. 판정은 대소문자를 구분하는 문자열 검색이다. 따라서 주석처럼 붙인 단어가 형식을 바꿀 수 있다. 다음과 같이 의미가 분명한 헤더를 그대로 쓴다.
+
+
+\begin{ManualCode}
+case_id,sza_deg,vza_deg,raa_deg,wavelength_nm,aod_555,rho_I_ref,rho_Q_ref,rho_U_ref
+1,40,30,90,555,0.1,0.05,-0.01,0
+\end{ManualCode}
+
+위 값은 \textbf{형식 설명을 위한 임의의 참조값}이며 검증 기준값이 아니다. 실제 비교에는 근거가 있는 참조 계산값을 넣는다. 에어로졸 형식의 기준 파장은 헤더에 \texttt{aod\_\allowbreak{}865}가 있으면 865 nm, 아니면 555 nm다. 임의 기준 파장을 지정하는 별도 열은 없다.
+
+\subsection{에어로졸 형식의 추가 조건}
+\label{sec:auto:08_input_formats:3.3}
+에어로졸 9열 CSV는 공통 \texttt{-\allowbreak{}-\allowbreak{}mie}가 필요하다. 현재 \texttt{main.\allowbreak{}c}가 배치 에어로졸 설정을 전달하려면 \textbf{CLI에도 양수 \texttt{-\allowbreak{}-\allowbreak{}aod-\allowbreak{}555} 또는 \texttt{-\allowbreak{}-\allowbreak{}aod-\allowbreak{}865}}가 있어야 한다. 행의 실제 AOD는 CSV 값으로 대체된다. 9열에 AOD만 적고 CLI AOD를 기본 0으로 두면 에어로졸 설정 부족 오류가 날 수 있다.
+
+이 형식에서는 각 행의 AOD도 양수여야 한다. AOD 0행을 일반 Rayleigh 경로로 자동 전환하는 계약이 아니며 에어로졸 준비가 실패할 수 있다. 에어로졸이 아닌 5--7열/다른 9열 형식에 CLI \texttt{-\allowbreak{}-\allowbreak{}mie}를 덧붙였다고 같은 효과가 생기지는 않는다.
+
+Mie 모델은 전체 배치에서 하나이고 기하·파장·AOD·참조값만 행별로 달라진다. \texttt{wind}, \texttt{pressure}, \texttt{surface} 같은 열을 추가해 범용 작업표로 만들 수 없다. 표면·풍속은 제한적으로 CLI 기본을 복사하지만, 위에 설명한 압력·흡수 결함은 그대로 남는다.
+
+\subsection{읽기 실패와 결과 확인}
+\label{sec:auto:08_input_formats:3.4}
+데이터 행은 \texttt{sscanf}로 순서대로 읽는다. 따옴표, 문자열 사례 ID, 중간 빈 셀, 열수 불일치는 지원하지 않는다. 첫 글자 \texttt{\#}인 행과 빈 행은 건너뛴다. 각 줄은 2048바이트 버퍼 안에 들어가야 한다.
+
+형식이 잘못된 행은 메시지를 남기고 \textbf{건너뛸 수 있으므로}, 출력 행 수가 입력 사례 수와 같은지 검사한다. 일부 솔버 오류는 프로세스 종료코드에 모두 반영되지 않을 수 있다. \texttt{-\allowbreak{}-\allowbreak{}output-\allowbreak{}advanced}는 광학두께·산란 차수·비교오차를 추가하지만 사례별 \texttt{rc}나 명시적 수렴 플래그까지 쓰지는 않는다. 종료코드 0만으로 전 행 성공을 판단하지 말고 로그·출력값과 독립 단일 실행을 대조한다. 참조값 없이 0으로 채운 행에서 나온 상대오차를 검증 정확도로 인용하지 않는다.
+
+\texttt{-\allowbreak{}-\allowbreak{}batch IN.\allowbreak{}csv -\allowbreak{}-\allowbreak{}output SUMMARY.\allowbreak{}csv -\allowbreak{}-\allowbreak{}output-\allowbreak{}full-\allowbreak{}grid DIR}는 과거 부가 격자 경로다. 마지막 인자는 파일명이 아니라 디렉터리이며, 각 사례를 \texttt{DIR/\allowbreak{}case\_\allowbreak{}<case\_\allowbreak{}id>.\allowbreak{}csv}로 쓴다. \texttt{case\_\allowbreak{}id}가 중복되면 파일이 충돌한다. 현재 압력·흡수 제한을 피하기 위한 방법은 아니다.
+
+\Needspace{12\baselineskip}
+\section{직접 IOP 위상 파일}
+\label{sec:auto:08_input_formats:4}
+\subsection{스칼라 P11 CSV}
+\label{sec:auto:08_input_formats:4.1}
+\texttt{-\allowbreak{}-\allowbreak{}water-\allowbreak{}model iop -\allowbreak{}-\allowbreak{}iop-\allowbreak{}a A -\allowbreak{}-\allowbreak{}iop-\allowbreak{}b B -\allowbreak{}-\allowbreak{}iop-\allowbreak{}bb BB -\allowbreak{}-\allowbreak{}iop-\allowbreak{}phase-\allowbreak{}lut FILE}에서 사용한다. 최소 헤더는 다음과 같다.
+
+
+\begin{ManualCode}
+theta_deg,P11
+\end{ManualCode}
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3400\linewidth-4.00pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.6600\linewidth-4.00pt\relax}@{}}
+\toprule
+\textbf{열} & \textbf{의미} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{열} & \textbf{의미} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{theta\_\allowbreak{}deg} & 산란각, 도, 0--180. 별칭 \texttt{theta}. \\
+\texttt{P11} & 무차원 위상함수 값, 0 이상. 별칭 \texttt{p11}. \\
+\texttt{case\_\allowbreak{}id} & 저수준/진단 로더의 선택용 문자열. 일반 IOP CLI에서 자동 사례 선택을 기대하지 않는다. \\
+\texttt{wavelength\_\allowbreak{}nm} & 저수준/진단 로더의 파장 선택용 열. 일반 IOP CLI에서 실행 파장으로 자동 선택되지 않는 점에 주의한다. \\
+\end{longtable}
+}
+
+현재 로더는 유효한 각도·P11 쌍이 적어도 두 개 있어야 하고 각도로 정렬한다. 그러나 두 점만으로 실제 입자의 전방 피크를 재현할 수 있다는 뜻은 아니다. 전 각도 범위를 충분히 해상하고, 중복 각도를 제거하며, 위상 적분 정규화와 입력 bb/b의 물리 정합을 확인한다. 실제 위상 자료를 사용하고 임의의 P11 두 점을 과학 입력으로 만들지 않는다.
+
+\textbf{공개 IOP CLI의 파장/사례 필터는 현재 자동 설정되지 않는다.} \texttt{case\_\allowbreak{}id}와 \texttt{wavelength\_\allowbreak{}nm} 열을 포함한 다사례·다파장 표를 그대로 주면 여러 곡선이 합쳐져 읽힐 수 있다. 사용할 \textbf{하나의 위상 곡선을 미리 추출한 파일}을 만든다. \texttt{-\allowbreak{}-\allowbreak{}iop-\allowbreak{}phase-\allowbreak{}lut}와 \texttt{-\allowbreak{}-\allowbreak{}iop-\allowbreak{}mie-\allowbreak{}phase}는 동시에 사용할 수 없다. 기본 스칼라 처리의 weak-cap \texttt{lut-\allowbreak{}deltam}과 진단 위상 선택은 \hyperref[chap:03_options]{옵션 장}에 설명했다.
+
+소스 계약은 \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_C/src/rt_water_rt.c\#L1469}{위상 LUT 로더}, 물성 모델의 배경은 \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_C/docs/WATER_INPUT_INTERFACE_v1.19_2026-07-18.md}{수질 입력 명세}, 위상 각도·표현 정책은 \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_C/docs/PHASE_ANGLE_GRID_FR631_SPEC_KO.md}{FR631 각도 명세}와 \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_C/docs/PHASE_REPRESENTATION_POLICY_KO.md}{위상 표현 정책}을 참고한다. 과거 명세의 종별 산란 지원 여부보다 이 매뉴얼의 현재 제한을 우선한다.
+
+\subsection{벡터 \texttt{.\allowbreak{}mie}}
+\label{sec:auto:08_input_formats:4.2}
+에어로졸 \texttt{-\allowbreak{}-\allowbreak{}mie}와 수중 \texttt{-\allowbreak{}-\allowbreak{}iop-\allowbreak{}mie-\allowbreak{}phase}는 \texttt{.\allowbreak{}mie} 파일을 읽지만 사용하는 물성이 다르다. 전자는 에어로졸 소광·단일산란알베도·편광 위상 및 파장 간 AOD 변환에 사용하고, 후자는 직접 지정한 총 IOP에 수중 벡터 위상 형상을 제공한다.
+
+\texttt{.\allowbreak{}mie}는 일반 \texttt{theta,\allowbreak{}P11} CSV가 아니다. 배포 입력 자료와 \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_C/src/shared/mie_io.c}{Mie reader 소스}, \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_C/docs/PHASE_ANGLE_GRID_FR631_SPEC_KO.md}{FR631 명세}를 기준으로 사용한다. 파일 확장자만 바꾸어 CSV를 \texttt{.\allowbreak{}mie}로 만들 수 없다. 계산 파장과 AOD 기준 파장이 실제 자료 범위 안에 있는지도 확인한다.
+
+\Needspace{12\baselineskip}
+\section{AFGL 사용자 기체 프로파일}
+\label{sec:auto:08_input_formats:5}
+\texttt{-\allowbreak{}-\allowbreak{}atm-\allowbreak{}profile userdef}는 현재 작업 디렉터리 아래 \texttt{inputs/\allowbreak{}afgl\_\allowbreak{}atm/\allowbreak{}afgl\_\allowbreak{}userdef.\allowbreak{}dat}를 읽는다. 파일 경로를 자유롭게 지정하는 CLI는 없다. 배포 사용자 파일에는 진단용 수정 이력이 있을 수 있으므로 그대로 실제 관측 대기라고 간주하지 않는다. 수정 전 파일을 보관하고 출처·변환 방법·해시를 기록한다.
+
+데이터는 \textbf{공백으로 구분된 숫자 10개}이며 CSV가 아니다. 한 행은 한 고도 경계의 상태를 나타낸다. 고도는 아래에서 위로 엄격히 증가하게 둔다.
+
+
+\begin{ManualCode}
+z_km P_mbar T_K n_cm-3 mr_H2O_ppmv mr_O3_ppmv mr_O2_ppmv mr_CO2_ppmv mr_NO2_ppmv mr_CH4_ppmv
+\end{ManualCode}
+
+위 문자열을 비주석 데이터 행으로 추가하지 않는다. 파일에 헤더를 넣으려면 첫 글자를 \texttt{\#}로 한다.
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3000\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2300\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.4700\linewidth-5.33pt\relax}@{}}
+\toprule
+\textbf{순서} & \textbf{값} & \textbf{단위} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{순서} & \textbf{값} & \textbf{단위} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+1 & 고도 z & km \\
+2 & 기압 P & mbar = hPa \\
+3 & 온도 T & K \\
+4 & 총 분자 수밀도 & molecules cm\textsuperscript{-}\textsuperscript{3} \\
+5 & H\textsubscript{2}O 체적 혼합비 & ppmv \\
+6 & O\textsubscript{3} 체적 혼합비 & ppmv \\
+7 & O\textsubscript{2} 체적 혼합비 & ppmv \\
+8 & CO\textsubscript{2} 체적 혼합비 & ppmv \\
+9 & NO\textsubscript{2} 체적 혼합비 & ppmv \\
+10 & CH\textsubscript{4} 체적 혼합비 & ppmv \\
+\end{longtable}
+}
+
+프로파일의 혼합비 단위(ppmv)와 CLI의 전체 기체 컬럼 단위(g cm\textsuperscript{-}\textsuperscript{2}, DU, molecules cm\textsuperscript{-}\textsuperscript{2})는 다르다. 기체 수밀도는 \texttt{mr\ensuremath{\times}1e-\allowbreak{}6\ensuremath{\times}n\_\allowbreak{}total}로 만들고 높이 방향 적분으로 기본 컬럼을 계산한다. CLI 컬럼을 덮어쓰면 프로파일 모양을 유지하며 그 기체 총량을 조정한다.
+
+수밀도와 이상기체 관계 \texttt{n\_\allowbreak{}total\ensuremath{\approx}P[mbar]\ensuremath{\times}7.\allowbreak{}2429e18/\allowbreak{}T[K]}가 맞아야 한다. 로더는 1\% 이상의 차이와 비물리적 P/T에 경고하지만 모든 잘못된 자료를 중단시키지는 않는다. 유효하지 않은 행을 주석 없이 남겨 두면 로더의 두 단계 행수 계산과 실제 읽기가 어긋날 수 있으므로, 모든 비주석 행을 정확히 10개 유한 숫자로 작성한다.
+
+이 파일은 \textbf{기체흡수 프로파일}이다. Rayleigh 분자 대기의 구조를 임의 AFGL 프로파일로 교체하는 일반 인터페이스라고 해석하지 않는다. 상세 출처는 \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_C/inputs/afgl_atm/README.md}{배포 AFGL 설명}과 \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_C/src/rt_absorption.c\#L46}{흡수 로더}에 있다. 기체 단면적은 고정 \texttt{inputs/\allowbreak{}xsec} 위치를 사용하며 \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_C/inputs/xsec/README.md}{단면적 자료 설명}을 참고한다.
+
+\Needspace{12\baselineskip}
+\section{입력 계약 확인 기록}
+\label{sec:auto:08_input_formats:6}
+\texttt{-\allowbreak{}-\allowbreak{}batch-\allowbreak{}full-\allowbreak{}grid} 열 26개는 \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_C/src/main.c\#L685}{main.c의 \texttt{fg\_\allowbreak{}col} 분기}를 전수 확인했다. \texttt{-\allowbreak{}-\allowbreak{}batch}의 열수/문자열 판정과 사례 복사는 \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_C/src/rt_io.c\#L60}{rt\_io.c}, 512개 RAA 배열은 \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_C/src/main.c\#L1222}{native 해양 격자 호출부}를 기준으로 했다.
+
+이 장은 현재 제한을 문서화한 것이며 생산 코드를 수정한 것은 아니다. 입력을 바꾸어 비교할 때는 같은 실행 방식·소스·자료·수치 설정을 유지하고, 최종 결과에 사용한 헤더·CSV·CLI·로그를 함께 보관한다.
+

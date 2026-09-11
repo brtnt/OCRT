@@ -1,0 +1,63 @@
+% Authoritative LaTeX chapter. Edit this file for future revisions.
+% Initially migrated 2026-09-11; no Markdown import occurs during PDF builds.
+\chapter{C LUT Example Utility}
+\label{chap:examples_readme}
+\begingroup
+\fontsize{10}{12}\selectfont
+\setlength{\parskip}{3pt}
+\renewcommand{\TableFont}{\fontsize{8.5}{11}\selectfont}
+\renewcommand{\arraystretch}{1.08}
+\href{https://github.com/brtnt/OCRT/blob/main/docs/manual/examples/make_c_luts.py}{make\_c\_luts.py} \textbf{uses the Python standard library to invoke the C executable}. It does not run the OCRT Python physics implementation. It requires an installed Python 3 and a built OCRT C executable.
+
+Use \texttt{python make\_\allowbreak{}c\_\allowbreak{}luts.\allowbreak{}py -\allowbreak{}-\allowbreak{}help} to see all options. The default grid is small for testing; it does not imply production accuracy or an optimal grid.
+
+To match the current ocean output writer's array size, simulation RAA samples are limited to 512 or fewer. This constraint concerns azimuthal spacing and is separate from the internal Fourier order.
+
+First create a plan from the repository root.
+
+
+\begin{ManualCode}
+python3 docs/manual/examples/make_c_luts.py rayleigh \
+  --ocrt-root code/OCRT_C --exe code/OCRT_C/build/ocrt \
+  --outdir task/rayleigh_demo
+\end{ManualCode}
+
+Inspect the generated \texttt{jobs.\allowbreak{}csv} and \texttt{manifest.\allowbreak{}json}, then append \texttt{-\allowbreak{}-\allowbreak{}run} to the same command. Without \texttt{-\allowbreak{}-\allowbreak{}run}, the utility still invokes \texttt{-\allowbreak{}-\allowbreak{}version} to check the version, but does not perform radiative transfer calculations. On Windows, use \texttt{python} instead of \texttt{python3} and \texttt{code/\allowbreak{}OCRT\_\allowbreak{}C/\allowbreak{}build/\allowbreak{}ocrt\_\allowbreak{}x86-\allowbreak{}64-\allowbreak{}v3.\allowbreak{}exe} as the executable.
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3400\linewidth-4.00pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.6600\linewidth-4.00pt\relax}@{}}
+\toprule
+\textbf{Option} & \textbf{Meaning and default} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Option} & \textbf{Meaning and default} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{rayleigh} / \texttt{simulation} & Required positional argument. Rayleigh including the sea surface / coupled-ocean CDOM simulation data \\
+\texttt{-\allowbreak{}-\allowbreak{}ocrt-\allowbreak{}root}, \texttt{-\allowbreak{}-\allowbreak{}exe}, \texttt{-\allowbreak{}-\allowbreak{}outdir} & Required. C working folder, executable, and results folder. Relative paths are referenced to the folder from which the utility is invoked. \\
+\texttt{-\allowbreak{}-\allowbreak{}wavelengths} & Comma-separated nm values; default \texttt{443,\allowbreak{}555} \\
+\texttt{-\allowbreak{}-\allowbreak{}szas} & Comma-separated degree values; default \texttt{30} \\
+\texttt{-\allowbreak{}-\allowbreak{}pressures} & Comma-separated hPa values; default \texttt{1013.\allowbreak{}25} \\
+\texttt{-\allowbreak{}-\allowbreak{}winds} & Comma-separated m/s values; default \texttt{5} \\
+\texttt{-\allowbreak{}-\allowbreak{}aods} & AOD555 for simulation; default \texttt{0}; positive values require \texttt{-\allowbreak{}-\allowbreak{}mie} \\
+\texttt{-\allowbreak{}-\allowbreak{}adom440} & aDOM440 (m\textsuperscript{-}\textsuperscript{1}) for simulation; default \texttt{0.\allowbreak{}1}; this utility fixes Chl/TSM at 0 \\
+\texttt{-\allowbreak{}-\allowbreak{}mie} & Aerosol file. Relative paths are referenced to the C working folder. \\
+\texttt{-\allowbreak{}-\allowbreak{}vza-\allowbreak{}step}, \texttt{-\allowbreak{}-\allowbreak{}vza-\allowbreak{}max}, \texttt{-\allowbreak{}-\allowbreak{}raa-\allowbreak{}step} & Degrees; defaults \texttt{30}, \texttt{60}, \texttt{90}; choose VZA spacing that divides the maximum angle exactly and RAA spacing that divides 360 exactly. \\
+\texttt{-\allowbreak{}-\allowbreak{}pssa} & Apply IPSS to rayleigh. Unavailable for coupled ocean. \\
+\texttt{-\allowbreak{}-\allowbreak{}include-\allowbreak{}direct-\allowbreak{}glint} & Include direct sunglint in rayleigh; the default is decouple. In simulation, ocean-grid TOA excludes direct sunglint, and that term is not separately recorded in the CSV. \\
+\texttt{-\allowbreak{}-\allowbreak{}gas-\allowbreak{}off} & Set all 6 gas columns to 0 in simulation. They are always 0 in rayleigh. \\
+\texttt{-\allowbreak{}-\allowbreak{}threads} & OMP thread count for each process; default \texttt{1}; cases execute sequentially. \\
+\texttt{-\allowbreak{}-\allowbreak{}timeout} & Time limit per case in seconds; default \texttt{900} \\
+\texttt{-\allowbreak{}-\allowbreak{}run} & Perform actual calculations. Exit without overwriting if a case CSV already exists. \\
+\end{longtable}
+}
+
+Each case saves a CSV, standard output, and a standard-error log. The utility checks row counts, finite primary observables, and the seawater convergence flag, but does not automatically guarantee convergence accuracy or I/Q/U symmetry. Users must check the validity of the upward transfer ratio with \texttt{T\_\allowbreak{}up\_\allowbreak{}rt\_\allowbreak{}valid}. Use a new folder rather than resuming a failed folder unchanged. Externally set \texttt{OCRT\_\allowbreak{}*} environment variables are inherited and recorded in the manifest, so check whether the invoking shell has diagnostic or experimental variables enabled.
+
+\texttt{jobs.\allowbreak{}csv} is \textbf{this utility's planning table}, not the input format for C's \texttt{-\allowbreak{}-\allowbreak{}batch} or \texttt{-\allowbreak{}-\allowbreak{}batch-\allowbreak{}full-\allowbreak{}grid}. The complete C argument array is in \texttt{manifest.\allowbreak{}json} under \texttt{argv}. In addition to the executable hash, retain the source commit and input-data hashes separately.
+\endgroup
+

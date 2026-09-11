@@ -1,0 +1,704 @@
+% Authoritative LaTeX chapter. Edit this file for future revisions.
+% Initially migrated 2026-09-11; no Markdown import occurs during PDF builds.
+\chapter{Python 사용과 배치 자료 생성}
+\label{chap:06_python_batch}
+매뉴얼 목차 · \hyperref[chap:01_concepts_geometry]{RAA와 관측 기하} · \hyperref[chap:04_examples]{C 실행 예시}
+
+이 부록은 \texttt{code/\allowbreak{}OCRT\_\allowbreak{}Python/\allowbreak{}}의 공개 실행 스크립트와 \texttt{code/\allowbreak{}campaign\_\allowbreak{}runner/\allowbreak{}}의 C 실행 관리 도구를 설명한다. 옵션·기본값·출력은 2026-09-11에 확인한 소스 기준이다. \textbf{Python 계산기는 현재 C v1.11.1의 모든 기능을 제공하지 않는다.} C용 옵션을 Python 명령에 그대로 옮기거나, 과거 Python README의 일치도 수치를 현재 자료 전체에 적용하지 않는다.
+
+\section{먼저 알아둘 지원 범위}
+\label{sec:auto:06_python_batch:1}
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3000\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2300\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.4700\linewidth-5.33pt\relax}@{}}
+\toprule
+\textbf{목적} & \textbf{사용할 진입점} & \textbf{특성} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{목적} & \textbf{사용할 진입점} & \textbf{특성} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+한 조건의 R1/R2/R3 확인 & \texttt{ocrt\_\allowbreak{}solve.\allowbreak{}py single} & 계산할 반사도 성분 선택, 압력 지정, 수렴 상태 표시 \\
+여러 조건을 순차 계산 & \texttt{ocrt\_\allowbreak{}solve.\allowbreak{}py grid} & 행별 단일 계산, 일부 행·밴드 선택, 명시적 재개 \\
+여러 조건을 NumPy/CuPy 배치 계산 & \texttt{produce\_\allowbreak{}grid.\allowbreak{}py} & 각 조건마다 R1/R2/R3 모두 계산, 자동 재개, 상세 파생 출력 \\
+같은 물리 조건에서 VZA \ensuremath{\times} RAA 각도 격자 & \texttt{ocrt\_\allowbreak{}fullgrid.\allowbreak{}py} & 대기·수중장을 공유하는 각도 LUT, I/Q/U 출력 \\
+CPU/GPU 결과 대조 & \texttt{gpu\_\allowbreak{}gate.\allowbreak{}py} & 네 가지 I 성분 제품 대조 \\
+C 계산을 여러 프로세스로 관리 & \texttt{campaign\_\allowbreak{}runner/\allowbreak{}runner/\allowbreak{}run\_\allowbreak{}campaign.\allowbreak{}py} & Python이 C 실행파일을 호출하는 별도 도구 \\
+\end{longtable}
+}
+
+현재 버전에서 특히 다음을 구분한다.
+
+\begin{itemize}
+\item \textbf{구면 보정:} 위 Python 계산 CLI에는 \texttt{-\allowbreak{}-\allowbreak{}pssa}나 IPSS 옵션이 없다. 최신 C의 IPSS 적용 결과가 필요한 LUT·자료 생산은 C 경로를 사용한다. Python을 C의 기본값까지 완전히 같은 대체 구현으로 취급하지 않는다.
+\item \textbf{해면:} Python 결합 단일/각도 LUT 경로는 \texttt{wind <=\allowbreak{} 0}일 때 평탄 해면 결합이 이식되지 않았다는 \texttt{NotImplementedEr\allowbreak{}ror}를 낸다. 예시는 양의 풍속을 사용한다. 배치 경로에서 숫자 0을 받는 것과 평탄 해면 구현을 지원하는 것은 같은 의미가 아니다.
+\item \textbf{Chl:} 종 옵션을 생략하면 기본 흡수표를 쓰고 식물플랑크톤 자체 \texttt{b =\allowbreak{} bb =\allowbreak{} 0}으로 처리한다. Chl 연동 쇄설물 산란은 별도로 남는다. \texttt{Chl > 0}에서 \texttt{-\allowbreak{}-\allowbreak{}phyto}/\texttt{-\allowbreak{}-\allowbreak{}phyto-\allowbreak{}group}를 명시하면 기본 종 이름이라도 오류다. \texttt{OCRT\_\allowbreak{}ADVANCED=\allowbreak{}1}로 해제되지 않는다.
+\item \textbf{설치 자료 누락:} 현재 생성자는 사용하지 않는 EAP 종별 Mie도 읽는다. 기본 경로는 \texttt{data/\allowbreak{}water\_\allowbreak{}iop/\allowbreak{}eap/\allowbreak{}EAP\_\allowbreak{}02\_\allowbreak{}Diatoms\_\allowbreak{}centric\_\allowbreak{}D6.\allowbreak{}mie}이다. 이 파일은 현재 \texttt{data-\allowbreak{}v1}의 181개 파일 매니페스트에 포함되지 않는다. 매뉴얼 작성 시 로컬에서도 이 파일 누락으로 성분 모델 초기화가 실패했다. 따라서 \textbf{현재 저장소와 공개 181개 자료를 설치하는 것만으로 Python R1/배치/각도 LUT 실행 준비가 끝난다고 볼 수 없다.} 배포자에게 일치하는 EAP 보조 자료를 받아 경로와 이력을 확인하거나, C 경로를 사용한다. 다른 Mie를 해당 이름으로 바꿔 넣지 않는다.
+\item \textbf{배치·단일의 수치 경로:} \texttt{produce\_\allowbreak{}grid.\allowbreak{}py}의 R1 대기 패스는 Greek 계수 커널, R3는 value 커널을 사용한다. 단일 CLI의 R1/R3는 value 커널을 사용한다. 배치 R2는 별도 층 수·산란차수 기본값도 사용한다. 그러므로 CPU/GPU 일치, 배치/단일 일치, 현재 C와의 일치를 각각 확인해야 한다.
+\item \textbf{파장:} 기본 파장 계약은 330--1100 nm지만 실제 사용되는 흡수·위상 표가 해당 파장을 덮어야 한다. 오래된 소스 주석에 남은 쇄설물 350--850 nm 범위와 실제 설치된 표가 다를 수 있다. 현재 로컬 FR631 쇄설물 위상표는 읽기 검사에서 330--1100 nm였다. 자료 버전과 SHA-256을 기록한다.
+\end{itemize}
+
+\texttt{produce\_\allowbreak{}grid.\allowbreak{}py}의 파일 머리에 남아 있는 “기체흡수 미적용”, “R2/R3에 value 커널 미적용”, \texttt{-\allowbreak{}-\allowbreak{}strict-\allowbreak{}check} 안내는 현 실행 코드와 맞지 않는다. 현재 기체흡수는 배치 대기에 전달되고, R3는 value 커널을 쓰며, \texttt{-\allowbreak{}-\allowbreak{}strict-\allowbreak{}check}라는 CLI 옵션은 없다.
+
+\section{설치와 준비 검사}
+\label{sec:auto:06_python_batch:2}
+아래에서 명령은 저장소의 \texttt{code/\allowbreak{}OCRT\_\allowbreak{}Python} 폴더에서 실행한다. \texttt{ocrt\_\allowbreak{}py}는 이 폴더에서 가져오는 모듈이며, 현재 별도의 배포용 \texttt{pyproject.\allowbreak{}toml}/\texttt{setup.\allowbreak{}py}가 없다.
+
+CPU 준비 예시:
+
+
+\begin{ManualCode}
+cd <OCRT 저장소 경로>\code\OCRT_Python
+python -m venv .venv
+.\.venv\Scripts\python -m pip install "numpy>=2" scipy
+.\.venv\Scripts\python -c "import numpy, scipy; print(numpy.__version__, scipy.__version__)"
+\end{ManualCode}
+
+Linux/WSL에서는 \texttt{python3 -\allowbreak{}m venv .\allowbreak{}venv}, \texttt{.\allowbreak{}venv/\allowbreak{}bin/\allowbreak{}python -\allowbreak{}m pip install 'n\allowbreak{}umpy>=\allowbreak{}2' scipy}처럼 실행한다. 이후 예시의 \texttt{python}은 준비한 가상환경의 Python으로 바꿔 사용한다. Python 3.10 이상을 기준으로 환경을 구성하면 이 부록의 계산기와 캠페인 도구를 함께 쓰기 편하다. NumPy 2 이상을 적은 이유는 현재 코드가 \texttt{numpy.\allowbreak{}trapezoid}를 사용하기 때문이고, SciPy는 CPU 배치의 \texttt{erfc} 계산에 필요하다. 예전 README의 “NumPy만 설치” 안내는 이 배치 경로에는 충분하지 않다.
+
+Mie 자료는 저장소 루트의 \texttt{scripts/\allowbreak{}fetch\_\allowbreak{}data.\allowbreak{}ps1} 또는 \texttt{scripts/\allowbreak{}fetch\_\allowbreak{}data.\allowbreak{}sh}로 설치한다. 파일은 C \texttt{inputs/\allowbreak{}}와 Python \texttt{data/\allowbreak{}}에 같은 상대경로로 놓인다. \textbf{이 설치와 앞 절의 EAP 누락 확인은 별개다.} 에어로졸 AOD가 0이어도 Python 고수준 CLI는 \texttt{.\allowbreak{}mie}를 읽는다. C Rayleigh 단독 실행의 “Mie 없이 실행” 조건을 Python 예시에 적용하지 않는다.
+
+준비 검사:
+
+
+\begin{ManualCode}
+python produce_grid.py --help
+python ocrt_solve.py single --help
+python ocrt_fullgrid.py --help
+python -c "from pathlib import Path; print(Path('data/water_iop/eap/EAP_02_Diatoms_centric_D6.mie').is_file())"
+python -c "from ocrt_py.constituent import OCRTConstituentModel; OCRTConstituentModel('data'); print('constituent data loaded')"
+\end{ManualCode}
+
+마지막 검사가 성공해야 R1 예제를 진행할 수 있다. \texttt{-\allowbreak{}-\allowbreak{}help} 성공은 자료 준비나 복사전달 계산 성공을 뜻하지 않는다.
+
+GPU는 호환되는 NVIDIA CUDA 환경과 그 환경에 맞는 CuPy가 추가로 필요하다. 예를 들어 CUDA 12 계열 환경에서는 \texttt{python -\allowbreak{}m pip install cu\allowbreak{}py-\allowbreak{}cuda12x}를 사용한다. 실제 드라이버/CUDA/Python 조합은 \href{https://docs.cupy.dev/en/stable/install.html}{CuPy 공식 설치 지침}과 맞춘다. GPU 선택은 \textbf{Python 프로세스를 시작하기 전에} 설정한다.
+
+
+\begin{ManualCode}
+$env:OCRT_PY_GPU = "1"
+python produce_grid.py --grid grid.csv --out result_gpu.csv --bands 443,555 --chunk 4
+Remove-Item Env:OCRT_PY_GPU
+\end{ManualCode}
+
+Linux/WSL에서는 \texttt{OCRT\_\allowbreak{}PY\_\allowbreak{}GPU=\allowbreak{}1 python produce\allowbreak{}\_\allowbreak{}grid.\allowbreak{}py .\allowbreak{}.\allowbreak{}.\allowbreak{}}이다. 값이 정확히 \texttt{1}일 때 CuPy를 가져온다. CuPy가 없으면 오류이며 자동 CPU 전환은 하지 않는다. \texttt{ocrt\_\allowbreak{}solve.\allowbreak{}py}와 각도 LUT의 모든 단계가 GPU화되었다는 의미로 해석하지 않는다.
+
+\Needspace{7\baselineskip}
+\section{공통 입력 규약: 단위와 RAA}
+\label{sec:auto:06_python_batch:3}
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3400\linewidth-4.00pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.6600\linewidth-4.00pt\relax}@{}}
+\toprule
+\textbf{입력} & \textbf{의미·단위} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{입력} & \textbf{의미·단위} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{sza} & 태양천정각, 도 \\
+\texttt{vza} & 공기 쪽 관측천정각, 도 \\
+\texttt{raa} & OCRT 상대방위각, 도. \textbf{180\textdegree{}가 경면/선글린트 쪽, 0\textdegree{}가 후방산란 쪽} \\
+\texttt{wind} & 풍속, m/s \\
+\texttt{aerosol} 또는 \texttt{aer} & \texttt{data/\allowbreak{}} 기준 Mie 경로 또는 모델 이름 \\
+\texttt{aod865} & 865 nm 기준 에어로졸 광학두께, 무차원 \\
+\texttt{chl} & Chl 농도, mg/m\textsuperscript{3} \\
+\texttt{tsm} & 부유물 농도, g/m\textsuperscript{3}. 수치상 mg/L와 같음 \\
+\texttt{acdom440} & 440 nm CDOM 흡수계수, m\textsuperscript{-}\textsuperscript{1} \\
+\end{longtable}
+}
+
+\textbf{다른 프로그램의 RAA를 그대로 복사하기 전에 정의를 확인한다.} 비교 자료가 경면 방향을 \texttt{0\textdegree{}}로 놓는 대칭 범위 \texttt{0--180\textdegree{}} 규약이면 OCRT 입력은 \texttt{180\textdegree{} - RAA\_\allowbreak{}외부}이다. 예를 들어 외부 \texttt{0/\allowbreak{}60/\allowbreak{}180\textdegree{}}는 OCRT \texttt{180/\allowbreak{}120/\allowbreak{}0\textdegree{}}가 된다. 이 변환은 두 규약의 방향 정의를 확인한 경우에만 적용한다. 위성 태양·센서 방위각에서 부호 있는 \texttt{0--360\textdegree{}} RAA를 만들 때는 기준 벡터와 회전 방향까지 기록해야 한다. \textbf{Q/U를 다룰 때 RAA를 임의로 \texttt{0--180\textdegree{}}로 접으면 U의 부호 정보가 사라질 수 있다.} 예시에는 \texttt{90\textdegree{}}와 \texttt{270\textdegree{}}를 함께 넣어 방위 대칭을 확인할 수 있게 했다.
+
+일반적인 상향 관측 예시는 SZA/VZA를 \texttt{0 <=\allowbreak{} 각도 < 90\textdegree{}} 범위에 둔다. \texttt{make\_\allowbreak{}grid.\allowbreak{}py}의 65\textdegree{}/55\textdegree{} 상한은 해당 샘플 설계의 범위이며 전체 OCRT의 검증 범위를 선언한 값이 아니다. 정확한 천저 \texttt{VZA=\allowbreak{}0\textdegree{}}는 일부 선택적 polarized value 수중 커널의 출력 특이점이 알려져 있다. 그 커널을 연구 목적으로 켰다면 \texttt{0.\allowbreak{}001\textdegree{}} 등 명시적 비천저 조건으로 비교하고 대체 각도를 기록한다.
+
+\subsection{배치 CSV}
+\label{sec:auto:06_python_batch:3.1}
+\texttt{produce\_\allowbreak{}grid.\allowbreak{}py}의 필수 헤더는 다음 10개다. 헤더 대소문자는 구분하지 않지만 이름 안의 공백·철자까지 자동 정리하지 않는다. 숫자는 소수점 \texttt{.\allowbreak{}}을 쓰고 단위 문자열은 넣지 않는다. \texttt{case\_\allowbreak{}id}는 파일 내에서 고유해야 한다.
+
+
+\begin{ManualCode}
+case_id,sza,vza,raa,wind,aerosol,aod865,chl,tsm,acdom440
+open_ocean,30,20,90,5,C50,0.05,0.2,0.1,0.01
+coastal,40,35,90,5,M80C,0.10,1.0,3.0,0.04
+\end{ManualCode}
+
+\texttt{produce\_\allowbreak{}grid.\allowbreak{}py}는 이름 끝에 \texttt{.\allowbreak{}mie}를 항상 붙이므로 \texttt{C50.\allowbreak{}mie} 대신 \textbf{\texttt{C50}}을 쓴다. 하위 폴더 모델은 \texttt{aerosol\_\allowbreak{}ahmad2010\_\allowbreak{}paper\_\allowbreak{}mie/\allowbreak{}A2010ver\_\allowbreak{}r80f50v01}처럼 쓴다. 단일/각도 CLI의 \texttt{-\allowbreak{}-\allowbreak{}aer}는 \texttt{.\allowbreak{}mie} 확장자가 있어도 된다. 실제 설치된 모델명을 사용하며, 이름이 비슷한 AccuRT 계열과 Ahmad 논문 기반 계열을 혼용하지 않는다.
+
+선택적 CSV 열은 비어 있으면 기본값을 사용한다.
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3000\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2300\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.4700\linewidth-5.33pt\relax}@{}}
+\toprule
+\textbf{대표 헤더} & \textbf{허용되는 다른 이름 (\texttt{produce\_\allowbreak{}grid.\allowbreak{}py})} & \textbf{기본값·효과} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{대표 헤더} & \textbf{허용되는 다른 이름 (\texttt{produce\_\allowbreak{}grid.\allowbreak{}py})} & \textbf{기본값·효과} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{ocrt\_\allowbreak{}adom\_\allowbreak{}slope} & \texttt{adom\_\allowbreak{}slope}, \texttt{cdom\_\allowbreak{}slope} & 0.014 nm\textsuperscript{-}\textsuperscript{1}. \texttt{aCDOM(\ensuremath{\lambda})=\allowbreak{}aCDOM440·exp[-S(\allowbreak{}\ensuremath{\lambda}-440)]} \\
+\texttt{ocrt\_\allowbreak{}detritus\_\allowbreak{}a440} & \texttt{detritus\_\allowbreak{}a440}, \texttt{det\_\allowbreak{}a440} & 0 m\textsuperscript{-}\textsuperscript{1}. Chl 연동 쇄설물의 440 nm 흡수 크기 \\
+\texttt{ocrt\_\allowbreak{}detritus\_\allowbreak{}slope} & \texttt{detritus\_\allowbreak{}slope}, \texttt{det\_\allowbreak{}slope} & 0.0109 nm\textsuperscript{-}\textsuperscript{1}. 쇄설물 흡수의 지수 기울기 \\
+\end{longtable}
+}
+
+\texttt{ocrt\_\allowbreak{}solve.\allowbreak{}py grid}는 같은 대표 헤더를 읽으며 추가 별칭도 지원한다. 예를 들어 ID는 \texttt{row\_\allowbreak{}id/\allowbreak{}id/\allowbreak{}case/\allowbreak{}index/\allowbreak{}row}, 에어로졸은 \texttt{aer\_\allowbreak{}model/\allowbreak{}aerosol\_\allowbreak{}model/\allowbreak{}mie/\allowbreak{}model/\allowbreak{}aer}, 각도는 \texttt{sza\_\allowbreak{}deg/\allowbreak{}vza\_\allowbreak{}deg/\allowbreak{}raa\_\allowbreak{}deg}, TSM은 \texttt{tsm\_\allowbreak{}g\_\allowbreak{}m3/\allowbreak{}tsm\_\allowbreak{}gm3}, Chl은 \texttt{chl\_\allowbreak{}mg\_\allowbreak{}m3/\allowbreak{}chl\_\allowbreak{}mgm3/\allowbreak{}chla}, CDOM은 \texttt{adom440/\allowbreak{}a\_\allowbreak{}cdom\_\allowbreak{}440/\allowbreak{}acdom440\_\allowbreak{}m\_\allowbreak{}inv/\allowbreak{}acdom\_\allowbreak{}440/\allowbreak{}cdom440/\allowbreak{}a\_\allowbreak{}cdom440}, AOD는 \texttt{aod\_\allowbreak{}865}, 풍속은 \texttt{wind\_\allowbreak{}ms/\allowbreak{}wind\_\allowbreak{}speed/\allowbreak{}wind\_\allowbreak{}speed\_\allowbreak{}ms/\allowbreak{}wind\_\allowbreak{}m\_\allowbreak{}s}도 가능하다. 헤더 정규화는 영문·숫자만 남겨 비교한다. ID 생략 시 행 순번을 사용한다. 여러 도구에서 함께 사용할 CSV는 위의 대표 헤더를 유지하는 편이 안전하다.
+
+\section{\texttt{produce\_\allowbreak{}grid.\allowbreak{}py}: 전체 옵션}
+\label{sec:auto:06_python_batch:4}
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3000\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2300\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.4700\linewidth-5.33pt\relax}@{}}
+\toprule
+\textbf{옵션} & \textbf{기본값} & \textbf{설명} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{옵션} & \textbf{기본값} & \textbf{설명} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{-\allowbreak{}h}, \texttt{-\allowbreak{}-\allowbreak{}help} & --- & 도움말 출력 후 종료 \\
+\texttt{-\allowbreak{}-\allowbreak{}grid PATH} & 필수 & 입력 조건 CSV \\
+\texttt{-\allowbreak{}-\allowbreak{}out PATH} & 필수 & 결과 CSV. 존재하면 자동으로 이어 쓰며 완료 키를 건너뜀 \\
+\texttt{-\allowbreak{}-\allowbreak{}data DIR} & 스크립트 옆 \texttt{data/\allowbreak{}} & 에어로졸·해수 IOP·AFGL·기체 단면적 자료 루트 \\
+\texttt{-\allowbreak{}-\allowbreak{}phyto NAME} & 생략 & 기본 Chl 흡수 경로. Chl > 0 행이 있으면 명시적 종 지정 금지 \\
+\texttt{-\allowbreak{}-\allowbreak{}mineral NAME} & \texttt{red\_\allowbreak{}clay} & 광물 종류. \texttt{red\_\allowbreak{}clay}, \texttt{brown\_\allowbreak{}earth}, \texttt{yellow\_\allowbreak{}clay}, \texttt{calcareous\_\allowbreak{}sand} \\
+\texttt{-\allowbreak{}-\allowbreak{}chunk N} & 64 & 한 배치의 조건 행 수. 양의 정수. GPU 메모리·케이스 복잡도에 맞춰 조절 \\
+\texttt{-\allowbreak{}-\allowbreak{}n-\allowbreak{}mu-\allowbreak{}water N} & 24 & 수중과 배치 대기 Gauss 적분 절점 수에 전달됨 \\
+\texttt{-\allowbreak{}-\allowbreak{}nt-\allowbreak{}atm N} & 400 & R1/R3 대기 SOS 층 수 \\
+\texttt{-\allowbreak{}-\allowbreak{}m-\allowbreak{}max N} & 16 & R1/R3 대기 Fourier 모드 상한 \\
+\texttt{-\allowbreak{}-\allowbreak{}max-\allowbreak{}it-\allowbreak{}water N} & 500 & 수중 산란차수 상한. 상한 도달과 수렴은 별개 \\
+\texttt{-\allowbreak{}-\allowbreak{}bands LIST} & 아래 12밴드 & 쉼표로 구분한 정수 nm. 예: \texttt{443,\allowbreak{}555,\allowbreak{}865} \\
+\texttt{-\allowbreak{}-\allowbreak{}no-\allowbreak{}gas} & 미지정, 흡수 켜짐 & 기체흡수 끄기 \\
+\end{longtable}
+}
+
+기본 밴드는 \texttt{380,\allowbreak{}412,\allowbreak{}443,\allowbreak{}490,\allowbreak{}510,\allowbreak{}555,\allowbreak{}620,\allowbreak{}660,\allowbreak{}680,\allowbreak{}709,\allowbreak{}745,\allowbreak{}865}이다. 이 목록을 특정 센서의 최종 응답함수 적분 결과와 혼동하지 않는다. 계산은 지정한 파장점에서 이루어진다.
+
+CLI로 바꾸지 못하는 주요 조건도 결과와 함께 기록해야 한다: 압력 \texttt{1013.\allowbreak{}25 hPa}, 물 굴절률 \texttt{1.\allowbreak{}34}, R1/R3 대기 산란차수 상한 \texttt{100}, 대기/수중 허용오차 \texttt{1e-\allowbreak{}7}, 에어로졸 전개 상한 \texttt{80}, 수중 입자 전개 상한 \texttt{200}이다. R2는 별도 함수 기본값인 \textbf{40층, Fourier 상한 2, 최대 20차}를 사용하며 \texttt{-\allowbreak{}-\allowbreak{}nt-\allowbreak{}atm}, \texttt{-\allowbreak{}-\allowbreak{}m-\allowbreak{}max}를 바꿔도 함께 바뀌지 않는다. 기체흡수 모델은 기본 \texttt{usstd76}이며 이 CLI에는 대기 프로파일·개별 기체량 지정 옵션이 없다.
+
+\subsection{재개 규칙}
+\label{sec:auto:06_python_batch:4.1}
+기존 CSV의 헤더가 현재 \texttt{OUT\_\allowbreak{}FIELDS}와 정확히 같아야 한다. 맞으면 \texttt{(case\_\allowbreak{}id,\allowbreak{} band\_\allowbreak{}nm)}만으로 완료 여부를 판단한다. 입력 값·자료 파일·광물 종류·기체 설정·수치 옵션이 달라졌는지는 비교하지 않으며, 기록된 NaN이나 미수렴 결과도 자동 재계산하지 않는다. 한 CSV를 동시에 여러 프로세스에서 쓰지 않는다.
+
+\textbf{입력이나 계산 설정을 바꾸면 새 출력 파일을 사용한다.} 중단 후 재개는 동일한 입력·설정·자료일 때만 한다. 출력 부모 폴더는 먼저 만든다. 출력은 밴드 순서 \ensuremath{\rightarrow} 청크 \ensuremath{\rightarrow} 입력 행 순서이며 행 ID 순서로 정렬된다고 가정하지 않는다. 입력 CSV의 중복 ID나 중복 밴드는 실행 전에 제거한다.
+
+\section{\texttt{ocrt\_\allowbreak{}solve.\allowbreak{}py}: 단일·순차 격자 전체 옵션}
+\label{sec:auto:06_python_batch:5}
+사용 형식은 \texttt{python ocrt\_\allowbreak{}solve.\allowbreak{}py single .\allowbreak{}.\allowbreak{}.\allowbreak{}} 또는 \texttt{python ocrt\_\allowbreak{}solve.\allowbreak{}py grid .\allowbreak{}.\allowbreak{}.\allowbreak{}}이다. 공통 옵션은 서브명령 뒤에 둔다.
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3000\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2300\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.4700\linewidth-5.33pt\relax}@{}}
+\toprule
+\textbf{공통 옵션} & \textbf{기본값} & \textbf{설명} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{공통 옵션} & \textbf{기본값} & \textbf{설명} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{-\allowbreak{}h}, \texttt{-\allowbreak{}-\allowbreak{}help} & --- & 해당 서브명령 도움말 \\
+\texttt{-\allowbreak{}-\allowbreak{}which R1 R2 R3} & 모두 & 실행할 성분을 공백으로 구분. \texttt{-\allowbreak{}-\allowbreak{}which R2}로 Rayleigh 기준만 계산 가능 \\
+\texttt{-\allowbreak{}-\allowbreak{}phyto-\allowbreak{}group NAME} & 생략 & 종 선택 제한은 \ref{sec:auto:06_python_batch:1}절과 같음 \\
+\texttt{-\allowbreak{}-\allowbreak{}tsm-\allowbreak{}species NAME} & \texttt{red\_\allowbreak{}clay} & 광물 네 종류 중 선택 \\
+\texttt{-\allowbreak{}-\allowbreak{}n-\allowbreak{}mu-\allowbreak{}water N} & 48 & 결합 R1 수중 Gauss 절점 수. R2/R3 대기 절점 수는 내부 24로 고정 \\
+\texttt{-\allowbreak{}-\allowbreak{}m-\allowbreak{}max N} & 16 & R1/R3 대기 Fourier 상한. R2는 2로 고정 \\
+\texttt{-\allowbreak{}-\allowbreak{}n-\allowbreak{}layers N} & 400 & R1/R2/R3 대기 층 수 \\
+\texttt{-\allowbreak{}-\allowbreak{}max-\allowbreak{}it-\allowbreak{}water N} & 500 & R1 수중 산란차수 상한 \\
+\texttt{-\allowbreak{}-\allowbreak{}pressure HPA} & 1013.25 & Rayleigh 계산에 전달할 압력, hPa \\
+\texttt{-\allowbreak{}-\allowbreak{}no-\allowbreak{}gas} & 미지정 & 기체흡수 끄기. 압력 0만 주어도 기체가 꺼지는 것은 아님 \\
+\texttt{-\allowbreak{}-\allowbreak{}adom-\allowbreak{}slope S}, \texttt{-\allowbreak{}-\allowbreak{}cdom-\allowbreak{}slope S} & 0.014 & CDOM 지수 흡수 기울기, nm\textsuperscript{-}\textsuperscript{1}. 같은 옵션의 별칭 \\
+\texttt{-\allowbreak{}-\allowbreak{}detritus-\allowbreak{}a440 A} & 0 & Chl 연동 쇄설물 흡수 크기, m\textsuperscript{-}\textsuperscript{1} \\
+\texttt{-\allowbreak{}-\allowbreak{}detritus-\allowbreak{}slope S} & 0.0109 & 쇄설물 흡수 기울기, nm\textsuperscript{-}\textsuperscript{1} \\
+\end{longtable}
+}
+
+\texttt{single} 전용 옵션:
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3000\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2300\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.4700\linewidth-5.33pt\relax}@{}}
+\toprule
+\textbf{옵션} & \textbf{기본값} & \textbf{설명} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{옵션} & \textbf{기본값} & \textbf{설명} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{-\allowbreak{}-\allowbreak{}wl NM} & 필수 & 파장, nm. 실수 가능 \\
+\texttt{-\allowbreak{}-\allowbreak{}sza DEG}, \texttt{-\allowbreak{}-\allowbreak{}vza DEG}, \texttt{-\allowbreak{}-\allowbreak{}raa DEG} & 각각 필수 & 관측 기하, \ref{sec:auto:06_python_batch:3}절의 OCRT 규약 \\
+\texttt{-\allowbreak{}-\allowbreak{}wind MPS} & 필수 & 풍속, 결합 R1은 양수 필요 \\
+\texttt{-\allowbreak{}-\allowbreak{}chl VALUE} & 0 & Chl 농도, mg/m\textsuperscript{3} \\
+\texttt{-\allowbreak{}-\allowbreak{}tsm VALUE} & 0 & TSM 농도, g/m\textsuperscript{3} \\
+\texttt{-\allowbreak{}-\allowbreak{}acdom440 VALUE} & 0 & CDOM 흡수계수, m\textsuperscript{-}\textsuperscript{1} \\
+\texttt{-\allowbreak{}-\allowbreak{}aod865 VALUE} & 0 & 865 nm AOD \\
+\texttt{-\allowbreak{}-\allowbreak{}aer NAME} & \texttt{C50} & \texttt{data/\allowbreak{}} 기준 모델명/상대경로. \texttt{.\allowbreak{}mie} 확장자 선택 가능 \\
+\end{longtable}
+}
+
+\texttt{grid} 전용 옵션:
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3000\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2300\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.4700\linewidth-5.33pt\relax}@{}}
+\toprule
+\textbf{옵션} & \textbf{기본값} & \textbf{설명} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{옵션} & \textbf{기본값} & \textbf{설명} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{-\allowbreak{}-\allowbreak{}grid PATH}, \texttt{-\allowbreak{}-\allowbreak{}out PATH} & 각각 필수 & 입력 조건 CSV와 결과 CSV \\
+\texttt{-\allowbreak{}-\allowbreak{}bands NM .\allowbreak{}.\allowbreak{}.\allowbreak{}} & 12밴드 & \textbf{공백}으로 구분한 정수 nm. \texttt{produce\_\allowbreak{}grid.\allowbreak{}py}의 쉼표 형식과 다름 \\
+\texttt{-\allowbreak{}-\allowbreak{}rows LO:\allowbreak{}HI} & 전체 & 0부터 세는 CSV 자료 행 슬라이스. LO 포함, HI 제외. 예: \texttt{0:\allowbreak{}10}은 첫 10행. 두 정수를 모두 입력 \\
+\texttt{-\allowbreak{}-\allowbreak{}resume} & 끄기 & 기존 \texttt{(row\_\allowbreak{}id,\allowbreak{}wavelength\_\allowbreak{}nm)}를 건너뜀. 생략 시 기존 결과를 덮어씀 \\
+\texttt{-\allowbreak{}-\allowbreak{}progress N} & 1 & N개 처리마다 진행 출력. 1 이상의 정수 \\
+\end{longtable}
+}
+
+두 서브명령에는 \texttt{-\allowbreak{}-\allowbreak{}data} 옵션이 없다. 스크립트 옆 \texttt{data/\allowbreak{}}를 쓴다. \texttt{grid}의 선택적 slope 열은 해당 행에서 CLI 기본값보다 우선한다. slope 추가 별칭은 CDOM \texttt{ccrr\_\allowbreak{}adom\_\allowbreak{}slope/\allowbreak{}s\_\allowbreak{}cdom/\allowbreak{}scdom}, 쇄설물 \texttt{s\_\allowbreak{}detritus/\allowbreak{}sdetritus/\allowbreak{}s\_\allowbreak{}det}도 지원한다.
+
+\texttt{grid}는 한 조건에서 예외가 발생하면 \texttt{FAIL row=\allowbreak{}.\allowbreak{}.\allowbreak{}.\allowbreak{} wl=\allowbreak{}.\allowbreak{}.\allowbreak{}.\allowbreak{}}을 출력하고 다음 조건으로 넘어간다. 마지막에 “완료”가 나와도 모든 조건이 성공했다는 뜻이 아니다. 요청한 행 수 \ensuremath{\times} 밴드 수와 실제 고유 결과 키 수를 비교하고 로그의 \texttt{FAIL}을 확인한다. 재개 시 헤더·설정·값 검증은 배치 생산기보다 약하므로 다른 버전의 CSV에 이어 쓰지 않는다.
+
+\subsection{종 이름 목록}
+\label{sec:auto:06_python_batch:5.1}
+파서가 받는 호환 별칭은 \texttt{pico}, \texttt{nano}, \texttt{micro}이며, 정식 카탈로그 이름은 다음과 같다.
+
+
+\begin{ManualCode}
+eap_diatoms_pennate        eap_chlorophytes        eap_diatoms_centric
+eap_cryptophytes           eap_cyano_blue         eap_cyano_red
+eap_dinoflagellates        eap_eustigmatophytes   eap_hapto_pavlovaceae
+eap_pelagophytes           eap_prasinophytes      eap_prochlorococcus
+eap_hapto_prymnesiaceae     eap_raphidophytes      eap_rhodophytes
+eap_synechococcus          eap_microcystis
+\end{ManualCode}
+
+이 목록이 생산 RT에서 종별 산란을 사용할 수 있다는 뜻은 아니다. Chl > 0에서는 명시적 선택 자체가 거절된다. Chl=0이라도 기본 \texttt{micro}/\texttt{eap\_\allowbreak{}diatoms\_\allowbreak{}centric} 외 선택은 \texttt{OCRT\_\allowbreak{}ADVANCED=\allowbreak{}1}을 요구하고 해당 EAP 파일을 읽는다. 일반 자료 생성에서는 종 옵션을 생략한다.
+
+\section{\texttt{ocrt\_\allowbreak{}fullgrid.\allowbreak{}py}: 각도 LUT 전체 옵션}
+\label{sec:auto:06_python_batch:6}
+한 파장·태양각·대기·해양 상태에 대해 VZA와 RAA의 데카르트 곱을 계산한다. \texttt{produce\_\allowbreak{}grid.\allowbreak{}py}처럼 서로 다른 물리 조건을 입력 행마다 바꾸는 도구가 아니다.
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3000\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2300\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.4700\linewidth-5.33pt\relax}@{}}
+\toprule
+\textbf{옵션} & \textbf{기본값} & \textbf{설명} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{옵션} & \textbf{기본값} & \textbf{설명} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{-\allowbreak{}h}, \texttt{-\allowbreak{}-\allowbreak{}help} & --- & 도움말 \\
+\texttt{-\allowbreak{}-\allowbreak{}out PATH} & 필수 & 각도 LUT CSV. 기존 파일 덮어씀, 자동 재개 없음 \\
+\texttt{-\allowbreak{}-\allowbreak{}wl NM}, \texttt{-\allowbreak{}-\allowbreak{}sza DEG}, \texttt{-\allowbreak{}-\allowbreak{}wind MPS} & 각각 필수 & 파장·태양각·풍속 \\
+\texttt{-\allowbreak{}-\allowbreak{}chl}, \texttt{-\allowbreak{}-\allowbreak{}tsm}, \texttt{-\allowbreak{}-\allowbreak{}acdom440}, \texttt{-\allowbreak{}-\allowbreak{}aod865} & 각각 필수 & 값이 0이어도 명시 \\
+\texttt{-\allowbreak{}-\allowbreak{}aer NAME} & \texttt{C50} & 에어로졸 모델명/경로, 확장자 선택 가능 \\
+\texttt{-\allowbreak{}-\allowbreak{}vza-\allowbreak{}values LIST} & \texttt{0,\allowbreak{}30} & 쉼표로 구분한 실수 각도 목록 \\
+\texttt{-\allowbreak{}-\allowbreak{}raa-\allowbreak{}values LIST} & \texttt{0,\allowbreak{}90,\allowbreak{}180,\allowbreak{}270} & 쉼표로 구분한 OCRT RAA 목록 \\
+\texttt{-\allowbreak{}-\allowbreak{}phyto-\allowbreak{}group NAME} & 생략 & \ref{sec:auto:06_python_batch:5}절의 종 제한 \\
+\texttt{-\allowbreak{}-\allowbreak{}tsm-\allowbreak{}species NAME} & \texttt{red\_\allowbreak{}clay} & 광물 네 종류 중 선택 \\
+\texttt{-\allowbreak{}-\allowbreak{}cdom-\allowbreak{}slope S} & 0.014 & CDOM 흡수 기울기, nm\textsuperscript{-}\textsuperscript{1} \\
+\texttt{-\allowbreak{}-\allowbreak{}n-\allowbreak{}mu-\allowbreak{}water N} & 48 & 결합 계산 Gauss 절점 수 \\
+\texttt{-\allowbreak{}-\allowbreak{}m-\allowbreak{}max N} & 16 & 대기 Fourier 상한 \\
+\texttt{-\allowbreak{}-\allowbreak{}n-\allowbreak{}layers-\allowbreak{}atm N} & 400 & 대기 층 수 \\
+\texttt{-\allowbreak{}-\allowbreak{}water-\allowbreak{}m-\allowbreak{}max N} & 30 & 수중 Fourier 상한 \\
+\texttt{-\allowbreak{}-\allowbreak{}water-\allowbreak{}n-\allowbreak{}layers N} & 300 & 수중 층 수 설정. 실제 수중 정책에서 필요한 층 수가 더 클 수 있음 \\
+\texttt{-\allowbreak{}-\allowbreak{}max-\allowbreak{}it-\allowbreak{}water N} & 500 & 수중 산란차수 상한 \\
+\texttt{-\allowbreak{}-\allowbreak{}pressure HPA} & 1013.25 & 압력, hPa \\
+\texttt{-\allowbreak{}-\allowbreak{}no-\allowbreak{}gas} & 미지정 & 기체흡수 끄기 \\
+\end{longtable}
+}
+
+\texttt{-\allowbreak{}-\allowbreak{}data}, \texttt{-\allowbreak{}-\allowbreak{}which}, \texttt{-\allowbreak{}-\allowbreak{}detritus-\allowbreak{}a440}, \texttt{-\allowbreak{}-\allowbreak{}detritus-\allowbreak{}slope}는 이 CLI에 없다. 해수 굴절률은 1.34이다. Mie와 파장별 에어로졸 상태를 한 번 준비해 각도 격자에서 공유한다.
+
+\section{실행 예시}
+\label{sec:auto:06_python_batch:7}
+\textbf{아래 R1 예시는 \ref{sec:auto:06_python_batch:2}절의 성분 자료 준비 검사가 성공한 환경에서 실행한다. 현재 로컬에서는 EAP 누락으로 R1의 수치 실행을 검증하지 못했다.} 명령 구문과 옵션은 실제 파서·소스에 대조했다. 대규모 실행 전에 실제 자료·수치 조건으로 소규모 대조를 수행한다.
+
+\subsection{Rayleigh 기준 반사도 한 점}
+\label{sec:auto:06_python_batch:7.1}
+에어로졸·기체흡수 없는 거친 Fresnel 해면 위 Rayleigh 기준이다. 완전 흑색 경계의 대기와는 해면 조건이 다르다.
+
+
+\begin{ManualCode}
+python ocrt_solve.py single --wl 555 --sza 30 --vza 20 --raa 90 --wind 5 --aer C50 --aod865 0 --which R2 --no-gas --pressure 1013.25 --n-layers 400
+\end{ManualCode}
+
+R2는 해수 성분 모델을 만들지 않으므로 EAP 파일이 필요하지 않지만 \texttt{C50.\allowbreak{}mie}는 읽는다. 파서에 지정하지 않은 R1/R3·Rrs 출력은 없다. IPSS를 포함한 운영용 해양 대기보정 Rayleigh LUT는 C 예제를 사용한다.
+
+매뉴얼 작성 시 이 명령을 Windows CPU/NumPy 2.3.5에서 실제 실행해 정상 종료와 \texttt{rho\_\allowbreak{}R\_\allowbreak{}I =\allowbreak{} 3.\allowbreak{}8982239255e-\allowbreak{}02}, \texttt{aod\_\allowbreak{}band =\allowbreak{} 0}을 확인했다. 이 값은 해당 설치의 동작 확인 기록이며, C와의 정밀도 검증 기준을 새로 확정한 값은 아니다.
+
+\subsection{여러 압력·파장의 소규모 Rayleigh LUT}
+\label{sec:auto:06_python_batch:7.2}
+다음 코드는 CSV를 생성하는 예다. \texttt{python} 대화형 입력 또는 별도 파일로 실행한다.
+
+
+\begin{ManualCode}
+import csv
+from itertools import product
+from pathlib import Path
+
+Path("results").mkdir(exist_ok=True)
+with open("results/rayleigh_grid.csv", "w", newline="", encoding="utf-8") as f:
+    w = csv.writer(f)
+    w.writerow(["case_id", "sza", "vza", "raa", "wind", "aerosol", "aod865", "chl", "tsm", "acdom440"])
+    for i, (s, v, r, wind) in enumerate(product([20, 40, 60], [0.001, 20, 40], [0, 60, 120, 180, 240, 300], [2, 5, 10])):
+        w.writerow([f"ray_{i:04d}", s, v, r, wind, "C50", 0, 0, 0, 0])
+\end{ManualCode}
+
+각 압력에서 162조건 \ensuremath{\times} 3파장 = 486행을 기대한다.
+
+
+\begin{ManualCode}
+python ocrt_solve.py grid --grid results/rayleigh_grid.csv --out results/rayleigh_p1013.csv --bands 443 555 865 --which R2 --no-gas --pressure 1013.25 --n-layers 400
+python ocrt_solve.py grid --grid results/rayleigh_grid.csv --out results/rayleigh_p900.csv --bands 443 555 865 --which R2 --no-gas --pressure 900 --n-layers 400
+\end{ManualCode}
+
+이 LUT의 제품은 \texttt{rho\_\allowbreak{}R\_\allowbreak{}I/\allowbreak{}Q/\allowbreak{}U}이며, 압력은 출력 CSV 열에 자동 저장되지 않으므로 실행 명령과 함께 보관한다. 중단 후에는 같은 명령에 \texttt{-\allowbreak{}-\allowbreak{}resume}을 붙인다. 태양·관측 기하, 풍속, 기체 적용 여부, 압력별 보간법을 LUT 메타데이터에 남긴다. 이 예는 Python 평면 대기 경로의 검토용 LUT이다.
+
+\subsection{대양·연안·탁수·방위 변화 시뮬레이션}
+\label{sec:auto:06_python_batch:7.3}
+문서에 포함된 \href{https://github.com/brtnt/OCRT/blob/main/docs/manual/examples/python_simulation_grid.csv}{python\_simulation\_grid.csv}는 6개 조건이다. 해수 상태·AOD·풍속·방위·흡수 기울기를 명시한 사용 예이며, 검증된 자연환경 분포를 의미하지 않는다.
+
+
+\begin{ManualCode}
+New-Item -ItemType Directory -Force results | Out-Null
+python ocrt_solve.py grid --grid ../../docs/manual/examples/python_simulation_grid.csv --out results/simulation_single_443_555.csv --bands 443 555 --n-mu-water 24 --n-layers 400 --m-max 16 --max-it-water 500
+python produce_grid.py --grid ../../docs/manual/examples/python_simulation_grid.csv --out results/simulation_batch_443_555.csv --bands 443,555 --chunk 2 --n-mu-water 24 --nt-atm 400 --m-max 16 --max-it-water 500
+\end{ManualCode}
+
+각 파일에서 12개 고유 조건·파장 키를 기대한다. 단일과 배치의 공통 \texttt{rho\_\allowbreak{}TOA}, R2/R3, Rrs를 맞춰 비교하고 차이를 기록한다. 위의 절점 수를 24로 맞춰도 대기 커널과 R2 설정은 같아지지 않는다. 일치가 필요한 생산 목적에서는 그 차이부터 해소·검증해야 한다. 낮은 산란차수나 층 수로 실행한 시험 결과를 최종 수렴 결과로 사용하지 않는다.
+
+탁수 행은 특히 산란차수 상한만으로 수렴 여부를 판단하지 않는다. \texttt{ocrt\_\allowbreak{}solve.\allowbreak{}py grid}의 \texttt{conv/\allowbreak{}orders}를 확인하고 \texttt{-\allowbreak{}-\allowbreak{}n-\allowbreak{}mu-\allowbreak{}water}, \texttt{-\allowbreak{}-\allowbreak{}n-\allowbreak{}layers}, \texttt{-\allowbreak{}-\allowbreak{}m-\allowbreak{}max}, \texttt{-\allowbreak{}-\allowbreak{}max-\allowbreak{}it-\allowbreak{}water}를 늘린 별도 파일과 필요한 제품의 변화를 비교한다. \texttt{produce\_\allowbreak{}grid.\allowbreak{}py} 출력에는 수중 수렴 플래그가 없으므로 별도의 대표 조건 검사가 필요하다.
+
+\subsection{기체·CDOM·광물 민감도}
+\label{sec:auto:06_python_batch:7.4}
+기체 효과를 비교하려면 동일 CSV를 새 출력 파일로 실행한다.
+
+
+\begin{ManualCode}
+python produce_grid.py --grid ../../docs/manual/examples/python_simulation_grid.csv --out results/simulation_nogas.csv --bands 443,555 --chunk 2 --no-gas
+\end{ManualCode}
+
+이 비교에서는 앞선 실행의 수치 옵션도 동일하게 지정한다. 기체 제거가 물 IOP를 제거하지는 않는다. CDOM 기울기만 비교할 때는 \texttt{single -\allowbreak{}-\allowbreak{}adom-\allowbreak{}slope 0.\allowbreak{}014}와 \texttt{single -\allowbreak{}-\allowbreak{}adom-\allowbreak{}slope 0.\allowbreak{}018}을 쓰거나 CSV에 서로 다른 \texttt{ocrt\_\allowbreak{}adom\_\allowbreak{}slope}를 명시한다. \texttt{grid}에서 CSV slope 열이 채워져 있으면 CLI 값을 바꿔도 해당 행의 값이 우선한다.
+
+광물 종류는 \texttt{ocrt\_\allowbreak{}solve.\allowbreak{}py -\allowbreak{}-\allowbreak{}tsm-\allowbreak{}species} 또는 \texttt{produce\_\allowbreak{}grid.\allowbreak{}py -\allowbreak{}-\allowbreak{}mineral}로 바꾸며 각 실행을 별도 파일에 기록한다. 같은 TSM 질량농도라도 종류가 다르면 IOP가 달라진다.
+
+\subsection{각도별 수출광·편광 LUT}
+\label{sec:auto:06_python_batch:7.5}
+
+\begin{ManualCode}
+python ocrt_fullgrid.py --out results/angular_555.csv --wl 555 --sza 30 --wind 5 --chl 1 --tsm 3 --acdom440 0.04 --aod865 0.1 --aer C50 --vza-values 0.001,20,40,55 --raa-values 0,45,90,135,180,225,270,315 --n-mu-water 48 --m-max 16 --n-layers-atm 400 --water-m-max 30 --water-n-layers 300 --max-it-water 500
+\end{ManualCode}
+
+32행의 \texttt{Rrs\_\allowbreak{}I/\allowbreak{}Q/\allowbreak{}U}, \texttt{rrs\_\allowbreak{}I/\allowbreak{}Q/\allowbreak{}U}, \texttt{TOA\_\allowbreak{}rho\_\allowbreak{}I/\allowbreak{}Q/\allowbreak{}U}를 얻는다. \texttt{water\_\allowbreak{}converged}와 \texttt{water\_\allowbreak{}orders}를 확인한다. 이 CSV는 \texttt{produce\_\allowbreak{}grid.\allowbreak{}py}와 열 구조가 다르다. 물리 상태마다 다른 파일을 만들어 파장·SZA·AOD·Chl·TSM·CDOM·풍속 차원의 LUT로 묶을 수 있다. 단일 각도 출력과 공유 각도장을 이용한 LUT 출력의 절점·수렴 차이도 확인한다.
+
+\subsection{재현 가능한 무작위 입력 설계와 소규모 추출}
+\label{sec:auto:06_python_batch:7.6}
+
+\begin{ManualCode}
+python make_grid.py --n 1000 --seed 20260718 --out results/design_1000.csv --iop-out results/design_water_1000.csv
+python subsample_grid.py --in results/design_1000.csv --n 8 --seed 20260720 --out results/pilot_8.csv
+\end{ManualCode}
+
+\texttt{make\_\allowbreak{}grid.\allowbreak{}py}는 자연로그 공간의 상관 정규분포를 범위 절단해서 Chl·TSM·CDOM을 뽑는다. TSM \texttt{0.\allowbreak{}1--20 g/\allowbreak{}m\textsuperscript{3}}, Chl \texttt{0.\allowbreak{}1--5 mg/\allowbreak{}m\textsuperscript{3}}, CDOM \texttt{0.\allowbreak{}01--0.\allowbreak{}1 m\textsuperscript{-}\textsuperscript{1}}; 목표 로그상관은 TSM--Chl \texttt{0.\allowbreak{}85}, Chl--CDOM \texttt{0.\allowbreak{}75}, TSM--CDOM \texttt{0.\allowbreak{}77}이다. AOD865는 \texttt{0.\allowbreak{}05--0.\allowbreak{}3}, 풍속은 \texttt{1--10 m/\allowbreak{}s}, SZA는 \texttt{0--65\textdegree{}}, VZA는 \texttt{0--55\textdegree{}}, RAA는 \texttt{0--180\textdegree{}}; 에어로졸은 \texttt{C50/\allowbreak{}T50/\allowbreak{}M80C/\allowbreak{}M95C/\allowbreak{}M98C/\allowbreak{}O99} 중 무작위 선택이다. 직접 글린트 반사도 절댓값 \texttt{<5e-\allowbreak{}4}를 만족할 때까지 기하를 다시 뽑는다. 따라서 채택된 기하와 풍속이 완전히 독립인 표본은 아니다.
+
+범위 절단 뒤의 상관은 목표와 달라질 수 있다. 원래 논문용 과거 격자와 같은 행들을 복원하는 도구도 아니다. 생성 CSV와 시드를 함께 보관한다.
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3400\linewidth-4.00pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.6600\linewidth-4.00pt\relax}@{}}
+\toprule
+\textbf{도구} & \textbf{전체 옵션} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{도구} & \textbf{전체 옵션} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{make\_\allowbreak{}grid.\allowbreak{}py} & \texttt{-\allowbreak{}h/\allowbreak{}-\allowbreak{}-\allowbreak{}help}; \texttt{-\allowbreak{}-\allowbreak{}n} 기본 1000; \texttt{-\allowbreak{}-\allowbreak{}seed} 기본 20260718; \texttt{-\allowbreak{}-\allowbreak{}out} 기본 \texttt{full\_\allowbreak{}grid\_\allowbreak{}design\_\allowbreak{}v1.\allowbreak{}csv}; \texttt{-\allowbreak{}-\allowbreak{}iop-\allowbreak{}out} 기본 \texttt{iop\_\allowbreak{}grid\_\allowbreak{}design\_\allowbreak{}v1.\allowbreak{}csv} \\
+\texttt{subsample\_\allowbreak{}grid.\allowbreak{}py} & \texttt{-\allowbreak{}h/\allowbreak{}-\allowbreak{}-\allowbreak{}help}; \texttt{-\allowbreak{}-\allowbreak{}in} 기본 \texttt{full\_\allowbreak{}grid\_\allowbreak{}design\_\allowbreak{}v1.\allowbreak{}csv}; \texttt{-\allowbreak{}-\allowbreak{}n} 기본 100; \texttt{-\allowbreak{}-\allowbreak{}seed} 기본 20260720; \texttt{-\allowbreak{}-\allowbreak{}out} 생략 시 \texttt{draft\_\allowbreak{}grid\_\allowbreak{}<실제 행 수>.\allowbreak{}csv} \\
+\end{longtable}
+}
+
+부분집합 추출은 원본 ID와 원본 행 순서를 유지한다. 요청 수가 원본보다 크면 전체 행을 선택한다. 현재 요약 출력에서 첫 두 행을 참조하므로 \texttt{-\allowbreak{}-\allowbreak{}n 0}/\texttt{-\allowbreak{}-\allowbreak{}n 1} 대신 2행 이상을 사용한다.
+
+\Needspace{7\baselineskip}
+\section{출력 CSV 해석}
+\label{sec:auto:06_python_batch:8}
+\subsection{\texttt{produce\_\allowbreak{}grid.\allowbreak{}py}의 열}
+\label{sec:auto:06_python_batch:8.1}
+반사도 \texttt{rho\_\allowbreak{}*}는 무차원이다. 아래 차감 제품은 해당 실행에서 계산한 세 반사도의 대수적 차이다. \textbf{차감 항등식이 성립한다는 사실만으로 물리 성분 분리가 정확하거나 C와 일치한다고 판단할 수 없다.} 서로 다른 수치 커널·절점·산란차수의 영향도 차이에 남을 수 있다.
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3400\linewidth-4.00pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.6600\linewidth-4.00pt\relax}@{}}
+\toprule
+\textbf{열} & \textbf{의미} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{열} & \textbf{의미} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{case\_\allowbreak{}id}, \texttt{band\_\allowbreak{}nm} & 조건 ID와 계산 파장 nm \\
+\texttt{sza,\allowbreak{}vza,\allowbreak{}raa,\allowbreak{}wind,\allowbreak{}aerosol,\allowbreak{}aod865,\allowbreak{}chl,\allowbreak{}tsm,\allowbreak{}acdom440} & 입력 조건 복사. 각도·풍속은 소수 4자리, 농도/AOD는 소수 6자리로 저장 \\
+\texttt{rho\_\allowbreak{}TOA} & R1: 대기--해양 결합 I 반사도. 직접 선글린트를 분리한 제품 \\
+\texttt{rho\_\allowbreak{}R} & R2: 에어로졸 없는 Rayleigh + 거친 Fresnel 해면 기준 I 반사도 \\
+\texttt{rho\_\allowbreak{}RpA} & R3: Rayleigh + 에어로졸 + 흑색 해양 위 Fresnel 해면 I 반사도 \\
+\texttt{rho\_\allowbreak{}RC} & \texttt{rho\_\allowbreak{}TOA - rho\_\allowbreak{}R} \\
+\texttt{rho\_\allowbreak{}A\_\allowbreak{}RA} & \texttt{rho\_\allowbreak{}RpA - rho\_\allowbreak{}R} \\
+\texttt{t\_\allowbreak{}rho\_\allowbreak{}w} & \texttt{rho\_\allowbreak{}TOA - rho\_\allowbreak{}RpA} \\
+\texttt{T\_\allowbreak{}dir\_\allowbreak{}dn} & 태양 방향 직달 대기투과율 \texttt{exp(-\ensuremath{\tau}/\allowbreak{}\ensuremath{\mu}sun)} \\
+\texttt{T\_\allowbreak{}diff\_\allowbreak{}dn\_\allowbreak{}hemi} & 하향 확산광의 반구 적분 기여 \\
+\texttt{T\_\allowbreak{}total\_\allowbreak{}dn\_\allowbreak{}hemi} & \texttt{Ed(0+) /\allowbreak{} (Fsun·\ensuremath{\mu}sun)} \\
+\texttt{T\_\allowbreak{}dir\_\allowbreak{}up\_\allowbreak{}view} & 관측 방향 직달 대기투과율 \texttt{exp(-\ensuremath{\tau}/\allowbreak{}\ensuremath{\mu}view)} \\
+\texttt{T\_\allowbreak{}total\_\allowbreak{}up\_\allowbreak{}view} & 실제 bottom-source 패스의 TOA 수광 radiance를 \texttt{Lu(0+)}로 나눈 유효 방향 투과율 \\
+\texttt{T\_\allowbreak{}diff\_\allowbreak{}up\_\allowbreak{}view} & \texttt{T\_\allowbreak{}total\_\allowbreak{}up\_\allowbreak{}view - T\_\allowbreak{}dir\_\allowbreak{}up\_\allowbreak{}view}. 각도 재분배 때문에 음수 가능; 일률적으로 0으로 잘라내지 않음 \\
+\texttt{TOA\_\allowbreak{}water\_\allowbreak{}signal\_\allowbreak{}I} & R1 내부 수중 기원 광원을 대기로 전달한 TOA radiance. \texttt{t\_\allowbreak{}rho\_\allowbreak{}w}와 단위가 다름 \\
+\texttt{T\_\allowbreak{}up\_\allowbreak{}rt\_\allowbreak{}valid} & \texttt{abs(Lu(0+)) > 0}이면 1, 아니면 0. 수치 수렴이나 전체 품질 판정 플래그가 아님 \\
+\texttt{rho\_\allowbreak{}wn} & \texttt{t\_\allowbreak{}rho\_\allowbreak{}w /\allowbreak{} (T\_\allowbreak{}total\_\allowbreak{}dn\_\allowbreak{}hemi·T\_\allowbreak{}total\_\allowbreak{}up\_\allowbreak{}view)}. 분모 0/NaN이면 NaN. 정규화 정의와 R1/R3 차이를 고려해 사용 \\
+\texttt{Rrs}, \texttt{Rrs\_\allowbreak{}I} & 같은 값. \texttt{Lu\_\allowbreak{}I(0+)/\allowbreak{}Ed(0+)}, sr\textsuperscript{-}\textsuperscript{1} \\
+\texttt{Rrs\_\allowbreak{}Q}, \texttt{Rrs\_\allowbreak{}U} & \texttt{Lu\_\allowbreak{}Q/\allowbreak{}U(0+)/\allowbreak{}Ed(0+)}, sr\textsuperscript{-}\textsuperscript{1}. I/Q/U 모두 동일한 I 하향 irradiance로 나눔 \\
+\texttt{rrs\_\allowbreak{}I}, \texttt{rrs\_\allowbreak{}Q}, \texttt{rrs\_\allowbreak{}U} & 수면 바로 아래 \texttt{Lu\_\allowbreak{}I/\allowbreak{}Q/\allowbreak{}U(0-)/\allowbreak{}Ed(0-)}, sr\textsuperscript{-}\textsuperscript{1} \\
+\texttt{a\_\allowbreak{}total,\allowbreak{}b\_\allowbreak{}total,\allowbreak{}bb\_\allowbreak{}total} & 해수 총 흡수·산란·후방산란계수, m\textsuperscript{-}\textsuperscript{1} \\
+\texttt{a\_\allowbreak{}w,\allowbreak{}b\_\allowbreak{}w,\allowbreak{}bb\_\allowbreak{}w} & 순수해수의 같은 세 계수, m\textsuperscript{-}\textsuperscript{1} \\
+\texttt{a\_\allowbreak{}chl} & 식물플랑크톤 흡수 기여만, m\textsuperscript{-}\textsuperscript{1} \\
+\texttt{a\_\allowbreak{}phyto\_\allowbreak{}detritus,\allowbreak{}b\_\allowbreak{}phyto\_\allowbreak{}detritus,\allowbreak{}bb\_\allowbreak{}phyto\_\allowbreak{}detritus} & 식물플랑크톤 + Chl 연동 쇄설물 합, m\textsuperscript{-}\textsuperscript{1}. 현재 식물플랑크톤 산란은 0 \\
+\texttt{a\_\allowbreak{}dom} & CDOM 흡수, m\textsuperscript{-}\textsuperscript{1} \\
+\texttt{a\_\allowbreak{}min,\allowbreak{}b\_\allowbreak{}min,\allowbreak{}bb\_\allowbreak{}min} & 광물의 흡수·산란·후방산란, m\textsuperscript{-}\textsuperscript{1} \\
+\texttt{Kd0minus} & 수면 바로 아래 하향 irradiance의 감쇠계수, m\textsuperscript{-}\textsuperscript{1} \\
+\end{longtable}
+}
+
+\texttt{T\_\allowbreak{}up\_\allowbreak{}rt\_\allowbreak{}valid=\allowbreak{}0}인 행의 상향 유효투과율과 \texttt{rho\_\allowbreak{}wn}은 NaN일 수 있다. NaN을 0으로 대체해서 학습·보정 자료에 넣지 않는다. 위 CSV에는 TOA Q/U, slope 선택값, 광물명, 압력, 버전, GPU/CPU 모드, 수치 설정, 수중 수렴 상태가 모두 저장되는 것은 아니다. 특히 optional slope 열은 입력에는 있어도 출력에 그대로 복사되지 않는다. 원본 CSV와 명령 로그를 반드시 함께 보관한다.
+
+Rrs가 필요하면 \texttt{Rrs\_\allowbreak{}I}를 직접 읽는다. \texttt{rho\_\allowbreak{}wn/\allowbreak{}\ensuremath{\pi}}와 Rrs의 관계를 검증하지 않고 서로 대체하지 않는다. \texttt{Rrs\_\allowbreak{}Q/\allowbreak{}U}가 음수라는 이유로 불량값으로 제거해서도 안 된다.
+
+\subsection{\texttt{ocrt\_\allowbreak{}solve.\allowbreak{}py}의 출력}
+\label{sec:auto:06_python_batch:8.2}
+\texttt{single}은 CSV가 아니라 표준출력 텍스트를 낸다. \texttt{conv/\allowbreak{}orders}와 일부 반사도·Rrs를 보여 준다. \texttt{-\allowbreak{}-\allowbreak{}which R2}처럼 R1을 실행하지 않은 경우 \texttt{conv/\allowbreak{}orders}는 \texttt{None}이다. R1에서 Q/U Rrs를 내부적으로 계산하더라도 현재 이 CLI 텍스트는 그 모든 키를 출력하지 않는다.
+
+\texttt{grid}는 다음 열들을 저장한다. 요청하지 않은 반사도 또는 조합에 필요한 피연산자가 없으면 해당 필드는 빈칸이다.
+
+
+\begin{ManualCode}
+row_id,wavelength_nm,tsm,chl,acdom440,aer_model,aod865,wind,sza,vza,raa,aod_band,
+rho_TOA_I,rho_R_I,rho_RA_black_I,rho_RC_I,rho_AplusRA_I,t_rho_w_I,Rrs,rrs0minus,
+rho_TOA_Q,rho_TOA_U,rho_R_Q,rho_R_U,rho_RA_black_Q,rho_RA_black_U,orders,conv,
+adom_slope,detritus_a440,detritus_slope
+\end{ManualCode}
+
+\texttt{rho\_\allowbreak{}RA\_\allowbreak{}black\_\allowbreak{}*}가 R3이고, \texttt{rho\_\allowbreak{}AplusRA\_\allowbreak{}I}는 R3-R2이다. \texttt{aod\_\allowbreak{}band}는 Mie 분광 소광비로 865 nm AOD를 계산 파장으로 변환한 값이다. \texttt{Rrs/\allowbreak{}rrs0minus}는 I 성분의 수면 위/아래 비율이다. 수중 \texttt{conv=\allowbreak{}1}을 확인하며, 이는 대기·전체 모델의 모든 정확성 검사를 대체하지 않는다. \texttt{orders}는 사용한 수중 최대 산란차수다.
+
+\subsection{\texttt{ocrt\_\allowbreak{}fullgrid.\allowbreak{}py}의 출력}
+\label{sec:auto:06_python_batch:8.3}
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3400\linewidth-4.00pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.6600\linewidth-4.00pt\relax}@{}}
+\toprule
+\textbf{열 묶음} & \textbf{의미} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{열 묶음} & \textbf{의미} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{case\_\allowbreak{}kind} & 현재 \texttt{ocean\_\allowbreak{}rrs\_\allowbreak{}grid} \\
+\texttt{sza\_\allowbreak{}deg,\allowbreak{}wavelength\_\allowbreak{}nm,\allowbreak{}wind\_\allowbreak{}speed\_\allowbreak{}ms} & 물리 조건 \\
+\texttt{mu\_\allowbreak{}index,\allowbreak{}mu\_\allowbreak{}view,\allowbreak{}vza\_\allowbreak{}deg,\allowbreak{}raa\_\allowbreak{}deg} & VZA 목록의 0기반 인덱스, \texttt{cos(VZA)}, 입력 각도 \\
+\texttt{Ed0plus\_\allowbreak{}air,\allowbreak{}Lu0plus\_\allowbreak{}I,\allowbreak{}Lu0plus\_\allowbreak{}Q,\allowbreak{}Lu0plus\_\allowbreak{}U} & 수면 위 하향 irradiance와 수출광 Stokes radiance \\
+\texttt{Rrs\_\allowbreak{}I,\allowbreak{}Rrs\_\allowbreak{}Q,\allowbreak{}Rrs\_\allowbreak{}U} & 위 radiance를 \texttt{Ed0plus\_\allowbreak{}air}로 나눈 값, sr\textsuperscript{-}\textsuperscript{1} \\
+\texttt{Ed0minus\_\allowbreak{}water,\allowbreak{}Lu0minus\_\allowbreak{}I,\allowbreak{}Lu0minus\_\allowbreak{}Q,\allowbreak{}Lu0minus\_\allowbreak{}U} & 수면 아래 대응 값 \\
+\texttt{rrs\_\allowbreak{}I,\allowbreak{}rrs\_\allowbreak{}Q,\allowbreak{}rrs\_\allowbreak{}U} & 수면 아래 radiance/irradiance 비, sr\textsuperscript{-}\textsuperscript{1} \\
+\texttt{TOA\_\allowbreak{}rho\_\allowbreak{}I,\allowbreak{}TOA\_\allowbreak{}rho\_\allowbreak{}Q,\allowbreak{}TOA\_\allowbreak{}rho\_\allowbreak{}U} & 직접 선글린트를 분리한 TOA Stokes 반사도 \\
+\texttt{a\_\allowbreak{}total,\allowbreak{}b\_\allowbreak{}total,\allowbreak{}bb\_\allowbreak{}total,\allowbreak{}omega\_\allowbreak{}water} & 해수 IOP 세 계수와 \texttt{b/\allowbreak{}(a+b)} \\
+\texttt{water\_\allowbreak{}orders,\allowbreak{}water\_\allowbreak{}converged} & 수중 최대 사용 산란차수·수렴 플래그 \\
+\texttt{aod\_\allowbreak{}ref,\allowbreak{}aod\_\allowbreak{}ref\_\allowbreak{}nm,\allowbreak{}aod\_\allowbreak{}target} & 기준 AOD·기준 파장 nm·계산 파장의 AOD \\
+\texttt{tau\_\allowbreak{}a\_\allowbreak{}eff,\allowbreak{}ssa\_\allowbreak{}a\_\allowbreak{}eff} & 에어로졸 처리 후 유효 광학두께·단일산란알베도 \\
+\end{longtable}
+}
+
+irradiance/radiance는 내부 \texttt{F\_\allowbreak{}sun\_\allowbreak{}TOA=\allowbreak{}1} 정규화에 따른 값이며, 실제 관측의 W 단위 분광복사휘도에 바로 대응시키지 않는다. 물리 절대량이 필요하면 입사 태양 스펙트럼의 정규화를 일관되게 적용한다. CSV에는 Chl/TSM/CDOM 입력 자체가 없으므로 상태 파일과 함께 묶는다.
+
+\section{GPU 대조와 검증 도구}
+\label{sec:auto:06_python_batch:9}
+
+\begin{ManualCode}
+python gpu_gate.py --grid results/pilot_8.csv --data data --bands 443,555 --chunk 4 --n-mu-water 24 --nt-atm 400 --m-max 16 --max-it-water 500 --tol 1e-7
+\end{ManualCode}
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3000\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2300\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.4700\linewidth-5.33pt\relax}@{}}
+\toprule
+\textbf{옵션} & \textbf{기본값} & \textbf{설명} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{옵션} & \textbf{기본값} & \textbf{설명} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{-\allowbreak{}h}, \texttt{-\allowbreak{}-\allowbreak{}help} & --- & 도움말 \\
+\texttt{-\allowbreak{}-\allowbreak{}grid PATH} & 필수 & 소규모 조건 CSV \\
+\texttt{-\allowbreak{}-\allowbreak{}data DIR} & 현재 폴더의 \texttt{data} & 자료 루트. \texttt{produce\_\allowbreak{}grid.\allowbreak{}py}와 기본 경로 기준이 다름 \\
+\texttt{-\allowbreak{}-\allowbreak{}bands LIST} & \texttt{443,\allowbreak{}555,\allowbreak{}865} & 쉼표로 구분한 정수 파장 \\
+\texttt{-\allowbreak{}-\allowbreak{}chunk N} & 8 & 배치 행 수 \\
+\texttt{-\allowbreak{}-\allowbreak{}n-\allowbreak{}mu-\allowbreak{}water N} & 24 & 수중/배치 대기 적분 절점 수 \\
+\texttt{-\allowbreak{}-\allowbreak{}nt-\allowbreak{}atm N} & 400 & R1/R3 대기 층 수 \\
+\texttt{-\allowbreak{}-\allowbreak{}m-\allowbreak{}max N} & 16 & R1/R3 대기 Fourier 상한 \\
+\texttt{-\allowbreak{}-\allowbreak{}max-\allowbreak{}it-\allowbreak{}water N} & 500 & 수중 산란차수 상한 \\
+\texttt{-\allowbreak{}-\allowbreak{}tol VALUE} & \texttt{1e-\allowbreak{}7} & CPU 대비 상대차의 통과 기준. 계산기 자체 수렴오차 옵션이 아님 \\
+\texttt{-\allowbreak{}-\allowbreak{}gpu-\allowbreak{}only} & 끄기 & CPU 비교를 생략하고 GPU 시간만 측정. 검증 통과로 해석하지 않음 \\
+\end{longtable}
+}
+
+대조 대상은 \texttt{rho\_\allowbreak{}TOA/\allowbreak{}rho\_\allowbreak{}R/\allowbreak{}rho\_\allowbreak{}RpA/\allowbreak{}Rrs} 네 가지 I 제품이다. 기체흡수는 켜고, 기본 광물은 \texttt{red\_\allowbreak{}clay}, 기본 Chl 경로를 사용한다. 광물·기체 on/off를 바꾸는 옵션은 없다. Q/U, 모든 IOP·투과율, C 결과를 검사하지 않는다. 코드상 NaN·누락 키를 엄격히 실패 처리하는 검사가 충분하지 않으므로, \textbf{PASS 문구와 별개로 두 계산의 키 수·모든 대상 값의 유한성을 확인한다.} 기준값이 0이면 분모를 1로 놓아 절대차처럼 계산한다.
+
+\texttt{verify.\allowbreak{}py}는 옵션 없는 과거 고정 기준값 검사다. 코드에 박힌 축소조건 C 기준 I 반사도 \texttt{2.\allowbreak{}2748060400e-\allowbreak{}01}와 상대차 \texttt{<1e-\allowbreak{}8}, 수중 \texttt{conv=\allowbreak{}1}을 검사한다. 현재 C 빌드·자료 SHA와 동기화된 기준임을 별도로 확인해야 하며, 이 한 케이스 PASS로 현재 C 전체 지원 범위를 보증하지 않는다. \texttt{diag\_\allowbreak{}gpu.\allowbreak{}py}는 옵션 없는 GPU 환경 진단 스크립트다.
+
+고급 환경변수는 기본 생산 예제에서 설정하지 않는다. \texttt{OCRT\_\allowbreak{}PY\_\allowbreak{}NATIVE\_\allowbreak{}COUPLED\_\allowbreak{}LUT\_\allowbreak{}OFF}는 공유 각도 LUT 대신 과거 셀 반복 경로, \texttt{OCRT\_\allowbreak{}PY\_\allowbreak{}AIR\_\allowbreak{}SURFACE\_\allowbreak{}CACHE\_\allowbreak{}OFF}는 해면 커널 캐시 비활성화용이며 비어 있지 않은 값이면 작동한다. \texttt{OCRT\_\allowbreak{}PY\_\allowbreak{}SEQ\_\allowbreak{}BCS=\allowbreak{}1}은 배치 경계 적분의 순차 경로 대조용이다. \texttt{OCRT\_\allowbreak{}VALUE\_\allowbreak{}PHASE\_\allowbreak{}SPLINE}, \texttt{OCRT\_\allowbreak{}WATER\_\allowbreak{}VALUE\_\allowbreak{}KERNEL\_\allowbreak{}POL}, \texttt{OCRT\_\allowbreak{}WATER\_\allowbreak{}MIE\_\allowbreak{}MOMENT\_\allowbreak{}N\_\allowbreak{}MU}, \texttt{OCRT\_\allowbreak{}WATER\_\allowbreak{}VALUE\_\allowbreak{}NPHI}는 raw \texttt{value\_\allowbreak{}phase}를 전달하는 수중 연구 경로에 관한 옵션으로, 고수준 성분 CLI를 자동으로 최신 C 직접 FR631 커널로 바꾸는 스위치가 아니다.
+
+\section{\texttt{campaign\_\allowbreak{}runner}: C 프로세스 캠페인 관리}
+\label{sec:auto:06_python_batch:10}
+이 도구는 Python RT 엔진과 별개다. 2026-08-22의 마이그레이션 배포 구조 \texttt{runtime-\allowbreak{}root/\allowbreak{}01\_\allowbreak{}OCRT\_\allowbreak{}C/\allowbreak{}}를 전제로 C 실행파일을 실행한다. \textbf{현재 GitHub 저장소 루트를 \texttt{-\allowbreak{}-\allowbreak{}runtime-\allowbreak{}root}로 주어 곧바로 실행하는 도구는 아니다.} \texttt{-\allowbreak{}-\allowbreak{}exe}를 지정해도 작업 폴더는 \texttt{runtime-\allowbreak{}root/\allowbreak{}01\_\allowbreak{}OCRT\_\allowbreak{}C}로 유지된다. 현재 저장소 기반의 새 생산 작업은 \ref{chap:08_input_formats}장과 부록~\ref{chap:04_examples}의 절차를 먼저 따른다.
+
+당시 설정·문서의 “PSSA ON”은 기록의 명칭이다. 실행 명령에는 \texttt{-\allowbreak{}-\allowbreak{}pssa}를 넣는데, \textbf{C v1.11.1에서는 이 스위치가 IPSS를 켠다.} 과거 C 실행파일은 다른 보정을 쓸 수 있으므로 바이너리 버전과 SHA를 반드시 같이 읽는다. 이 도구가 오래된 실행환경을 자동으로 최신 C로 바꿔 주지는 않는다.
+
+\subsection{실행 옵션}
+\label{sec:auto:06_python_batch:10.1}
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3000\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2300\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.4700\linewidth-5.33pt\relax}@{}}
+\toprule
+\textbf{옵션} & \textbf{기본값} & \textbf{설명} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{옵션} & \textbf{기본값} & \textbf{설명} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{-\allowbreak{}h}, \texttt{-\allowbreak{}-\allowbreak{}help} & --- & 도움말 \\
+\texttt{-\allowbreak{}-\allowbreak{}runtime-\allowbreak{}root DIR} & 필수 & \texttt{01\_\allowbreak{}OCRT\_\allowbreak{}C} 하위 폴더가 있는 마이그레이션 루트 \\
+\texttt{-\allowbreak{}-\allowbreak{}matrix CSV} & 필수 & 실제 C 명령 인자와 검증 조건을 담은 실행 행렬 \\
+\texttt{-\allowbreak{}-\allowbreak{}output-\allowbreak{}dir DIR} & 필수 & 결과·로그·매니페스트 저장 폴더 \\
+\texttt{-\allowbreak{}-\allowbreak{}config JSON} & 동봉 \texttt{config/\allowbreak{}polarization\_\allowbreak{}campaign\_\allowbreak{}pssa\_\allowbreak{}16core.\allowbreak{}json} & 실행 정책·환경·검증 조건 \\
+\texttt{-\allowbreak{}-\allowbreak{}exe PATH} & 자동 탐색 & 실행파일 절대/상대경로. 생략 시 \texttt{01\_\allowbreak{}OCRT\_\allowbreak{}C/\allowbreak{}build/\allowbreak{}}의 \texttt{ocrt\_\allowbreak{}polarization}, \texttt{ocrt}, \texttt{ocrt\_\allowbreak{}v1.\allowbreak{}2}와 \texttt{.\allowbreak{}exe} 변형 탐색 \\
+\texttt{-\allowbreak{}-\allowbreak{}workers N} & 설정 파일의 16 & 독립 C 프로세스 수. 현재 정책은 1--16 \\
+\texttt{-\allowbreak{}-\allowbreak{}pilot N} & 0, 제한 없음 & 첫 N행만 실행하고 용량·시간 추정 출력 \\
+\texttt{-\allowbreak{}-\allowbreak{}max-\allowbreak{}runs N} & 0, 제한 없음 & 실행 행 수 제한. \texttt{-\allowbreak{}-\allowbreak{}pilot} 절단 뒤 적용 \\
+\texttt{-\allowbreak{}-\allowbreak{}dry-\allowbreak{}run} & 끄기 & 명령과 실행설정만 생성, C 계산 생략. 바이너리·행렬 검사와 파일 생성은 수행 \\
+\texttt{-\allowbreak{}-\allowbreak{}keep-\allowbreak{}raw} & 끄기 & 검증·압축 후에도 원본 CSV 유지 \\
+\end{longtable}
+}
+
+기본 정책은 worker당 \texttt{OMP\_\allowbreak{}NUM\_\allowbreak{}THREADS=\allowbreak{}1}, \texttt{OCRT\_\allowbreak{}ADVANCED=\allowbreak{}1}, 직접 수중 입자 커널이며 광범위 truncation을 금지한다. 물 실행 행에 \texttt{-\allowbreak{}-\allowbreak{}n-\allowbreak{}mu-\allowbreak{}water}가 없으면 중단한다. \texttt{run\_\allowbreak{}campaign.\allowbreak{}py}는 \texttt{-\allowbreak{}-\allowbreak{}pssa}가 누락되면 추가하지만, 보관 명령을 변환하는 도구는 누락된 명령을 오류로 처리한다. 설정 파일은 정책 기록이며, 기능 지원 여부는 실제로 실행하는 C 버전에서 다시 확인한다.
+
+\subsection{행렬과 실행 예}
+\label{sec:auto:06_python_batch:10.2}
+행렬의 열은 \texttt{run\_\allowbreak{}id,\allowbreak{}stage,\allowbreak{}uses\_\allowbreak{}water,\allowbreak{}expected\_\allowbreak{}rows,\allowbreak{}output\_\allowbreak{}relpath,\allowbreak{}command\_\allowbreak{}args\_\allowbreak{}json,\allowbreak{}required\_\allowbreak{}columns\_\allowbreak{}json,\allowbreak{}expected\_\allowbreak{}vza\_\allowbreak{}json,\allowbreak{}expected\_\allowbreak{}raa\_\allowbreak{}json,\allowbreak{}notes}이다. \texttt{command\_\allowbreak{}args\_\allowbreak{}json}은 실행파일을 제외한 문자열 인자 목록이며, 셸 전체 명령문이나 파이프가 아니다. 출력 옵션은 실행기가 추가하므로 행렬에 \texttt{-\allowbreak{}-\allowbreak{}output-\allowbreak{}full-\allowbreak{}grid/\allowbreak{}-\allowbreak{}-\allowbreak{}batch-\allowbreak{}full-\allowbreak{}grid/\allowbreak{}-\allowbreak{}-\allowbreak{}output}을 넣지 않는다. \texttt{run\_\allowbreak{}id}는 고유해야 한다. 출력 상대경로는 캠페인 폴더 안의 파일명으로 정한다.
+
+기존 마이그레이션 실행환경이 준비된 경우, \texttt{code/\allowbreak{}campaign\_\allowbreak{}runner}에서:
+
+
+\begin{ManualCode}
+python runner/run_campaign.py --runtime-root runtime/MIGRATION_PKG_2026-08-19 --matrix matrices/PURE_RAYLEIGH_15RUN_MATRIX.csv --output-dir results/rayleigh_reference --workers 4 --pilot 2 --dry-run
+python runner/run_campaign.py --runtime-root runtime/MIGRATION_PKG_2026-08-19 --matrix matrices/PURE_RAYLEIGH_15RUN_MATRIX.csv --output-dir results/rayleigh_reference --workers 4 --pilot 2
+python runner/monitor_progress.py --output-dir results/rayleigh_reference
+\end{ManualCode}
+
+실제 명령·격자·결과를 확인한 뒤 \texttt{-\allowbreak{}-\allowbreak{}pilot 2}를 빼고 같은 출력 폴더로 이어서 실행한다. 압축 결과가 존재하면 구조·행 수·지정 VZA/RAA·선택한 수치 열의 유한성을 다시 검사해 재사용한다. 이 재사용도 모든 입력 설정의 물리적 동일성을 자동 보증하지 않으므로 다른 명령 행렬에는 새 출력 폴더를 쓴다.
+
+\texttt{PURE\_\allowbreak{}RAYLEIGH\_\allowbreak{}15RUN\_\allowbreak{}MATRIX.\allowbreak{}csv}는 5파장 \ensuremath{\times} 3 SZA의 알려진 기준이다. \texttt{HISTORICAL\_\allowbreak{}RUN\_\allowbreak{}MATRIX\_\allowbreak{}REQUIRED.\allowbreak{}csv}는 과거 8,045건을 복원한 완성 행렬이 아니므로 빈 상태의 전체 캠페인을 실행할 수 없다. 누락된 조건을 추측해서 역사적 재현으로 부르지 않는다.
+
+출력은 다음과 같다.
+
+
+\begin{ManualCode}
+results/<campaign>/
+  run_config.json             실행환경·입력행렬·바이너리 SHA
+  run_commands.txt            실제 C 인자
+  run_manifest.csv            실행별 상태·시간·행 수·SHA·로그 경로
+  RUN_SUMMARY.json            실행 요약
+  PILOT_OR_RUN_ESTIMATE.json  용량·시간 추정
+  logs/*.stdout.log
+  logs/*.stderr.log
+  <stage>/*.csv.gz            검증 후 확정한 원본 결과
+\end{ManualCode}
+
+검증을 통과한 CSV를 압축하고 최종 이름으로 바꾼다. 현재 검증기의 유한성 검사는 지정된 일부 출력 열에 한정되므로 모든 열의 과학적 유효성 검사와 동일하지 않다. 시간 추정 파일의 \texttt{estimated\_\allowbreak{}16\_\allowbreak{}worker\_\allowbreak{}wall\_\allowbreak{}s\_\allowbreak{}ideal}은 이름 그대로 16 worker로 나눈 이상적 값이다. \texttt{-\allowbreak{}-\allowbreak{}workers 4} 같은 실제 설정의 예상시간으로 읽지 않는다.
+
+\subsection{보조 도구의 전체 옵션}
+\label{sec:auto:06_python_batch:10.3}
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3400\linewidth-4.00pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.6600\linewidth-4.00pt\relax}@{}}
+\toprule
+\textbf{도구} & \textbf{옵션} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{도구} & \textbf{옵션} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{monitor\_\allowbreak{}progress.\allowbreak{}py} & \texttt{-\allowbreak{}h/\allowbreak{}-\allowbreak{}-\allowbreak{}help}, 필수 \texttt{-\allowbreak{}-\allowbreak{}output-\allowbreak{}dir}. 매니페스트의 상태별 수량·용량·최근 행을 읽음 \\
+\texttt{build\_\allowbreak{}matrix\_\allowbreak{}from\_\allowbreak{}run\_\allowbreak{}commands.\allowbreak{}py} & \texttt{-\allowbreak{}h/\allowbreak{}-\allowbreak{}-\allowbreak{}help}, 필수 \texttt{-\allowbreak{}-\allowbreak{}commands}, 필수 \texttt{-\allowbreak{}-\allowbreak{}output}, \texttt{-\allowbreak{}-\allowbreak{}default-\allowbreak{}expected-\allowbreak{}rows} 기본 1296. 보관된 정확한 명령을 행렬과 \texttt{.\allowbreak{}audit.\allowbreak{}csv}로 변환 \\
+\texttt{inspect\_\allowbreak{}historical\_\allowbreak{}package.\allowbreak{}py} & \texttt{-\allowbreak{}h/\allowbreak{}-\allowbreak{}-\allowbreak{}help}, 필수 \texttt{-\allowbreak{}-\allowbreak{}archive}, \texttt{-\allowbreak{}-\allowbreak{}output-\allowbreak{}dir} 기본 \texttt{historical\_\allowbreak{}import}. 과거 tar에서 조건·명령 기록과 SHA를 추출 \\
+\texttt{setup\_\allowbreak{}runtime.\allowbreak{}py} & \texttt{-\allowbreak{}h/\allowbreak{}-\allowbreak{}-\allowbreak{}help}, 필수 \texttt{-\allowbreak{}-\allowbreak{}parts-\allowbreak{}dir}, 필수 \texttt{-\allowbreak{}-\allowbreak{}runtime-\allowbreak{}dir}, \texttt{-\allowbreak{}-\allowbreak{}verify-\allowbreak{}only}, \texttt{-\allowbreak{}-\allowbreak{}no-\allowbreak{}python-\allowbreak{}data}, \texttt{-\allowbreak{}-\allowbreak{}no-\allowbreak{}build}, \texttt{-\allowbreak{}-\allowbreak{}march} 기본 \texttt{auto} (\texttt{auto/\allowbreak{}cascadelake/\allowbreak{}x86-\allowbreak{}64-\allowbreak{}v3/\allowbreak{}x86-\allowbreak{}64}), \texttt{-\allowbreak{}-\allowbreak{}full-\allowbreak{}mie-\allowbreak{}hash-\allowbreak{}audit}, \texttt{-\allowbreak{}-\allowbreak{}extract-\allowbreak{}workers} 기본 4, \texttt{-\allowbreak{}-\allowbreak{}force} \\
+\end{longtable}
+}
+
+\texttt{setup\_\allowbreak{}runtime.\allowbreak{}py}는 당시 마이그레이션 기반 파일·정책 overlay·PART00--PART10 묶음을 요구하는 복원 설치기다. 현재 \texttt{data-\allowbreak{}v1} zip 네 개를 받는 \texttt{fetch\_\allowbreak{}data}와 다른 절차다. \texttt{-\allowbreak{}-\allowbreak{}verify-\allowbreak{}only}는 입력 압축파일 검증 후 종료, \texttt{-\allowbreak{}-\allowbreak{}no-\allowbreak{}python-\allowbreak{}data}는 Python 짝 자료 설치 생략, \texttt{-\allowbreak{}-\allowbreak{}no-\allowbreak{}build}는 빌드 생략, \texttt{-\allowbreak{}-\allowbreak{}full-\allowbreak{}mie-\allowbreak{}hash-\allowbreak{}audit}는 추출된 전체 Mie SHA 검사이다. \textbf{\texttt{-\allowbreak{}-\allowbreak{}force}는 이미 존재하는 \texttt{-\allowbreak{}-\allowbreak{}runtime-\allowbreak{}dir}을 삭제하고 다시 만든다.} 원래 보관 자료·결과를 두는 폴더에 쓰지 않는다.
+
+\section{작성·확인 근거}
+\label{sec:auto:06_python_batch:11}
+\begin{itemize}
+\item \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_Python/produce_grid.py}{배치 CLI와 출력 필드}
+\item \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_Python/ocrt_solve.py}{단일/순차 격자 CLI}
+\item \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_Python/ocrt_fullgrid.py}{각도 LUT CLI}, \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_Python/ocrt_py/lut.py}{각도 LUT 출력}
+\item \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_Python/ocrt_py/batch_driver.py}{배치 계산 경로·투과율 정의}, \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_Python/ocrt_py/driver.py}{단일 결합 경로}
+\item \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_Python/ocrt_py/constituent.py}{성분 모델·EAP gate}, \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_Python/ocrt_py/backend.py}{배열 backend}
+\item \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_Python/gpu_gate.py}{GPU 대조 도구}, \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_Python/verify.py}{과거 C 기준 검사}
+\item \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/scripts/MIE_SHA256SUMS_data-v1.txt}{현재 배포 자료 매니페스트}
+\item \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/campaign_runner/runner/run_campaign.py}{C 캠페인 실행기}, \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/campaign_runner/config/polarization_campaign_pssa_16core.json}{기본 설정}
+\end{itemize}
+
+이 부록의 검사는 실제 도움말 출력, 입력 파서, 출력 필드, 함수 호출 경로, 로컬 자료 로딩을 대조하고 \ref{sec:auto:06_python_batch:7.1}절의 R2 한 점 실행을 확인한 것이다. GPU 실행·현재 C와의 전체 정밀도 대조·EAP 보조자료가 필요한 R1 실행 성공을 새로 검증했다는 의미는 아니다.
+

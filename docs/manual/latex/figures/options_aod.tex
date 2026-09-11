@@ -1,0 +1,23 @@
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[x=1cm,y=1cm,font=\sffamily\fontsize{9}{11}\selectfont,>=Latex]
+\node[align=center,font=\sffamily\bfseries\fontsize{10}{12}\selectfont] at (7.7,5.3) {\FigLang{AOD를 지정하는 파장과 복사전달 계산 파장을 구분한다}{Separate the AOD reference wavelength from the RT calculation wavelength}};
+\draw[->,ocrtGray,thick] (0.8,3.5)--(14.8,3.5) node[above left] {$\lambda$ (nm)};
+\foreach \x in {1.3,2.6,3.9,5.2,6.5,7.8,9.1,10.4,11.7,13.0}{\draw[ocrtLine] (\x,3.43)--(\x,3.57);}
+\draw[orange!85!black,very thick] (3.8,3.28)--(3.8,3.75);
+\draw[ocrtTeal,very thick] (10.3,3.28)--(10.3,3.75);
+\node[align=center,text width=6cm] at (3.8,4.35) {\texttt{--wavelength 443}\\$\lambda=443\;\mathrm{nm}$};
+\node[align=center,text width=6cm] at (10.3,4.35) {\texttt{--aod-555 0.1}\\$\lambda_{\rm ref}=555\;\mathrm{nm},\quad \tau_a(555)=0.1$};
+\draw[->,orange!85!black,thick] (3.8,3.22)--(3.8,2.05);
+\draw[->,ocrtTeal,thick] (10.3,3.22)--(10.3,2.05);
+\node[draw=ocrtLine,fill=ocrtTeal!6,rounded corners=2pt,minimum width=13.3cm,minimum height=1.3cm] at (7.05,1.32) {};
+\node at (3.8,1.57) {$C_{\rm ext}(443)$};
+\node at (10.3,1.57) {$C_{\rm ext}(555)$};
+\node[align=center] at (7.05,0.94) {\FigLang{같은 \texttt{--mie FILE}에서 두 파장의 소광값을 평가}{Evaluate both extinction values from the same \texttt{--mie FILE}}};
+\draw[->,orange!85!black,thick] (3.8,0.62)--(5.55,-0.22);
+\draw[->,ocrtTeal,thick] (10.3,0.62)--(8.55,-0.22);
+\node[align=center,text width=15cm] at (7.7,-0.72) {$\displaystyle \tau_a(\lambda)=\tau_a(\lambda_{\rm ref})\frac{C_{\rm ext}(\lambda)}{C_{\rm ext}(\lambda_{\rm ref})}\qquad\Longrightarrow\qquad \tau_a(443)=0.1\frac{C_{\rm ext}(443)}{C_{\rm ext}(555)}$};
+\end{tikzpicture}
+\caption{\FigLang{\texttt{--aod-555}, \texttt{--aod-865}, 또는 \texttt{--aod}와 \texttt{--aod-ref-wavelength}는 기준 AOD를 지정한다. \texttt{--wavelength}는 실제 계산 파장이다. 그림은 두 입력의 역할을 보여 주는 개념 축이며 수치 간격은 축척이 아니다. 파장별 AOD 비율은 사용한 Mie 파일에서 계산하므로 443 nm에서도 AOD가 자동으로 0.1이라고 가정하지 않는다.}{\texttt{--aod-555}, \texttt{--aod-865}, or \texttt{--aod} with \texttt{--aod-ref-wavelength} sets reference AOD; \texttt{--wavelength} sets the calculation wavelength. The axis distinguishes their roles and is not to scale. The Mie file determines the spectral extinction ratio, so the AOD at 443 nm is not automatically 0.1.}}
+\label{fig:options-aod}
+\end{figure}

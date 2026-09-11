@@ -1,0 +1,44 @@
+% Authoritative Korean source. Edit chapter files in ko/, then run build.py.
+\documentclass[11pt,a4paper,oneside]{report}
+\newcommand{\EditionShort}{KO}
+\input{common/preamble}
+\renewcommand{\contentsname}{목차}
+\renewcommand{\chaptername}{장}
+\renewcommand{\appendixname}{부록}
+\renewcommand{\figurename}{그림}
+\hypersetup{pdftitle={OCRT 사용자 매뉴얼},pdfsubject={설치, 관측 기하, 전체 옵션, LUT, 시뮬레이션과 입출력 형식},pdfauthor={OCRT project},pdflang={ko-KR}}
+\begin{document}
+\ManualTitlePage{사용자 매뉴얼}{한국어판}{}{}
+\pagenumbering{roman}
+\chapter*{이 매뉴얼에 대하여}
+\addcontentsline{toc}{chapter}{이 매뉴얼에 대하여}
+OCRT는 해색 대기보정과 대기--해양 복사전달 시뮬레이션을 위한 코드다. 본문은 OCRT의 개념, 설치, 옵션, 입력 형식과 출력 해석을 설명한다. 앞부분의 Quick start로 첫 계산을 확인할 수 있다. 상세 활용 예시, LUT 제작, 시뮬레이션 자료 생성, Python 및 보조 코드의 사용법은 부록에서 다룬다.
+
+문서 기준은 2026-09-11의 C 문서 릴리스 v1.11.1이다. 기준 소스 커밋은 다음과 같다.
+
+\texttt{54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d}
+
+실행 파일의 버전 문자열만으로 최신 소스 여부를 판정하지 않는다. Python 지원 범위는 C와 별도로 설명한다.
+
+\textbf{OCRT의 RAA=180도는 선글린트 가지다.} 위성 방위각 변환과 편광 U 부호는 \ref{chap:01_concepts_geometry}장을 먼저 읽고 확인한다. 대기보정용 Rayleigh LUT는 기체흡수, 에어로졸 및 직달 선글린트 포함 여부를 먼저 결정한다.
+
+이 문서는 현행 구현을 설명한다. 기본값과 실제 효과가 다른 과거 도움말, 지원되지 않는 조합, 검증하지 않은 조건은 해당 장에서 구분한다. 예시 실행의 성공은 전체 생산 격자의 과학적 정확도를 보증하지 않는다.
+
+한글판과 영문판은 같은 장 구성과 옵션 이름을 사용한다. 앞으로의 수정 원본은 이 디렉토리의 LaTeX이며, 이전 Markdown은 최초 초안 기록이다. 공개 라이선스와 인용 조건은 저장소의 \href{https://github.com/brtnt/OCRT/blob/main/LICENSE}{LICENSE}를 확인한다.
+\tableofcontents
+\clearpage
+\input{ko/00_quick_start}
+\clearpage\pagenumbering{arabic}
+\input{ko/01_concepts_geometry}
+\input{ko/02_installation}
+\input{ko/03_options}
+\input{ko/08_input_formats}
+\input{ko/05_output_formats}
+\input{ko/07_validation_notes}
+\appendix
+\input{ko/04_examples}
+\input{ko/06_python_batch}
+\input{ko/09_cookbook}
+\input{ko/examples_readme}
+\input{ko/03_environment_index}
+\end{document}

@@ -1,0 +1,150 @@
+% Authoritative LaTeX chapter. Edit this file for future revisions.
+% Initially migrated 2026-09-11; no Markdown import occurs during PDF builds.
+\chapter{검증, 문제 해결과 문서 근거}
+\label{chap:07_validation_notes}
+\begingroup
+\setlength{\parskip}{3pt}
+목차 · \hyperref[chap:03_options]{전체 옵션} · \hyperref[chap:03_environment_index]{환경변수 소스 색인}
+
+\section{이 매뉴얼에서 확인한 범위}
+\label{sec:auto:07_validation_notes:1}
+2026-09-11에 기준 커밋 \texttt{54861c68e35ec5aa\allowbreak{}a3938fad53e93dc2\allowbreak{}dfa7eb1d}의 코드를 읽고 옵션과 출력문을 대조했다. C 문서 릴리스는 v1.11.1이지만 \texttt{-\allowbreak{}-\allowbreak{}version}은 오래된 \texttt{OCRT-\allowbreak{}v1.\allowbreak{}2-\allowbreak{}2026-\allowbreak{}08-\allowbreak{}16-\allowbreak{}KST-\allowbreak{}mie-\allowbreak{}fr631-\allowbreak{}direct-\allowbreak{}truncation} 문자열을 유지한다.
+
+C는 Ubuntu/WSL의 GCC 15.2.0, \texttt{-\allowbreak{}march=\allowbreak{}x86-\allowbreak{}64-\allowbreak{}v3}, 저장소의 최적화·OpenMP 옵션으로 현재 소스를 새로 빌드했다. \texttt{OMP\_\allowbreak{}NUM\_\allowbreak{}THREADS=\allowbreak{}1}로 다음 작은 사례를 실행하고 종료코드 0을 확인했다. 소스 변경 없이 문서와 예시 도구만 추가했다.
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3000\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2300\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.4700\linewidth-5.33pt\relax}@{}}
+\toprule
+\textbf{사례} & \textbf{핵심 조건} & \textbf{확인} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{사례} & \textbf{핵심 조건} & \textbf{확인} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+검은 경계 Rayleigh 단일 기하 & 555 nm, SZA40/VZA30/RAA90, P1013.25, 6기체0 & 정상 실행 \\
+해면 포함 Rayleigh LUT & 555 nm, SZA40, 풍속5, 직달 glint 제외, VZA0/\allowbreak{}30/\allowbreak{}60\ensuremath{\times}\allowbreak{}RAA0/\allowbreak{}90/\allowbreak{}180/\allowbreak{}270 & 12행, 13열, 유한수 \\
+위 Rayleigh LUT에 IPSS & 동일 조건, \texttt{-\allowbreak{}-\allowbreak{}pssa} & 12행, 13열, 유한수 \\
+에어로졸 단일 기하 & 555 nm, M80C, AOD555=0.1, 풍속5, 6기체0 & 정상 실행 \\
+OCRT CDOM 단일 기하 & 555 nm, aDOM440=0.1, Chl/TSM0, 풍속3, 기본 기체 & 정상 실행 \\
+OCRT CDOM LUT & 위 상태, 12개 방향 & 12행, 60열, 유한수, \texttt{Rrs=\allowbreak{}Lu/\allowbreak{}Ed}와 하향 전달량 합계 확인 \\
+CCRR 단일 기하 & 555 nm, Chl1, TSM0, aDOM440=0.02, 풍속3 & 정상 실행 \\
+직접 IOP 단일 기하 & 555 nm, a0.1/b0.2/bb0.005 m\textsuperscript{-}\textsuperscript{1}, 풍속3 & 정상 실행 \\
+기체흡수 예시 & 760 nm, tropical, H\textsubscript{2}O 3 g/cm\textsuperscript{2}, O\textsubscript{3} 300 DU & 정상 실행 \\
+순수 해수 & 555 nm, OCRT 성분 모두0, 풍속3, 기본 기체 & 정상 실행 \\
+Chl·TSM·쇄설물 & 555 nm, Chl1/TSM0.5/aDOM0.02, red\_clay, detritus a440=0.01 & 정상 실행 \\
+C 전체 격자 배치 & 443/555 nm 두 행, CDOM0.1, 굴절률1.34 명시, 각12방향 & 정상 실행 \\
+문서 C LUT 도구 & Rayleigh와CDOM simulation 각각1상태 & 계획 생성 및 실제 12행 계산 확인 \\
+Python R2 단일 기하 & 555 nm, SZA30/VZA20/RAA90, 풍속5, P1013.25, 400층, 기체off & Windows/NumPy 2.3.5에서 실행; \texttt{rho\_\allowbreak{}R\_\allowbreak{}I=\allowbreak{}0.\allowbreak{}038982239255} \\
+\end{longtable}
+}
+
+전체 C 파서의 인식 이름 \textbf{168개}가 \hyperref[chap:03_options]{\ref*{chap:03_options}장}에 포함되는지 추출 목록으로 검사했다. 일반 옵션 외의 별칭·호환·진단 이름도 포함한 수다. C 환경변수 \textbf{149개}는 별도 소스 색인에 실었다. Python 주요 계산·캠페인 CLI의 옵션도 파서와 대조했고, 예제 상태표의 6행이 두 입력 리더에서 해석됨을 확인했다.
+
+이 확인은 설치·예시·문서 형식의 확인이다. 모든 옵션의 물리 효과를 조합별로 실행했다는 뜻은 아니다. 전체 센서 격자, 모든 Mie 모델, 모든 파장과 고농도 상태를 생산 검증한 결과도 아니다. 예시의 다른 파장·농도·각도, Windows 네이티브 재빌드, 전체 IPSS 회귀 스크립트의 이번 실행은 위 표의 확인 범위에 포함되지 않는다. Python 성분 배치는 아래 EAP 자료 제한으로 수치 실행을 확인하지 못했다.
+
+\section{기존 도움말과 현재 구현의 차이}
+\label{sec:auto:07_validation_notes:2}
+새 사용법은 현재 파서와 실제 실행 경로를 근거로 했다. 낡은 도움말을 그대로 실행 예제로 옮기지 않았다.
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3400\linewidth-4.00pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.6600\linewidth-4.00pt\relax}@{}}
+\toprule
+\textbf{항목} & \textbf{현재 확인된 동작·사용 지침} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{항목} & \textbf{현재 확인된 동작·사용 지침} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+RAA & 180\textdegree{}가 선글린트 가지. 일부 미사용 helper의 산란각 설명은 생산 Fourier/IPSS 경로와 불일치한다. \hyperref[chap:01_concepts_geometry]{\ref*{chap:01_concepts_geometry}장}의 기준을 따른다. \\
+\texttt{-\allowbreak{}-\allowbreak{}pssa} & IPSS 단일 알고리즘. \texttt{-\allowbreak{}-\allowbreak{}pssa-\allowbreak{}mode} 제거, 결합 해양 미지원. \\
+기체 컬럼 단위 & O\textsubscript{2}/CO\textsubscript{2}/CH\textsubscript{4}는 molecules/cm\textsuperscript{2}. 도움말의 mol/cm\textsuperscript{2}를 화학의 몰 단위로 해석하지 않는다. \\
+일반 \texttt{-\allowbreak{}-\allowbreak{}batch} & 기체 초기화 이전 분기, 기압 등 일부 입력의 행 전달 제한. 일반 단일·격자 실행과 동등하다고 가정하지 않는다. \\
+해양 격자 기본값 & \texttt{-\allowbreak{}-\allowbreak{}output-\allowbreak{}full-\allowbreak{}grid} 명시 여부로 초기화 시점의 수중 노드 수가 달라질 수 있다. 명시적 파일 옵션을 사용한다. \\
+해양 선글린트 & 기본 해양 TOA는 직달 glint가 분리된 값. 단일 출력은 glint-on 키를 별도로 제공하지만 해양 격자 CSV에는 그 키가 없다. \\
+비해양 glint U 진단 & 진단 키의 부호가 총량에 가산한 부호와 다르다. 별도 decouple 실행으로 분리를 확인한다. \\
+입사광 스케일 & 수중 경로에 따라 \texttt{F\_\allowbreak{}sun=\allowbreak{}1} 또는 \ensuremath{\pi}. 모드 간 원시 Lu/Ed 숫자를 정규화 확인 없이 비교하지 않는다. \\
+수치 조절 인자 & 인식되지만 현재 솔버에서 효과가 없는 과거 필드가 있다. 실제 SOS 제어와의 차이는 \ref{chap:03_options}장 참조. \\
+식물플랑크톤 산란 & C의 EAP 성분 산란은 비활성. Chl 입력의 전체 광학 의미를 출력 IOP로 확인한다. \\
+Python 설치 & 현 공개 자료 manifest에 EAP 파일이 없어 특정 성분 생성자 초기화가 실패한다. Rayleigh 단일 경로의 성공을 모든 모드 성공으로 확대하지 않는다. \\
+Python/C 동등성 & Python은 IPSS CLI가 없고, Python 내부에서도 단일/배치 경로가 커널을 다르게 선택한다. 동일 조건의 출력 비교가 별도로 필요하다. \\
+\end{longtable}
+}
+
+이 항목들은 코드 수정 사항이 아니라 매뉴얼이 사용자에게 설명하는 현행 제한이다.
+
+\section{오류와 대응}
+\label{sec:auto:07_validation_notes:3}
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3400\linewidth-4.00pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.6600\linewidth-4.00pt\relax}@{}}
+\toprule
+\textbf{증상} & \textbf{확인할 점} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{증상} & \textbf{확인할 점} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+입력 파일을 찾지 못함 & 현재 디렉토리가 \texttt{code/\allowbreak{}OCRT\_\allowbreak{}C}인지, 소형 입력·Mie 자료가 설치됐는지, 파일명의 대소문자가 맞는지 확인 \\
+\texttt{Illegal instruct\allowbreak{}ion} 또는 실행 즉시 종료 & 실행 파일을 CPU가 지원하는 \texttt{-\allowbreak{}march}로 다시 빌드; 오래된 별도 exe를 호출하지 않았는지 확인 \\
+\texttt{-\allowbreak{}-\allowbreak{}surface is requi\allowbreak{}red} & black/flat/black\_fresnel\_ocean/ocean 중 하나를 명시 \\
+wind 필수 오류 & ocean/black\_fresnel\_ocean에서 \texttt{-\allowbreak{}-\allowbreak{}wind-\allowbreak{}speed} 지정; 무풍도0 명시 \\
+단일 기하·격자 충돌 & VZA/RAA를 둘 다 지정하거나 둘 다 생략; 단일 모드에 LUT 간격 옵션을 붙이지 않음 \\
+unknown argument & \texttt{-\allowbreak{}-\allowbreak{}key value} 형식 사용; 삭제된 이름과 \texttt{-\allowbreak{}-\allowbreak{}key=\allowbreak{}value} 형식 여부 확인 \\
+ADVANCED/DEBUG 요구 & \hyperref[chap:03_options]{옵션 표}에서 목적과 효과를 확인하고 필요한 환경변수만 사용 \\
+Rayleigh 기준값에 흡수가 포함됨 & 6기체 모두0인지 확인; 기압0은 기체off가 아님 \\
+\texttt{water-\allowbreak{}model} 또는 branch prefix 오류 & ocrt/ccrr/iop 한 종류를 한 번 선택하고 필수3값 모두 제공 \\
+AOD/파일 조합 오류 & AOD>0일 때 Mie 필요, AOD0일 때 에어로졸 전용 옵션 제거 \\
+Python EAP 파일 누락 & \hyperref[chap:06_python_batch]{부록~\ref*{chap:06_python_batch}}의 자료 제한 확인; 가짜 파일이나 다른 입자 자료로 대체하지 않음 \\
+\texttt{Rrs\_\allowbreak{}I} 중복 열 오류 & 대소문자를 구분하는 Python CSV 리더 사용; Rrs와rrs를 합치지 않음 \\
+CSV의 NaN & 해당 값의 정의와 \texttt{T\_\allowbreak{}up\_\allowbreak{}rt\_\allowbreak{}valid} 확인. 상향 전달량이 정의되지 않은 조건의 NaN과 주요 관측량 계산 실패를 구별 \\
+미수렴·이상한 편광 & 종료코드, stderr, 수렴 플래그, SZA/VZA/RAA, 좌표계, 수치 설정 확인; 0으로 덮어쓰지 않음 \\
+\end{longtable}
+}
+
+표준에러를 버리지 않는다. 마지막 에러 한 줄뿐 아니라 입력자료·기체·모델·수렴 관련 진단을 함께 남겨야 원인을 구별할 수 있다.
+
+\section{입력 파일 계약과 장기 보관}
+\label{sec:auto:07_validation_notes:4}
+FR631 Mie, AFGL, 기체 단면적, 사용자 IOP LUT는 확장자가 같다고 내용이 호환되는 것이 아니다. 파장 단위·범위, 각도 순서와 정규화, 위상행렬 성분, 컬럼을 기존 리더에 맞춘다. 사용자 자료는 배포 원본을 덮어쓰지 않고 별도 파일로 관리한다.
+
+\begin{itemize}
+\item \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_C/docs/OCRT_330_1100_FR631_INTEGRATION_GUIDE_KO.md}{스펙트럼 입력 통합 가이드}
+\item \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_C/docs/OCRT_330_1100_FR631_SPECTRAL_DATA_TECHNICAL_NOTE_KO.md}{스펙트럼 자료 기술 설명}
+\item \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_C/docs/OCRT_MIE_GRID_TRUNCATION_AND_VALIDATION_ARTIFACT_POLICY_2026-08-21.md}{FR631 truncation 정책}
+\item \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_C/docs/OCRT_AOD_REFERENCE_WAVELENGTH_KO.md}{AOD 기준파장 설명}
+\end{itemize}
+
+LUT의 최소 메타데이터는 소스/실행파일/자료 버전, 파장·기하·기압·풍속·수질 축, AOD 기준파장, 기체 프로파일·컬럼, 표면과glint 정의, IPSS 여부, RAA/편광 좌표계, 수치 옵션, 단위, 유효성 플래그, 생성 명령이다. 개별 CSV에 없는 상태 변수도 사례표에 남긴다.
+
+\section{매뉴얼 갱신 근거}
+\label{sec:auto:07_validation_notes:5}
+구현 확인의 출발점:
+
+\begin{itemize}
+\item \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_C/src/main.c}{main.c: CLI, 분기, 해양 CSV}
+\item \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_C/src/rt_io.c}{rt\_io.c: 단일/배치 출력}
+\item \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_C/src/rt_solver.c}{rt\_solver.c: 대기·해양 결합과 정규화}
+\item \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_C/src/rt_fourier.c}{rt\_fourier.c: 방위각 재구성}
+\item \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_C/src/rt_ipss.c}{rt\_ipss.c: 구면 기하와 보정}
+\item \href{https://github.com/brtnt/OCRT/tree/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_Python}{Python 코드}
+\end{itemize}
+
+새 옵션은 이름·기본값·단위·허용범위·모드·게이트·실제 효과를 함께 갱신한다. 출력 헤더를 바꾸면 \ref{chap:05_output_formats}장의 열 목록과 읽기 예시도 갱신한다. RAA·편광·정규화·선글린트 처리 변경은 개념 장, 예시, 출력 장 세 곳을 함께 수정한다. 과거 실험 문서는 원래 검증 조건을 보존하고 현재 설명에서 링크한다.
+
+\section{그림과 핵심 예시의 검증 기록}
+\label{sec:auto:07_validation_notes:6}
+부록~\ref{chap:09_cookbook}은 핵심 예시 10개, C 명령 13개로 구성한다. 명령은 2026년 9월 11일의 실행 기록에서 변경 없이 선별했다. 출력 구조·주요 수치의 유한성·해당 수렴 표시를 확인했고, R39의 개별·배치 실행은 두 파장에서 모든 CSV 필드가 같았다. 현재 요약은 \path{examples/verification_core_examples.json}, 실제 C 방위각 그림의 자료는 \path{latex/figures/data/}에 있다.
+
+이 검사는 모든 조건의 물리적 정확도를 보증하지 않는다. 과거 강한 기체흡수 검사에서는 수렴 표시가 1이어도 대기층 수에 민감한 결과가 있었다. 원본 40개와 과거 진단은 \path{review/}에 보관한다. 실제 활용 조건에서는 해상도 수렴과 기준 자료 비교를 별도로 수행한다.
+\par\endgroup

@@ -1,0 +1,482 @@
+% Authoritative LaTeX chapter. Edit this file for future revisions.
+% Initially migrated 2026-09-11; no Markdown import occurs during PDF builds.
+\chapter{Detailed Examples and LUT Generation}
+\label{chap:04_examples}
+After running the introductory examples here, continue to the \hyperref[chap:09_cookbook]{purpose-based recipes in Appendix~\ref*{chap:09_cookbook}} to explore additional geometry, atmosphere, water, and dataset-generation cases.
+Contents · \hyperref[chap:03_options]{Option reference} · \hyperref[chap:05_output_formats]{Interpreting outputs}
+
+\Needspace{17\baselineskip}
+\section{Common setup and calculation modes}
+\label{sec:auto:04_examples:1}
+Run the Bash commands in this appendix \textbf{from \texttt{code/\allowbreak{}OCRT\_\allowbreak{}C}}. \texttt{.\allowbreak{}/\allowbreak{}build/\allowbreak{}ocrt} must have been built from the current source. First prepare the output folder and the arguments that disable gas absorption.
+
+
+\par\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+export OMP_NUM_THREADS=1
+mkdir -p ../../task/manual_examples
+GAS_OFF=(--gas-column-h2o 0 --gas-column-o3 0 --gas-column-no2 0
+         --gas-column-o2 0 --gas-column-co2 0 --gas-column-ch4 0)
+\end{ManualCode}
+\end{minipage}\par
+
+\texttt{GAS\_\allowbreak{}OFF} is a Bash array; do not use it unchanged in another shell. In PowerShell, create the \hyperref[sec:example_first_run]{\texttt{\$gasOff} array in Appendix~\ref*{sec:example_first_run}}, replace \texttt{"\$\{GAS\_\allowbreak{}OFF[@]\}"} with \texttt{@gasOff}, use \texttt{\& .\allowbreak{}\textbackslash{}build\textbackslash{}ocrt\_\allowbreak{}x86-\allowbreak{}64-\allowbreak{}v3.\allowbreak{}exe} for the executable, and replace the \texttt{\textbackslash{}} line continuation with a backtick. The \hyperref[chap:examples_readme]{example utility} can generate the same case plan on both operating systems.
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3400\linewidth-4.00pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.6600\linewidth-4.00pt\relax}@{}}
+\toprule
+\textbf{Input configuration} & \textbf{Behavior} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Input configuration} & \textbf{Behavior} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+Both \texttt{-\allowbreak{}-\allowbreak{}vza V -\allowbreak{}-\allowbreak{}raa R} specified & Calculate one direction; write results to standard output \\
+Both VZA and RAA omitted, with \texttt{-\allowbreak{}-\allowbreak{}output-\allowbreak{}full-\allowbreak{}grid F.\allowbreak{}csv} specified & Write a uniform VZA/RAA grid to CSV \\
+\texttt{-\allowbreak{}-\allowbreak{}batch-\allowbreak{}full-\allowbreak{}grid jobs.\allowbreak{}csv} & Run ocean full-grid cases one row at a time \\
+\end{longtable}
+}
+
+Specifying only one of VZA/RAA, or mixing a single direction with grid options, is an error. Specify file paths explicitly. For ocean grids in particular, explicitly specifying \texttt{-\allowbreak{}-\allowbreak{}output-\allowbreak{}full-\allowbreak{}grid} also fixes the underwater numerical defaults for the explicit grid path. \textbf{The default 2.5\textdegree{} grid is unnecessarily large for an initial check, so start with a small grid.}
+
+\Needspace{17\baselineskip}
+\section{Pure molecular scattering: black boundary}
+\label{sec:auto:04_examples:2}
+This provides an atmospheric reference excluding the sea-surface contribution. Set all six gas columns to 0 and omit aerosols.
+
+
+\par\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+./build/ocrt --surface black --sza 40 --vza 30 --raa 90 \
+  --wavelength 555 --pressure 1013.25 "${GAS_OFF[@]}" \
+  > ../../task/manual_examples/ray_black.txt \
+  2> ../../task/manual_examples/ray_black.log
+\end{ManualCode}
+\end{minipage}\par
+
+\texttt{-\allowbreak{}-\allowbreak{}pressure 0} removes molecular scattering. It does not disable gas absorption, so do not confuse it with the gas-off setting. Do not describe a \texttt{-\allowbreak{}-\allowbreak{}surface black} LUT as an atmospheric-correction LUT over a rough ocean.
+
+\Needspace{7\baselineskip}
+\Needspace{17\baselineskip}
+\section{Rayleigh LUT for ocean atmospheric correction}
+\label{sec:auto:04_examples:3}
+\subsection{Define the physical conditions first}
+\label{sec:auto:04_examples:3.1}
+One configuration for a Rayleigh LUT used in ocean atmospheric correction is \textbf{molecular scattering + rough Fresnel sea surface + no underwater light source + no aerosols + no gas absorption}. Direct sunglint is often corrected separately, so the example below excludes that single-reflection term with \texttt{-\allowbreak{}-\allowbreak{}decouple-\allowbreak{}sunglint}. This does not remove all reflection at the sea-surface boundary.
+
+Use \texttt{rho\_\allowbreak{}I/\allowbreak{}Q/\allowbreak{}U} from this configuration as the Rayleigh term under that definition. If your atmospheric-correction system includes sunglint in its LUT, remove \texttt{-\allowbreak{}-\allowbreak{}decouple-\allowbreak{}sunglint} and record the definition in the LUT metadata. Mixing LUTs with different definitions can cause double correction or omission.
+
+\subsection*{See glint and polarization in actual calculations}
+Figure~\ref{fig:measured-azimuth} varies wind and direct-glint inclusion at equal solar and viewing zenith angles. Surface reflection changes the azimuthal shape even without aerosols or gas absorption. The lower U curve shows the information lost by folding RAA into 0--180 degrees. These curves plot the distributed numerical CSV data, rather than invented illustrative values. Directional reflectance $\rho_I$ can exceed 1 within a narrow glint peak. Assess energy balance using hemispherically integrated fluxes.
+\input{figures/measured_azimuth}
+\FloatBarrier
+
+Regenerate the figure data from the repository root with the command below. Python 3 with its standard library is sufficient. Each native grid has 144 rows; the plot selects the 72 azimuths at VZA=40 degrees. Calculation conditions, executable hash, and symmetry checks are saved in a metadata JSON file. Successful execution does not establish convergence accuracy for an entire production LUT.
+\par\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+python3 docs/manual/examples/generate_figure_data.py \
+  --ocrt-root code/OCRT_C --exe code/OCRT_C/build/ocrt \
+  --outdir task/manual_figure_data
+\end{ManualCode}
+\end{minipage}\par
+
+\subsection{Angular grid for one wavelength and SZA}
+\label{sec:auto:04_examples:3.2}
+
+\par\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+./build/ocrt --surface black_fresnel_ocean --wind-speed 5 \
+  --sza 40 --wavelength 555 --pressure 1013.25 \
+  --decouple-sunglint "${GAS_OFF[@]}" \
+  --lut-vza-step 30 --lut-vza-max 60 --lut-raa-step 90 \
+  --output-full-grid ../../task/manual_examples/ray_w555_s40_p1013_w5.csv \
+  2> ../../task/manual_examples/ray_w555_s40_p1013_w5.log
+\end{ManualCode}
+\end{minipage}\par
+
+VZA is \texttt{0,\allowbreak{}30,\allowbreak{}60\textdegree{}}, and RAA is \texttt{0,\allowbreak{}90,\allowbreak{}180,\allowbreak{}270\textdegree{}}, giving 12 rows. The grid excludes 360\textdegree{} because it duplicates 0\textdegree{}. Simply folding RAA into 0--180\textdegree{} can lose the sign information in U. Choose a \texttt{-\allowbreak{}-\allowbreak{}lut-\allowbreak{}raa-\allowbreak{}step} value that divides 360 exactly.
+
+With the default 2.5\textdegree{} spacing and a maximum VZA of 85\textdegree{}, one case has \texttt{(floor(85/\allowbreak{}2.\allowbreak{}5)+1) \ensuremath{\times} floor(36\allowbreak{}0/\allowbreak{}2.\allowbreak{}5) =\allowbreak{} 35\ensuremath{\times}144 =\allowbreak{} 5,\allowbreak{}040 rows}. Multiply this by the number of wavelength, SZA, pressure, and wind-speed combinations to estimate total storage. This grid samples output directions; it is separate from internal integration resolution such as \texttt{-\allowbreak{}-\allowbreak{}n-\allowbreak{}mu}.
+
+\subsection{Multiple wavelengths, SZAs, pressures, and wind speeds}
+\label{sec:auto:04_examples:3.3}
+Run the following \textbf{from the repository root}. First generate the plan for 16 cases without \texttt{-\allowbreak{}-\allowbreak{}run}. Add \texttt{-\allowbreak{}-\allowbreak{}run} to the same command to execute it.
+
+
+\par\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+python3 docs/manual/examples/make_c_luts.py rayleigh \
+  --ocrt-root code/OCRT_C --exe code/OCRT_C/build/ocrt \
+  --outdir task/rayleigh_lut_demo \
+  --wavelengths 443,555 --szas 20,60 \
+  --pressures 900,1013.25 --winds 3,7 \
+  --vza-step 30 --vza-max 60 --raa-step 90
+\end{ManualCode}
+\end{minipage}\par
+
+This example produces 16\ensuremath{\times}12=192 rows; its resolution is not a recommendation for production use. \texttt{manifest.\allowbreak{}json} records the execution arguments, axes, gas/sunglint/IPSS settings, and executable hash. \texttt{jobs.\allowbreak{}csv} links case files to their input conditions.
+
+Specify actual satellite wavelengths from the sensor's band definitions. The example's 443/555 nm does not represent the complete band configuration of a particular sensor. OCRT's \texttt{-\allowbreak{}-\allowbreak{}wavelength} performs a monochromatic calculation. If broadband effects are needed, validate a separate spectral-integration procedure that accounts for the sensor spectral response, solar spectrum, and absorption structure. Do not label a single center-wavelength calculation as a band-integrated result.
+
+\subsection{Pressure and angular interpolation}
+\label{sec:auto:04_examples:3.4}
+Rayleigh optical thickness is proportional to pressure, but final reflectance including multiple scattering and the sea surface is not exactly linear in pressure. Do not replace the pressure axis by simply multiplying all results by \texttt{P/\allowbreak{}1013.\allowbreak{}25}. Evaluate SZA/VZA/RAA interpolation errors against independent calculation points as well. Denser sampling may be needed at large zenith angles or near sunglint.
+
+Check the following:
+
+\begin{enumerate}
+\item Verify the row count and actual header in every file against expectations.
+\item Check \texttt{rho\_\allowbreak{}I/\allowbreak{}Q/\allowbreak{}U} for NaN/Inf. Negative Q/U can be valid polarization information.
+\item Compare a single-direction calculation with the grid value in the same mode. Match the two paths' internal nodes and defaults, and check nadir separately.
+\item Compare the default numerical settings with finer settings to establish an error limit suited to the intended use.
+\item Match the inclusion of gases and direct sunglint, the RAA convention, and the polarization reference plane to the atmospheric-correction code.
+\end{enumerate}
+
+\Needspace{17\baselineskip}
+\section{Rayleigh LUT with the IPSS spherical correction}
+\label{sec:auto:04_examples:4}
+Add \texttt{-\allowbreak{}-\allowbreak{}pssa} to the command in Section~\ref{sec:auto:04_examples:3}. For example:
+
+
+\par\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+./build/ocrt --surface black_fresnel_ocean --wind-speed 5 \
+  --sza 75 --wavelength 555 --pressure 1013.25 \
+  --decouple-sunglint --pssa "${GAS_OFF[@]}" \
+  --lut-vza-step 10 --lut-vza-max 80 --lut-raa-step 30 \
+  --output-full-grid ../../task/manual_examples/ray_ipss_s75.csv \
+  2> ../../task/manual_examples/ray_ipss_s75.log
+\end{ManualCode}
+\end{minipage}\par
+
+The option retains its historical name, but IPSS is the only actual algorithm. SZA/VZA are referenced to the surface pixel. Distinguish plane-parallel and IPSS LUTs in metadata and file names. \texttt{-\allowbreak{}-\allowbreak{}pssa-\allowbreak{}mode} has been removed, and \texttt{-\allowbreak{}-\allowbreak{}surface ocean -\allowbreak{}-\allowbreak{}water-\allowbreak{}model .\allowbreak{}.\allowbreak{}.\allowbreak{} -\allowbreak{}-\allowbreak{}pssa} is unsupported. Do not extend the documented IPSS support for atmospheric and black-ocean calculations to coupled-ocean calculations.
+
+\Needspace{17\baselineskip}
+\section{Aerosols + Rayleigh + sea surface}
+\label{sec:auto:04_examples:5}
+After installing \texttt{inputs/\allowbreak{}M80C.\allowbreak{}mie}:
+
+
+\par\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+./build/ocrt --surface black_fresnel_ocean --wind-speed 5 \
+  --sza 40 --vza 30 --raa 90 --wavelength 443 --pressure 1013.25 \
+  --mie inputs/M80C.mie --aod-555 0.1 \
+  --decouple-sunglint "${GAS_OFF[@]}" \
+  > ../../task/manual_examples/aer443.txt \
+  2> ../../task/manual_examples/aer443.log
+\end{ManualCode}
+\end{minipage}\par
+
+AOD is 0.1 at 555 nm; the AOD at 443 nm is obtained from the Mie extinction ratio. Check \texttt{AOD\_\allowbreak{}ref\_\allowbreak{}nm} and \texttt{AOD\_\allowbreak{}band}. To use 865 nm as the reference, replace \texttt{-\allowbreak{}-\allowbreak{}aod-\allowbreak{}555 0.\allowbreak{}1} with \texttt{-\allowbreak{}-\allowbreak{}aod-\allowbreak{}865 0.\allowbreak{}1}. Do not specify both options. For an AOD=0 case, also remove aerosol settings such as \texttt{-\allowbreak{}-\allowbreak{}mie}.
+
+The difference after subtracting an aerosol-free result also includes aerosol interactions with molecules and the sea surface. Do not assume that this difference equals the single-scattering aerosol term. Consult the data provider's definitions for the physical meaning of model names. When changing the Mie model, also record its name and file hash.
+
+\Needspace{17\baselineskip}
+\section{Gas absorption and atmospheric profiles}
+\label{sec:auto:04_examples:6}
+Gas absorption is enabled by default in the normal single-geometry and explicit full-grid paths. Do not append \texttt{GAS\_\allowbreak{}OFF} to the following example, which includes absorption.
+
+
+\par\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+./build/ocrt --surface black_fresnel_ocean --wind-speed 5 \
+  --sza 40 --vza 30 --raa 90 --wavelength 760 --pressure 1013.25 \
+  --atm-profile tropical --gas-column-h2o 3.0 --gas-column-o3 300 \
+  > ../../task/manual_examples/gas760.txt \
+  2> ../../task/manual_examples/gas760.log
+\end{ManualCode}
+\end{minipage}\par
+
+H2O is in g/cm\textsuperscript{2}, O3/NO2 in DU, and O2/CO2/CH4 in \textbf{molecules/cm\textsuperscript{2}}. The \texttt{mol/\allowbreak{}cm\textsuperscript{2}} notation in the existing help text refers to molecule counts. Interpreting it as the chemical unit mol introduces a scaling error equal to Avogadro's number. Gas columns are adjusted while retaining the profile shape; see \hyperref[chap:03_options]{Chapter~\ref*{chap:03_options}} for the detailed conditions.
+
+When producing a Rayleigh background that includes gas absorption, maintain it as a separate data set from the gas-free data in Section~\ref{sec:auto:04_examples:3}. Do not use the legacy \texttt{-\allowbreak{}-\allowbreak{}batch} for this purpose: it branches before normal gas initialization.
+
+\Needspace{17\baselineskip}
+\section{Coupled ocean: pure seawater and CDOM}
+\label{sec:auto:04_examples:7}
+First, a pure-seawater calculation including the atmosphere:
+
+
+\par\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+./build/ocrt --surface ocean --water-model ocrt \
+  --ocrt-chl 0 --ocrt-tsm 0 --ocrt-adom440 0 --wind-speed 3 \
+  --sza 40 --vza 30 --raa 90 --wavelength 555 --pressure 1013.25 \
+  > ../../task/manual_examples/pure_water.txt \
+  2> ../../task/manual_examples/pure_water.log
+\end{ManualCode}
+\end{minipage}\par
+
+To add a CDOM contribution, use \texttt{-\allowbreak{}-\allowbreak{}ocrt-\allowbreak{}adom440 0.\allowbreak{}1 -\allowbreak{}-\allowbreak{}ocrt-\allowbreak{}adom-\allowbreak{}slope 0.\allowbreak{}014}. The following full-grid example uses those conditions. Its CSV stores TOA reflectance, above-surface \texttt{Rrs}, below-surface \texttt{rrs}, IOPs, transmittance diagnostics, and other quantities together.
+
+
+\par\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+./build/ocrt --surface ocean --water-model ocrt \
+  --ocrt-chl 0 --ocrt-tsm 0 --ocrt-adom440 0.1 \
+  --ocrt-adom-slope 0.014 --wind-speed 3 \
+  --sza 40 --wavelength 555 --pressure 1013.25 \
+  --lut-vza-step 30 --lut-vza-max 60 --lut-raa-step 90 \
+  --output-full-grid ../../task/manual_examples/cdom555.csv \
+  2> ../../task/manual_examples/cdom555.log
+\end{ManualCode}
+\end{minipage}\par
+
+To validate the underwater boundary without an atmosphere, specify pressure 0, no aerosols, and all six gas columns 0 together. Solar illumination and the air--water boundary remain present even in this case. Distinguish this configuration from conditions used to compare against observations in an actual water body.
+
+\Needspace{17\baselineskip}
+\section{TSM, chlorophyll, and detritus}
+\label{sec:auto:04_examples:8}
+This constituent-model example requires the relevant Mie/IOP data to be installed.
+
+
+\par\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+./build/ocrt --surface ocean --water-model ocrt \
+  --ocrt-chl 1 --ocrt-tsm 0.5 --ocrt-adom440 0.02 \
+  --ocrt-tsm-species red_clay --ocrt-detritus-a440 0.01 \
+  --ocrt-adom-slope 0.014 --ocrt-detritus-slope 0.0109 \
+  --water-temperature 20 --water-salinity 35 --wind-speed 3 \
+  --sza 40 --vza 30 --raa 90 --wavelength 555 --pressure 1013.25 \
+  > ../../task/manual_examples/constituents555.txt \
+  2> ../../task/manual_examples/constituents555.log
+\end{ManualCode}
+\end{minipage}\par
+
+Chl is in mg/m\textsuperscript{3}, inorganic TSM in g/m\textsuperscript{3}, and the reference absorptions of aDOM and detritus in m\textsuperscript{-}\textsuperscript{1}. \textbf{EAP phytoplankton scattering is currently disabled in the OCRT constituent path, so specifying Chl does not enable that scattering.} Do not add \texttt{-\allowbreak{}-\allowbreak{}ocrt-\allowbreak{}phyto-\allowbreak{}group} to the general example. Inspect the absorption and scattering components in the output, and assess how this limitation affects the intended simulation.
+
+\Needspace{17\baselineskip}
+\section{CCRR input-conversion path}
+\label{sec:auto:04_examples:9}
+
+\par\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+./build/ocrt --surface ocean --water-model ccrr \
+  --ccrr-chl 1 --ccrr-tsm 0 --ccrr-adom440 0.02 \
+  --wind-speed 3 --sza 40 --vza 30 --raa 90 \
+  --wavelength 555 --pressure 1013.25 \
+  > ../../task/manual_examples/ccrr555.txt \
+  2> ../../task/manual_examples/ccrr555.log
+\end{ManualCode}
+\end{minipage}\par
+
+This path converts CCRR inputs into IOPs and related quantities, then calculates with OCRT. It does not run a separate radiative transfer solver. Do not mix the \texttt{-\allowbreak{}-\allowbreak{}ocrt-\allowbreak{}*} and \texttt{-\allowbreak{}-\allowbreak{}ccrr-\allowbreak{}*} constituent options. The same Chl input is not guaranteed to produce the same IOPs as the OCRT constituent model.
+
+\Needspace{17\baselineskip}
+\section{Specifying total IOPs directly}
+\label{sec:auto:04_examples:10}
+
+\par\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+./build/ocrt --surface ocean --water-model iop \
+  --iop-a 0.1 --iop-b 0.2 --iop-bb 0.005 --wind-speed 3 \
+  --sza 40 --vza 30 --raa 90 --wavelength 555 --pressure 1013.25 \
+  > ../../task/manual_examples/iop555.txt \
+  2> ../../task/manual_examples/iop555.log
+\end{ManualCode}
+\end{minipage}\par
+
+These three values are \textbf{total} a, b, and bb, including pure seawater and other components, all in m\textsuperscript{-}\textsuperscript{1}. They must satisfy \texttt{a\ensuremath{\geq}0,\allowbreak{} b>0,\allowbreak{} 0<bb<0.\allowbreak{}5b}. The bb/b ratio alone does not determine the full phase-function shape. Choose phase-function, interpolation, and truncation methods appropriate to the comparison, using \texttt{-\allowbreak{}-\allowbreak{}iop-\allowbreak{}phase-\allowbreak{}lut} or \texttt{-\allowbreak{}-\allowbreak{}iop-\allowbreak{}mie-\allowbreak{}phase} if needed. Observe the option-conflict rules in \hyperref[chap:03_options]{Chapter~\ref*{chap:03_options}}. Mie forward-peak truncation is OFF by default for scientific reference calculations; do not add truncation options arbitrarily to improve speed.
+
+\Needspace{17\baselineskip}
+\section{Systematic generation of simulation data}
+\label{sec:auto:04_examples:11}
+The storage unit is an angular grid for one atmospheric/ocean state. Manage rows of observables together with a linked table describing the state. The following example has 2 wavelengths \ensuremath{\times} 2 SZAs \ensuremath{\times} 2 CDOM values = 8 states, with 12 directions per state. \textbf{Run this command from the repository root again, and specify output and executable paths relative to that location.}
+
+
+\par\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+python3 docs/manual/examples/make_c_luts.py simulation \
+  --ocrt-root code/OCRT_C --exe code/OCRT_C/build/ocrt \
+  --outdir task/simulation_demo \
+  --wavelengths 443,555 --szas 20,60 --winds 3 \
+  --adom440 0,0.1 --vza-step 30 --vza-max 60 --raa-step 90
+\end{ManualCode}
+\end{minipage}\par
+
+Inspect the plan, then add \texttt{-\allowbreak{}-\allowbreak{}run}. Gases use the default usstd76 profile, aerosols are absent, and Chl/TSM are 0. Add \texttt{-\allowbreak{}-\allowbreak{}aods 0,\allowbreak{}0.\allowbreak{}1 -\allowbreak{}-\allowbreak{}mie inputs/\allowbreak{}M80C.\allowbreak{}mie} for an aerosol axis, or \texttt{-\allowbreak{}-\allowbreak{}gas-\allowbreak{}off} to disable gas absorption. This helper has no Chl/TSM axes. To vary those constituents, prepare a separate case table using the explicit arguments in Section~\ref{sec:auto:04_examples:8}.
+
+Even when generating training data, retain input concentrations and IOPs, and TOA reflectance and surface \texttt{Rrs}, in separate columns. Do not fill failed or unconverged rows with zeros. Check \texttt{water\_\allowbreak{}converged}, the process exit code, NaN/Inf, and transmittance-validity flags. Randomly splitting only neighboring angles from the same atmospheric/ocean state between training and evaluation sets can overstate data independence. Design evaluation sets at the atmospheric/ocean-state level for the intended use.
+
+\Needspace{17\baselineskip}
+\section{C native ocean full-grid batch}
+\label{sec:auto:04_examples:12}
+Start in the same C working directory as Section~\ref{sec:auto:04_examples:1}. First save the following CSV as \texttt{.\allowbreak{}.\allowbreak{}/\allowbreak{}.\allowbreak{}.\allowbreak{}/\allowbreak{}task/\allowbreak{}manual\_\allowbreak{}examples/\allowbreak{}ocean\_\allowbreak{}jobs.\allowbreak{}csv}, using UTF-8 without a BOM.
+
+
+\par\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+out,wavelength,sza,wind,ocrt_adom440
+../../task/manual_examples/b443.csv,443,40,3,0.1
+../../task/manual_examples/b555.csv,555,40,3,0.1
+\end{ManualCode}
+\end{minipage}\par
+
+
+\par\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+./build/ocrt --surface ocean --water-model ocrt \
+  --ocrt-chl 0 --ocrt-tsm 0 --ocrt-adom440 0.1 --wind-speed 3 \
+  --sza 40 --wavelength 443 --pressure 1013.25 --n-water 1.34 \
+  --lut-vza-step 30 --lut-vza-max 60 --lut-raa-step 90 \
+  --batch-full-grid ../../task/manual_examples/ocean_jobs.csv \
+  > ../../task/manual_examples/ocean_batch.txt \
+  2> ../../task/manual_examples/ocean_batch.log
+\end{ManualCode}
+\end{minipage}\par
+
+Values absent from the CSV, or blank fields, use the base CLI values. Specify base \texttt{-\allowbreak{}-\allowbreak{}sza/\allowbreak{}-\allowbreak{}-\allowbreak{}wavelength} arguments on the CLI even when the CSV includes SZA and wavelength. Give each case a distinct \texttt{out} value. The reader is not a complete general-purpose CSV parser, so do not include commas, quotation marks, or line breaks inside fields. See \hyperref[chap:08_input_formats]{Chapter~\ref*{chap:08_input_formats}, input file formats}, for all supported input columns.
+
+This example explicitly sets \texttt{-\allowbreak{}-\allowbreak{}n-\allowbreak{}water 1.\allowbreak{}34} to match the refractive index of the preceding single-state calculations. In the current batch implementation, if a row contains wavelength and the CLI does not specify a refractive index, the calculation selects the Quan--Fry refractive index dependent on wavelength, water temperature, and salinity. It can therefore differ from the fixed 1.34 used in a single calculation when the option is omitted. When using wavelength-dependent refractive index, apply the same selection in all comparison paths.
+
+This batch command does not automatically inherit the 96-node underwater default of a single-state grid requested with \texttt{-\allowbreak{}-\allowbreak{}output-\allowbreak{}full-\allowbreak{}grid}. The current source raises the underwater default to 96 only when \texttt{-\allowbreak{}-\allowbreak{}output-\allowbreak{}full-\allowbreak{}grid} explicitly enables grid mode. The batch command above does not pass through that condition and may use the normal underwater default of 48. To compare the two paths or generate data with matching numerical settings, explicitly pass \texttt{-\allowbreak{}-\allowbreak{}n-\allowbreak{}mu-\allowbreak{}water 96} to both with \texttt{OCRT\_\allowbreak{}ADVANCED=\allowbreak{}1} set in the environment. Check convergence separately for high-concentration conditions.
+
+Increasing \texttt{OMP\_\allowbreak{}NUM\_\allowbreak{}THREADS} enables parallel execution across rows. Check memory use for one case before increasing the thread count. Split conditions that the CSV does not control, such as pressure, into separate CLI runs. \textbf{The normal \texttt{-\allowbreak{}-\allowbreak{}batch} and \texttt{-\allowbreak{}-\allowbreak{}batch-\allowbreak{}full-\allowbreak{}grid} use different implementation paths.} Do not assume that features supported in full-grid batch mode are also supported in normal batch mode.
+
+\Needspace{24\baselineskip}
+\section{Reading and checking CSV files with Python}
+\label{sec:auto:04_examples:13}
+The Python standard library is sufficient to read the files. This example checks the CSV from Section~\ref{sec:auto:04_examples:7} while running from the C working directory.
+
+
+\par\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+import csv
+import math
+from pathlib import Path
+
+path = Path('../../task/manual_examples/cdom555.csv')
+with path.open(encoding='utf-8', newline='') as f:
+    rows = list(csv.DictReader(f))
+assert len(rows) == 12
+for row in rows:
+    for name in ('TOA_rho_I', 'Rrs_I', 'rrs_I', 'a_total', 'b_total'):
+        assert math.isfinite(float(row[name])), (name, row)
+    assert int(row['water_converged']) == 1, row
+    if int(row['T_up_rt_valid']) != 1:
+        print('Treat upward RT transmittance as invalid:', row['vza_deg'], row['raa_deg'])
+print(rows[0]['wavelength_nm'], rows[0]['Rrs_I'])
+\end{ManualCode}
+\end{minipage}\par
+
+\texttt{Rrs\_\allowbreak{}I} is in sr\textsuperscript{-}\textsuperscript{1}, while \texttt{TOA\_\allowbreak{}rho\_\allowbreak{}I} is dimensionless. Multiplying \texttt{Rrs\_\allowbreak{}I} by \ensuremath{\pi} gives a surface reflectance quantity normalized by downwelling irradiance at the surface, distinct from TOA reflectance. When storing results, also record units, the 0+/0- location, the reference plane, and the gas/sunglint conditions.
+
+\Needspace{17\baselineskip}
+\section{First calculation: Bash and PowerShell}
+\label{sec:auto:04_examples:14}
+
+\label{sec:example_first_run}
+
+\textbf{Set the current working directory to \texttt{code/\allowbreak{}OCRT\_\allowbreak{}C} when running.} Specifying the executable's location alone does not automatically change the internal \texttt{inputs/\allowbreak{}} relative paths.
+
+\Needspace{13\baselineskip}
+Bash:
+
+
+\par\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+export OMP_NUM_THREADS=1
+mkdir -p ../../task/manual_examples
+./build/ocrt --surface black --sza 40 --vza 30 --raa 90 \
+  --wavelength 555 --pressure 1013.25 \
+  --gas-column-h2o 0 --gas-column-o3 0 --gas-column-no2 0 \
+  --gas-column-o2 0 --gas-column-co2 0 --gas-column-ch4 0 \
+  > ../../task/manual_examples/rayleigh_single.txt \
+  2> ../../task/manual_examples/rayleigh_single.log
+\end{ManualCode}
+\end{minipage}\par
+
+\Needspace{13\baselineskip}
+PowerShell:
+
+
+\par\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+$env:OMP_NUM_THREADS = '1'
+New-Item -ItemType Directory -Force ..\..\task\manual_examples | Out-Null
+$gasOff = @('--gas-column-h2o','0','--gas-column-o3','0','--gas-column-no2','0',
+            '--gas-column-o2','0','--gas-column-co2','0','--gas-column-ch4','0')
+& .\build\ocrt_x86-64-v3.exe --surface black --sza 40 --vza 30 --raa 90 `
+  --wavelength 555 --pressure 1013.25 @gasOff `
+  > ..\..\task\manual_examples\rayleigh_single.txt `
+  2> ..\..\task\manual_examples\rayleigh_single.log
+if ($LASTEXITCODE -ne 0) { throw 'OCRT failed; inspect the log' }
+\end{ManualCode}
+\end{minipage}\par
+
+This is a molecular-scattering calculation above a black boundary, with no sea-surface reflection. Use \hyperref[chap:04_examples]{Appendix~\ref*{chap:04_examples}} for a Rayleigh LUT including the sea surface for ocean atmospheric correction. Standard output begins with three I/Q/U numbers, followed by results in \texttt{key=\allowbreak{}value} format; diagnostics go to standard error. See \hyperref[chap:05_output_formats]{Chapter~\ref*{chap:05_output_formats}} for their meaning.
+
+\Needspace{24\baselineskip}
+\section{Reading CSV: distinguish Rrs from rrs}
+\label{sec:auto:04_examples:15}
+
+\label{sec:example_csv_reader}
+
+This example reads an ocean-grid output and selects above-water and below-water reflectance separately. Replace the filename with the actual result-file path.
+
+\textbf{Preserve the case of column names.} \texttt{Rrs\_\allowbreak{}I} and \texttt{rrs\_\allowbreak{}I} in ocean CSV files are different physical quantities. PowerShell's case-insensitive \texttt{Import-\allowbreak{}Csv} can treat these headers as duplicates and fail to read them. Use a case-sensitive reader such as Python's \texttt{csv.\allowbreak{}DictReader} or \texttt{pandas.\allowbreak{}read\_\allowbreak{}csv}, and do not convert all column names to lowercase.
+
+\par\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+import csv
+
+with open("ocean_grid.csv", newline="", encoding="utf-8-sig") as f:
+    for row in csv.DictReader(f):
+        above_water = float(row["Rrs_I"])
+        below_water = float(row["rrs_I"])
+        # above_water: 0+; below_water: 0-; both in sr^-1
+\end{ManualCode}
+\end{minipage}\par
+
+\Needspace{17\baselineskip}
+\section{Run a two-state ocean batch}
+\label{sec:auto:04_examples:16}
+
+\label{sec:example_input_batch}
+
+After creating the folder, save the following CSV as \texttt{jobs\_\allowbreak{}adom.\allowbreak{}csv}. File paths are relative to \texttt{code/\allowbreak{}OCRT\_\allowbreak{}C}.
+
+
+\par\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+out,wavelength,sza,wind,ocrt_adom440
+../../task/manual_examples/adom_443_s30.csv,443,30,3,0.05
+../../task/manual_examples/adom_555_s40.csv,555,40,5,0.10
+\end{ManualCode}
+\end{minipage}\par
+
+
+\par\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+export OMP_NUM_THREADS=1
+export OCRT_ADVANCED=1
+./build/ocrt --surface ocean --water-model ocrt \
+  --ocrt-chl 0 --ocrt-tsm 0 --ocrt-adom440 0.1 \
+  --sza 30 --wavelength 555 --wind-speed 3 --n-water 1.34 \
+  --n-mu-water 96 --lut-vza-step 30 --lut-vza-max 60 --lut-raa-step 90 \
+  --batch-full-grid jobs_adom.csv
+\end{ManualCode}
+\end{minipage}\par
+
+Gas absorption is active with the default profile in this command. To exclude gases, add all \hyperref[chap:03_options]{six column options set to 0 from Chapter~\ref*{chap:03_options}} to the CLI. The expected grid size for each row is 3 VZA values \ensuremath{\times} 4 RAA values = 12 rows. This short example explains the input structure; for actual data generation, also follow the verified execution procedures in \hyperref[chap:04_examples]{Appendix~\ref*{chap:04_examples}}.
+
+\Needspace{17\baselineskip}
+\section{Run the IPSS validation script}
+\label{sec:auto:04_examples:17}
+\label{sec:example_ipss_gates}
+
+On Linux/Bash, run the following with \texttt{code/\allowbreak{}OCRT\_\allowbreak{}C} as the working directory. GCC and Python 3 are required. The geometry and Rayleigh numerical checks can run without the large Mie data set.
+
+
+\par\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+bash scripts/run_ipss_gates.sh
+\end{ManualCode}
+\end{minipage}\par
+
+The expected completion markers are \texttt{IPSS GATES:\allowbreak{} ALL PASS} and \texttt{IPSS REGRESSION:\allowbreak{} ALL PASS}. The script uses \texttt{build/\allowbreak{}ocrt}, so build the latest executable to be tested under that name. It does not automatically switch to a Windows \texttt{.\allowbreak{}exe} name. The coupled ocean+IPSS rejection check judges only whether execution fails; inspect the actual error message to distinguish the intended rejection from a failure caused by missing data.

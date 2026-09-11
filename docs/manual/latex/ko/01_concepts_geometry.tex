@@ -1,0 +1,253 @@
+% Authoritative LaTeX chapter. Edit this file for future revisions.
+% Initially migrated 2026-09-11; no Markdown import occurs during PDF builds.
+\chapter{기본 개념과 관측 기하}
+\label{chap:01_concepts_geometry}
+매뉴얼 목차 · \hyperref[chap:05_output_formats]{출력 포맷}
+
+이 문서는 \texttt{code/\allowbreak{}OCRT\_\allowbreak{}C/\allowbreak{}src}의 공개 입력과 계산 결과를 기준으로 한다. 확인 기준은 Git 커밋 \texttt{54861c68e35ec5aa\allowbreak{}a3938fad53e93dc2\allowbreak{}dfa7eb1d}이며, 실행 파일의 버전 문자열만으로 최신 소스 여부를 판정하지 않는다. 과거 검증 보고서는 당시 버전에 대한 기록이다.
+
+\section{OCRT가 계산하는 것}
+\label{sec:auto:01_concepts_geometry:1}
+OCRT는 태양광이 대기, 해수면, 물속에서 산란·흡수·반사·투과되는 과정을 계산하는 복사전달 모델이다. 같은 파장의 탄성 산란에 대해 Stokes \texttt{I}, \texttt{Q}, \texttt{U}를 계산한다. \texttt{I}는 총 복사휘도에 해당하고, \texttt{Q}, \texttt{U}는 선택한 기준면에 대한 선편광 성분이다. 원편광 \texttt{V}는 공개 출력에 없다.
+
+입력은 관측 기하, 파장, 대기압·에어로졸·기체, 해수면 바람, 물의 광학 특성이다. 주요 출력은 다음과 같다.
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3400\linewidth-4.00pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.6600\linewidth-4.00pt\relax}@{}}
+\toprule
+\textbf{위치·수량} & \textbf{의미} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{위치·수량} & \textbf{의미} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+TOA & 대기 상단에서 위성 방향으로 나가는 신호 \\
+\texttt{0+} & 수면 바로 위, 공기 쪽 \\
+\texttt{0-\allowbreak{}} & 수면 바로 아래, 물 쪽 \\
+\texttt{rho} & 태양 입사량으로 정규화한 방향별 TOA 반사도, 무차원 \\
+\texttt{Rrs} & \texttt{Lu(0+)/\allowbreak{}Ed(0+)}, 수면 위 원격탐사반사도, sr\textsuperscript{-}\textsuperscript{1} \\
+\texttt{rrs} & \texttt{Lu(0-\allowbreak{})/\allowbreak{}Ed(0-\allowbreak{})}, 수면 아래 원격탐사반사도, sr\textsuperscript{-}\textsuperscript{1} \\
+\texttt{Lu}, \texttt{Ed}, \texttt{Eu} & 각각 상향 복사휘도, 하향 복사조도, 상향 복사조도 \\
+\end{longtable}
+}
+
+\texttt{Rrs}와 \texttt{rho}는 분모와 단위가 다르다. \texttt{Rrs}에 \ensuremath{\pi}를 곱한 수면 반사도도 대기 경로가 포함된 TOA \texttt{rho}와 같지 않다. 원시 \texttt{Lu}, \texttt{Ed}는 모델별 입사광 정규화가 적용된 값이므로 \hyperref[chap:05_output_formats]{출력의 정규화 규칙}을 먼저 확인한다.
+
+계산은 수평으로 균일한 층을 가정한다. 다중산란은 SOS(Successive Orders of Scattering, 산란 차수별 누적)로 계산하고, 방위각 의존성은 Fourier 모드로 표현한다. \texttt{-\allowbreak{}-\allowbreak{}pssa}를 켜면 현재 구현은 IPSS 구면 보정을 적용한다. 완전한 3차원 지형·구름 복사전달이나 임의 해저 지형을 입력하는 모델로 해석하지 않는다.
+
+\section{표면 모드를 먼저 선택한다}
+\label{sec:auto:01_concepts_geometry:2}
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3000\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2300\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.4700\linewidth-5.33pt\relax}@{}}
+\toprule
+\textbf{\texttt{-\allowbreak{}-\allowbreak{}surface}} & \textbf{계산 범위} & \textbf{대표 용도} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{\texttt{-\allowbreak{}-\allowbreak{}surface}} & \textbf{계산 범위} & \textbf{대표 용도} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{black} & 반사하지 않는 하부 경계 위의 대기 & 순수 대기 경로, Rayleigh 산란 확인 \\
+\texttt{flat} & 평탄한 Fresnel 반사 경계 위의 대기 & 평탄면 Fresnel 기준 계산 \\
+\texttt{black\_\allowbreak{}fresnel\_\allowbreak{}ocean} & 바람에 따른 Fresnel 해수면과 대기, 물속 수출광 없음 & 해양 대기보정용 Rayleigh/에어로졸 경로 LUT \\
+\texttt{ocean} & 대기--해수면--수중 복사전달의 결합 & \texttt{Rrs}, \texttt{rrs}, TOA 해양 신호·모의자료 \\
+\end{longtable}
+}
+
+\texttt{ocean}에서는 물의 특성을 \texttt{-\allowbreak{}-\allowbreak{}water-\allowbreak{}model ocrt}, \texttt{ccrr}, \texttt{iop} 중 하나로 지정한다. \texttt{ocrt}와 \texttt{ccrr}는 구성성분을 광학 특성으로 바꾸는 방법을 선택하고, \texttt{iop}는 흡수·산란·후방산란 계수와 위상함수를 직접 공급한다. 같은 이름의 농도라도 구성성분 모델에 따라 광학 특성이 달라질 수 있다.
+
+IOP(Inherent Optical Properties, 고유광학특성)의 \texttt{a}, \texttt{b}, \texttt{bb}는 각각 흡수, 산란, 후방산란 계수이며 단위는 m\textsuperscript{-}\textsuperscript{1}이다. 소광 계수는 \texttt{c=\allowbreak{}a+b}, 단일산란 알베도는 \texttt{omega=\allowbreak{}b/\allowbreak{}(a+b)}다. \texttt{bb}는 \texttt{b}의 후방 반구 성분이므로 \texttt{a+b+bb}를 소광 계수로 사용하지 않는다.
+
+\section{SZA, VZA, RAA: 반드시 지상 화소 기준}
+\label{sec:auto:01_concepts_geometry:3}
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3000\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2300\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.4700\linewidth-5.33pt\relax}@{}}
+\toprule
+\textbf{입력·CSV 이름} & \textbf{정의} & \textbf{단위} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{입력·CSV 이름} & \textbf{정의} & \textbf{단위} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{-\allowbreak{}-\allowbreak{}sza}, \texttt{sza\_\allowbreak{}deg} & 지상 화소의 위쪽 수직선과 태양을 향하는 방향 사이의 각도 & 도 \\
+\texttt{-\allowbreak{}-\allowbreak{}vza}, \texttt{vza\_\allowbreak{}deg} & 지상 화소의 위쪽 수직선과 센서를 향하는 방향 사이의 각도 & 도 \\
+\texttt{-\allowbreak{}-\allowbreak{}raa}, \texttt{raa\_\allowbreak{}deg} & 아래 운영 정의를 따르는 OCRT 공개 상대방위각 & 도 \\
+\end{longtable}
+}
+
+\texttt{VZA=\allowbreak{}0\textdegree{}}는 천저 관측이다. VZA는 위성에서 내려다본 off-nadir angle과 구별한다. 구면 기하에서는 두 각이 다를 수 있다. \texttt{-\allowbreak{}-\allowbreak{}pssa}를 사용해도 입력은 지상 화소 기준이다. \texttt{ocean}에서 VZA는 공기 중 관측각이며, 표준 경로는 물속 각도를 내부 굴절 변환으로 구한다. 동일한 VZA 숫자를 수중 각도로 다시 해석하면 안 된다.
+
+낮의 상향 관측에서는 일반적으로 \texttt{0 \ensuremath{\leq} SZA < 90}, \texttt{0 \ensuremath{\leq} VZA < 90}의 유효 기하를 준비한다. 기본 LUT는 VZA \texttt{0--85\textdegree{}}이며 정확한 격자는 출력 CSV의 좌표를 확인한다. RAA는 \texttt{[0,\allowbreak{}360)}으로 정규화해 입력하는 것을 권장한다. \texttt{360\textdegree{}}는 물리적으로 \texttt{0\textdegree{}}와 같은 방향이며 LUT에는 중복 끝점으로 넣지 않는다.
+
+그림~\ref{fig:geometry-zenith-refraction}은 수직선에서 재는 두 천정각과 수중 굴절을 구분한다. 그림~\ref{fig:geometry-curvature}은 왜 위성의 off-nadir 각도를 \texttt{--vza}에 그대로 넣으면 안 되는지 보여준다.
+
+\input{figures/geometry_zenith_refraction}
+\input{figures/geometry_curvature}
+
+\section{OCRT RAA의 운영 정의}
+\label{sec:auto:01_concepts_geometry:4}
+\textbf{OCRT의 직접 선글린트 방향은 \texttt{RAA=\allowbreak{}180\textdegree{}}다.} 평탄면 정반사 기하에서 \texttt{SZA=\allowbreak{}VZA}일 때 이 방향이 정반사 가지에 해당한다. 바람이 있으면 Cox--Munk 경사 분포가 정반사 신호를 주변 각도로 넓힌다.
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3400\linewidth-4.00pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.6600\linewidth-4.00pt\relax}@{}}
+\toprule
+\textbf{OCRT RAA} & \textbf{해석} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{OCRT RAA} & \textbf{해석} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{0\textdegree{}} & 직접 글린트의 반대 주평면 가지 \\
+\texttt{90\textdegree{}} & 주평면에 수직인 한쪽 방위 \\
+\texttt{180\textdegree{}} & 직접 글린트 주평면 가지; \texttt{SZA=\allowbreak{}VZA}에서 정반사 기하 \\
+\texttt{270\textdegree{}} & \texttt{90\textdegree{}}의 거울 방위; \texttt{I/\allowbreak{}Q}는 대칭이고 \texttt{U}는 반대 부호가 될 수 있음 \\
+\texttt{360\textdegree{}} & \texttt{0\textdegree{}}와 동일한 방향 \\
+\end{longtable}
+}
+
+“태양과 같은 쪽”, “전방”, “후방”이라는 말만으로 RAA를 결정하지 않는다. 태양을 \textbf{바라보는 방향}과 태양광이 \textbf{진행하는 방향}은 수평 방위가 180\textdegree{} 다르기 때문이다. 다른 복사전달 코드나 LUT에서 \texttt{RAA=\allowbreak{}0\textdegree{}}가 글린트라면 그 숫자를 OCRT에 그대로 넣을 수 없다.
+
+그림~\ref{fig:geometry-glint-branches}에서 태양광의 진행 방향과 센서 look 방향을 함께 따라가면 두 가지를 구별하기 쉽다. 그림의 \texttt{RAA=180\textdegree{}}만으로 정반사 중심이 결정되는 것은 아니며 \texttt{SZA=VZA}도 필요하다.
+
+\input{figures/geometry_glint_branches}
+
+\subsection{위성 SAA/VAA로부터 계산}
+\label{sec:auto:01_concepts_geometry:4.1}
+먼저 제품 메타데이터에서 다음을 확인한다.
+
+\begin{enumerate}
+\item SAA가 지상 화소에서 \textbf{태양을 향하는} 방위각인지 확인한다.
+\item VAA가 지상 화소에서 \textbf{센서를 향하는} 방위각인지 확인한다. 센서에서 지표를 향하는 방위라면 \texttt{180\textdegree{}}를 더해 지상 화소 기준으로 바꾼다.
+\item SAA와 VAA의 영점 및 양의 회전 방향을 일치시킨다. 이미 상대방위각으로 제공된 값에 이 절차를 다시 적용하지 않는다.
+\end{enumerate}
+
+두 값이 위의 look-azimuth 정의를 만족하고 같은 회전 방향을 쓸 때, 다음은 OCRT의 \texttt{0/\allowbreak{}180\textdegree{}} 가지와 일치하는 명시적인 변환 규약이다.
+
+
+\begin{ManualCode}
+def ocrt_raa_from_look_azimuths(saa_deg, vaa_deg):
+    return (vaa_deg - saa_deg) % 360.0
+\end{ManualCode}
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.2300\linewidth-6.00pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2400\linewidth-6.00pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2300\linewidth-6.00pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.3000\linewidth-6.00pt\relax}@{}}
+\toprule
+\textbf{SAA} & \textbf{VAA} & \textbf{위 식의 OCRT RAA} & \textbf{의미} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{SAA} & \textbf{VAA} & \textbf{위 식의 OCRT RAA} & \textbf{의미} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+30\textdegree{} & 30\textdegree{} & 0\textdegree{} & 태양 look 방위와 센서 look 방위 일치 \\
+30\textdegree{} & 210\textdegree{} & 180\textdegree{} & 글린트 가지; 정반사 중심에는 SZA=VZA도 필요 \\
+350\textdegree{} & 10\textdegree{} & 20\textdegree{} & 0\textdegree{} 경계를 넘는 차이 \\
+10\textdegree{} & 350\textdegree{} & 340\textdegree{} & 위 행의 거울 방위 \\
+\end{longtable}
+}
+
+이 식은 위에 선언한 좌표에서 유도한 변환이며, 특정 위성 제품의 Stokes 기준면까지 자동으로 맞춘다는 뜻은 아니다. 제품의 양의 방위 회전 방향을 반대로 선택하면 \texttt{RAA}가 \texttt{360-RAA}로 바뀌어 \texttt{I/\allowbreak{}Q}는 같아도 \texttt{U} 부호는 뒤집힌다. 편광 자료에는 원래 SAA/VAA, 변환식, 기준면·회전 방향을 함께 기록하고, 주평면 밖의 한 기하에서 signed \texttt{U}를 대조한다. 제품의 방위·Stokes 정의를 모르면 \texttt{I/\allowbreak{}Q}의 값이 맞는 것만으로 \texttt{U} 변환까지 검증했다고 판단할 수 없다.
+
+그림~\ref{fig:geometry-azimuth}는 SAA에서 VAA까지의 회전을 표시한다. 오른쪽 그림은 같은 좌표를 태양 look 방위 기준으로 돌린 것이며, 거울 방위 두 개를 구분해 저장해야 하는 이유도 보여준다.
+
+\input{figures/geometry_azimuth}
+
+\subsection{0--180\textdegree{}로 접힌 RAA만 있는 경우}
+\label{sec:auto:01_concepts_geometry:4.2}
+접힌 값은 흔히 다음처럼 만든다.
+
+
+\begin{ManualCode}
+raa_360 = (vaa_deg - saa_deg) % 360.0
+raa_folded = min(raa_360, 360.0 - raa_360)
+\end{ManualCode}
+
+축대칭 조건에서 \texttt{I}와 \texttt{Q}만 사용하는 LUT에는 반원 격자를 이용할 수 있다. 그러나 \texttt{raa\_\allowbreak{}folded=\allowbreak{}20\textdegree{}}만 남기면 원래 \texttt{20\textdegree{}}였는지 \texttt{340\textdegree{}}였는지 알 수 없다. \texttt{U}를 보존하려면 원래 0--360\textdegree{} 방향 또는 거울 방향 여부를 함께 저장해야 한다. 절댓값 \texttt{abs(U)}를 저장하면 방향 정보가 사라진다.
+
+\section{다른 코드의 Phi와 맞추는 방법}
+\label{sec:auto:01_concepts_geometry:5}
+현재 \texttt{rt\_\allowbreak{}raa\_\allowbreak{}convention.\allowbreak{}h}는 OCRT--OSOAA 비교에 다음 두 \textbf{동등한 대안 중 하나}를 정의한다.
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3000\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2300\linewidth-5.33pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.4700\linewidth-5.33pt\relax}@{}}
+\toprule
+\textbf{변환 방식} & \textbf{OSOAA에 전달할 방위} & \textbf{OCRT와 비교할 U} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{변환 방식} & \textbf{OSOAA에 전달할 방위} & \textbf{OCRT와 비교할 U} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+A & \texttt{Phi\_\allowbreak{}OSOAA=\allowbreak{}(180-RAA\_\allowbreak{}OCRT) mod 360} & \texttt{U\_\allowbreak{}OCRT=\allowbreak{}-U\_\allowbreak{}OSOAA} \\
+B & \texttt{Phi\_\allowbreak{}OSOAA=\allowbreak{}(RAA\_\allowbreak{}OCRT+180) mod 36\allowbreak{}0} & \texttt{U\_\allowbreak{}OCRT=\allowbreak{}U\_\allowbreak{}OSOAA} \\
+\end{longtable}
+}
+
+\texttt{I/\allowbreak{}Q}는 두 방식에서 같은 물리 비교를 구성한다. A 방식의 U 반전과 B 방식의 각도 변환을 동시에 적용하지 않는다. 이 규칙은 해당 비교 하네스의 출력 기준을 전제로 하며, 임의 코드 전체에 적용하는 보편 공식이 아니다.
+
+현재 OCRT의 대기 출력과 수면 위 \texttt{Rrs}, 수면 아래 \texttt{rrs}는 \textbf{같은 공개 RAA}로 Fourier 재구성한다. 과거 보고서의 \texttt{Phi\_\allowbreak{}OSOAA,\allowbreak{}water=\allowbreak{}RAA\_\allowbreak{}OCRT} 무변환 규칙은 수정 전 물 출력에 대응했던 규칙이다. 현재 소스의 물 출력에는 사용하지 않는다.
+
+\texttt{-\allowbreak{}-\allowbreak{}ccrr-\allowbreak{}compare}는 CCRR 참조 CSV를 읽을 때 내부에서 \texttt{RAA\_\allowbreak{}OCRT=\allowbreak{}(180-RAA\_\allowbreak{}CCRR) mod 360}을 적용한다. CSV의 \texttt{raa\_\allowbreak{}deg}가 이미 OCRT 규약이면 이 비교 모드에 그대로 넣어 이중 변환하지 않는다. 결과의 \texttt{raa\_\allowbreak{}ccrr\_\allowbreak{}deg}, \texttt{raa\_\allowbreak{}ocrt\_\allowbreak{}deg}, \texttt{raa\_\allowbreak{}mapping}을 확인한다.
+
+\section{Stokes 부호와 주평면 밖 검증}
+\label{sec:auto:01_concepts_geometry:6}
+공개 기본 경로는 관측 방향의 자오면(관측 방향과 수직선이 이루는 면)에 맞춘 Stokes 성분을 사용한다. 표면 기본 Q 규약은 \texttt{q\_\allowbreak{}convention=\allowbreak{}1}, Fresnel 핵심 성분 \texttt{Q\_\allowbreak{}kernel=\allowbreak{}(Rp-Rs)/\allowbreak{}2}다. \texttt{Q}와 \texttt{U}는 부호가 있는 값이며 음수도 정상이다. 센서 좌표나 산란면 좌표와 비교할 때는 기준면 회전이 필요할 수 있다.
+
+축대칭 표면·매질 및 같은 기준면에서 다음 대칭성이 성립한다.
+
+
+\begin{ManualCode}
+I(RAA) =  I(360−RAA)
+Q(RAA) =  Q(360−RAA)
+U(RAA) = −U(360−RAA)
+\end{ManualCode}
+
+주평면 \texttt{RAA=\allowbreak{}0/\allowbreak{}180\textdegree{}}에서는 U가 0 또는 수치 오차 수준이라 U 부호 오류가 드러나지 않는다. \texttt{RAA=\allowbreak{}45/\allowbreak{}315\textdegree{}}처럼 주평면 밖의 쌍도 확인한다. 정확히 \texttt{VZA=\allowbreak{}0\textdegree{}}에서는 자오면이 기하적으로 퇴화하므로 RAA별 Q/U가 직관적인 좌우 방향과 대응하지 않을 수 있다. 모델 비교에는 천저값만 쓰지 말고 작은 양의 VZA도 포함한다.
+
+\section{산란각과 과거 주석의 충돌}
+\label{sec:auto:01_concepts_geometry:7}
+위에서 선언한 look 방향으로부터 실제 태양광 진행 벡터와 상향 관측 벡터를 내적하면 대기 산란각은 다음과 같다.
+
+
+\begin{ManualCode}
+mu_s = cos(SZA), mu_v = cos(VZA)
+cos(Theta) = −mu_s*mu_v − sin(SZA)*sin(VZA)*cos(RAA_OCRT)
+\end{ManualCode}
+
+이 식은 현재 \texttt{rt\_\allowbreak{}ipss\_\allowbreak{}cos\_\allowbreak{}scattering\_\allowbreak{}angle()}의 식과 일치한다. \texttt{SZA=\allowbreak{}VZA=\allowbreak{}30\textdegree{}}이면 \texttt{RAA=\allowbreak{}0\textdegree{}}에서 \texttt{Theta=\allowbreak{}180\textdegree{}}이고, 글린트 가지인 \texttt{RAA=\allowbreak{}180\textdegree{}}에서는 \texttt{Theta=\allowbreak{}120\textdegree{}}다. \textbf{수면 정반사 방향과 대기 입자의 정확 후방산란 방향은 같은 개념이 아니다.}
+
+현행 저장소에는 해결되지 않은 내부 설명 충돌도 있다. \texttt{rt\_\allowbreak{}raa\_\allowbreak{}convention.\allowbreak{}h}의 \texttt{rt\_\allowbreak{}atm\_\allowbreak{}scatter\_\allowbreak{}cos\_\allowbreak{}from\_\allowbreak{}public\_\allowbreak{}raa()}는 위 식과 반대인 \texttt{+sin(SZA)*sin(VZ\allowbreak{}A)*cos(RAA)}를 사용하고, 관련 주석과 \texttt{test\_\allowbreak{}raa\_\allowbreak{}convention.\allowbreak{}c}는 \texttt{RAA=\allowbreak{}180\textdegree{}}를 정확 후방산란이라고 표현한다. 이번 문서 작성 시점에 이 helper의 생산 \texttt{src} 호출은 확인되지 않았으며, 실제 Fourier 재구성은 \texttt{public\_\allowbreak{}RAA+\ensuremath{\pi}}, IPSS는 위의 \texttt{-cos(RAA)} 식을 사용한다. 따라서 그 helper·과거 감사 보고서의 “정확 후방산란” 문구를 위성 기하 변환의 근거로 사용하지 않는다. 이 매뉴얼은 소스 코드를 변경하지 않는다.
+
+\subsection{구현 확인 위치}
+\label{sec:auto:01_concepts_geometry:7.1}
+\begin{itemize}
+\item \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_C/src/rt_raa_convention.h}{공개 RAA helper 및 최신 OSOAA 매핑}
+\item \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_C/src/rt_fourier.c}{Fourier 재구성의 내부 +\ensuremath{\pi} 변환}
+\item \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_C/src/rt_ipss.c}{IPSS 산란각·화소 기준 기하}
+\item \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_C/src/main.c}{CLI 모드 선택과 CCRR 변환}
+\item \href{https://github.com/brtnt/OCRT/blob/54861c68e35ec5aaa3938fad53e93dc2dfa7eb1d/code/OCRT_C/src/shared/surface.c}{표면 Stokes 및 자오면 회전}
+\end{itemize}
+
+입력 파라미터를 바꾸기 전에 \texttt{RAA=\allowbreak{}180\textdegree{}} 글린트, \texttt{0\textdegree{}} 반대 가지, 주평면 밖 U 부호라는 세 가지를 먼저 맞추면 비교에서 생기는 대표적인 180\textdegree{}·부호 오류를 줄일 수 있다.
+

@@ -1,0 +1,149 @@
+% Authoritative LaTeX chapter. Edit this file for future revisions.
+% Initially migrated 2026-09-11; no Markdown import occurs during PDF builds.
+\chapter{Installation and First Run}
+\label{chap:02_installation}
+Contents · \hyperref[chap:03_options]{Next: C options}
+
+\section{Components and prerequisites}
+\label{sec:auto:02_installation:1}
+The recommended starting point is the C reference implementation. It requires a C11-capable GCC, OpenMP, and Git. The repository's Linux guidance specifies GCC 11 or later; Windows uses MinGW-w64 GCC. See \hyperref[chap:06_python_batch]{Appendix~\ref*{chap:06_python_batch}} for the Python batch package's dependencies and supported scope.
+
+
+{\TableFont
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{\dimexpr 0.3400\linewidth-4.00pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.6600\linewidth-4.00pt\relax}@{}}
+\toprule
+\textbf{Location} & \textbf{Role} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Location} & \textbf{Role} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{code/\allowbreak{}OCRT\_\allowbreak{}C/\allowbreak{}src/\allowbreak{}} & C source \\
+\texttt{code/\allowbreak{}OCRT\_\allowbreak{}C/\allowbreak{}inputs/\allowbreak{}} & AFGL, absorption cross sections, seawater IOPs, and Mie data read by C \\
+\texttt{code/\allowbreak{}OCRT\_\allowbreak{}C/\allowbreak{}build/\allowbreak{}} & Executables built locally \\
+\texttt{code/\allowbreak{}OCRT\_\allowbreak{}Python/\allowbreak{}} & Python implementation \\
+\texttt{scripts/\allowbreak{}} & Public Mie data installers and hash lists \\
+\end{longtable}
+}
+
+The command examples assume that the repository is cloned into a folder named \texttt{OCRT}. They do not hard-code absolute paths that vary by account or computer.
+
+
+\par\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+git clone https://github.com/brtnt/OCRT.git
+cd OCRT
+git rev-parse HEAD
+\end{ManualCode}
+\end{minipage}\par
+
+If the repository is already cloned, inspect any changes to the existing source and decide which version to use. Executables are not distributed through Git, so build after obtaining the source.
+
+\section{Installing input data}
+\label{sec:auto:02_installation:2}
+Small data files are included in Git. The 181 FR631 Mie files needed for aerosol and particulate-ocean calculations are distributed in four archives in the \href{https://github.com/brtnt/OCRT/releases/tag/data-v1}{data-v1 release}. Allow approximately 1.3 GB for the download, approximately 4.3 GB for the C inputs, and approximately 4.3 GB for the Python copy. Also reserve space for the archive cache.
+
+Run from the repository root.
+
+Linux/Bash:
+
+
+\par\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+bash scripts/fetch_data.sh
+\end{ManualCode}
+\end{minipage}\par
+
+Windows/PowerShell:
+
+
+\par\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+powershell -ExecutionPolicy Bypass -File scripts\fetch_data.ps1
+\end{ManualCode}
+\end{minipage}\par
+
+The scripts verify the archives' SHA-256 hashes and install the data in the C and Python input folders. Do not use \texttt{-\allowbreak{}NoVerify} for a normal installation. Existing input files with the same names may be updated during installation, so keep modified user data separately.
+
+To verify individual C Mie files on Linux as well:
+
+
+\par\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+cd code/OCRT_C/inputs
+sha256sum -c ../../../scripts/MIE_SHA256SUMS_data-v1.txt
+cd ../../..
+\end{ManualCode}
+\end{minipage}\par
+
+C Rayleigh examples without aerosols or underwater-particle calculations can be run without downloading the large Mie data set. Calculations with gas absorption enabled require the small AFGL and cross-section files. \textbf{Python has paths that preload additional data in constructors, so the C conditions for running without those data do not transfer directly to Python.}
+
+\section{Building on Linux}
+\label{sec:auto:02_installation:3}
+The default CPU option in the \texttt{Makefile} is \texttt{-\allowbreak{}march=\allowbreak{}cascadelake} (AVX-512). Execution fails if the CPU does not support it. For a typical x86-64 AVX2 environment, specify the options explicitly:
+
+
+\par\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+cd code/OCRT_C
+make CFLAGS='-std=c11 -O3 -march=x86-64-v3 -ffp-contract=fast -fassociative-math -fno-signed-zeros -fno-trapping-math -DOCRT_FAST_KERNELS -fopenmp -Isrc'
+./build/ocrt --version
+./build/ocrt --help
+\end{ManualCode}
+\end{minipage}\par
+
+When rebuilding with a different CPU option, force a rebuild with the same \textbf{complete} CFLAGS, for example \texttt{make -\allowbreak{}B CFLAGS=\allowbreak{}'\ldots{}'}. Replace \texttt{\ldots{}} in that command with the actual options. Make does not automatically regenerate an existing executable merely because CFLAGS changed.
+
+An x86-64 CPU without AVX2 can use a build with \texttt{-\allowbreak{}march=\allowbreak{}x86-\allowbreak{}64}, but performance and numerical differences must be checked again. The x86-specific options above cannot be used on ARM/macOS, which is outside this manual's verified execution scope. Do not treat Apple Clang as equivalent to the GCC/OpenMP environment.
+
+\section{Building on Windows}
+\label{sec:auto:02_installation:4}
+Install a GCC environment following the \href{https://www.msys2.org/}{official MSYS2 installation guidance}. The current official default environment is UCRT64. In a UCRT64 terminal, install GCC with:
+
+
+\par\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+pacman -S mingw-w64-ucrt-x86_64-gcc
+gcc --version
+\end{ManualCode}
+\end{minipage}\par
+
+Existing OCRT Windows scripts were written for MinGW64 GCC. Consistently use the \texttt{bin} path of your MinGW64 or UCRT64 environment, and do not mix GCC/DLL environments. The following is \textbf{an example for UCRT64 with MSYS2 installed in its default location}. If your installation is elsewhere, change the corresponding PATH entry.
+
+In PowerShell, starting at the repository root:
+
+
+\par\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+$env:Path = 'C:\msys64\ucrt64\bin;' + $env:Path
+gcc --version
+Set-Location code\OCRT_C
+.\build_win.bat
+.\build\ocrt_x86-64-v3.exe --version
+.\build\ocrt_x86-64-v3.exe --help
+\end{ManualCode}
+\end{minipage}\par
+
+\texttt{build\_\allowbreak{}win.\allowbreak{}bat} includes the Windows compatibility source files, and its default output is \texttt{build\textbackslash{}ocrt\_\allowbreak{}x86-\allowbreak{}64-\allowbreak{}v3.\allowbreak{}exe}. It waits for a keypress after running. \texttt{build\_\allowbreak{}win.\allowbreak{}bat native} targets the current computer's CPU. Use \texttt{cascadelake} only after confirming AVX-512 support. An old \texttt{ocrt.\allowbreak{}exe} remaining in the folder is not automatically replaced by the new build.
+
+The \texttt{build/\allowbreak{}run\_\allowbreak{}star.\allowbreak{}py} mentioned in the script's final message is not a required distribution file in the public repository. Its absence does not indicate a compilation failure. Verify the build using the first calculation in Appendix~\ref{sec:example_first_run} and the validation procedure in Appendix~\ref{sec:example_ipss_gates}.
+
+This manual verified building and running on Linux/WSL. Native Windows and UCRT64 builds require a separate environment check.
+
+\section{Working directory at runtime}
+\label{sec:auto:02_installation:5}
+\textbf{Set the current working directory to \texttt{code/\allowbreak{}OCRT\_\allowbreak{}C} when running.} Specifying the executable's location alone does not automatically change the internal \texttt{inputs/\allowbreak{}} relative paths.
+
+Bash and PowerShell commands for a single calculation, with output guidance, are provided in Appendix~\ref{sec:example_first_run}. For a first installation, begin with the Quick start at the front of the manual.
+
+\section{Validation and reproducibility}
+\label{sec:auto:02_installation:6}
+Geometry and Rayleigh numerical checks can be run after installation. The validation script and its completion markers are described in Appendix~\ref{sec:example_ipss_gates}.
+
+With the outputs, retain the commit, build command and GCC version, CPU, executable hash, input-data version, complete options, environment variables, output headers, and standard-error logs. Perform scientific comparisons under matching conditions, distinguishing last-digit differences caused by the compiler/CPU from model differences.
+
+Also pay attention to case sensitivity, paths containing spaces, and UTF-8 handling in inputs and outputs. Save input CSV files as UTF-8 without a BOM, with \texttt{.\allowbreak{}} as the decimal separator and \texttt{,\allowbreak{}} as the field delimiter.
+

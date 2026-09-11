@@ -1,0 +1,1272 @@
+% Authoritative LaTeX chapter. Update this file directly, with matching catalogue arguments.
+
+\chapter{실전 활용: 재현 가능한 40가지 예시}
+
+\label{chap:09_cookbook}
+
+부록~\ref{chap:04_examples}의 사용 예시를 통제된 비교와 유한한 실행 사례로 확장한다. 모든 명령은 Quick start 빌드 후 Bash/Linux/WSL의 \texttt{code/\allowbreak{}OCRT\_\allowbreak{}C}에서 실행한다. R01/R07/R38부터 시작하고 해양·에어로졸 사례는 필요한 자료를 설치한 뒤 선택한다. 이 부록은 40가지 예시와 49개 C 호출로 구성되며 일부 비교 예시는 두 상태를 모두 실행한다. 양 언어판의 명령과 출력 파일명은 같다.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+export OMP_NUM_THREADS=1
+mkdir -p ../../task/manual_cookbook
+
+\end{ManualCode}
+\end{minipage}\par
+
+새 결과 폴더와 OCRT 실험·진단 환경변수가 남아 있지 않은 셸을 사용한다. 아래 리다이렉션은 같은 이름의 파일을 덮어쓰므로 수동 재실행 시 폴더명을 바꾼다. 함께 제공한 \texttt{run\_\allowbreak{}recipes.py}는 기존 결과를 거부하고 상속된 \texttt{OCRT\_\allowbreak{}*} 변수를 지운 뒤 여기 명시한 사례별 설정만 켜므로 재현에 편리하다. 별도 설명이 없으면 기체 총량은 명시적으로 0이다. 해면이 있는 사례의 경계 굴절률은 1.34로 고정한다. 지원되지 않는 결합 해양 IPSS나 EAP 식물플랑크톤 산란을 켜는 사례는 없다.
+
+\Needspace{16\baselineskip}
+\section{원하는 예시 선택 및 실행}
+\label{sec:auto:09_cookbook:1}
+
+이 도구는 저장소 최상위에서 실행한다. 계획 단계에서는 솔버를 호출하지 않는다. manifest.json을 확인한 뒤 같은 선택·결과 폴더에 \texttt{-\allowbreak{}-\allowbreak{}run}을 붙인다. 네이티브 Windows에서는 \texttt{python}과 Windows 실행 파일 경로를 쓰며 Python 도구가 셸별 배열·리다이렉션 차이를 처리한다.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+python3 docs/manual/examples/run_recipes.py --list
+
+python3 docs/manual/examples/run_recipes.py \
+  --select R01,R02,R07,R38 \
+  --ocrt-root code/OCRT_C --exe code/OCRT_C/build/ocrt \
+  --outdir task/cookbook_selected --threads 1 --timeout 900
+
+\end{ManualCode}
+\end{minipage}\par
+
+\texttt{-\allowbreak{}-\allowbreak{}group geometry,rayleigh}, \texttt{-\allowbreak{}-\allowbreak{}group ocean}, \texttt{-\allowbreak{}-\allowbreak{}select all}로 범위를 넓힌다. 그룹은 geometry, rayleigh, gas, aerosol, ocean, workflow이다. 기본 선택은 전체 40개이며 처음에는 적은 수를 명시하는 편이 쉽다. 도구는 실행 파일·필수 자료의 해시와 호출별 전체 인자·환경·시간을 기록하고 stdout과 stderr를 저장한다. 사례는 순차 실행하며 \texttt{-\allowbreak{}-\allowbreak{}threads}는 각 C 프로세스 내부 스레드 수다.
+
+\Needspace{16\baselineskip}
+\section{관측기하와 편광}
+\label{sec:auto:09_cookbook:2}
+
+\Needspace{17\baselineskip}
+
+\subsection{R01 · 검은 경계의 기준 계산}
+\label{sec:auto:09_cookbook:2.1}
+
+\label{recipe:R01}
+
+\textbf{목적. }SZA40\textdegree{}, VZA30\textdegree{}, RAA90\textdegree{}에서 기체 흡수가 없는 분자 산란 기준값을 만든다. 검은 하부 경계는 수면 반사와 수중 광원을 제외한다. 에어로졸 파일과 AOD 옵션은 넣지 않는다.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface black --sza 40 --wavelength 555 --pressure 1013.25 \
+  --vza 30 --raa 90 --gas-column-h2o 0 --gas-column-o3 0 --gas-column-no2 0 \
+  --gas-column-o2 0 --gas-column-co2 0 --gas-column-ch4 0 \
+  > ../../task/manual_cookbook/R01.txt \
+  2> ../../task/manual_cookbook/R01.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{결과 파일. }\texttt{R01.txt}.
+
+\textbf{확인·해석. }R01.txt의 \texttt{TOA\_\allowbreak{}rho\_\allowbreak{}I/\allowbreak{}Q/\allowbreak{}U}, \texttt{tau\_\allowbreak{}R}, \texttt{orders}, \texttt{conv}를 읽는다. 무차원 TOA 반사도이며 Q나 U가 음수인 것은 정상일 수 있다. \texttt{conv=\allowbreak{}1}은 수렴 플래그이지 정확도의 보증이 아니다. R02–R06은 이 기준에서 기하각 하나씩만 바꾼다.
+
+\Needspace{17\baselineskip}
+
+\subsection{R02 · 거울 방위각과 U의 부호}
+\label{sec:auto:09_cookbook:2.2}
+
+\label{recipe:R02}
+
+\textbf{목적. }RAA만 90\textdegree{}에서 270\textdegree{}로 바꾼다. 수평으로 균일하고 방위 방향으로 대칭인 이 장면에서 두 방향은 태양 주평면에 대한 거울상이다.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface black --sza 40 --wavelength 555 --pressure 1013.25 \
+  --vza 30 --raa 270 --gas-column-h2o 0 --gas-column-o3 0 --gas-column-no2 0 \
+  --gas-column-o2 0 --gas-column-co2 0 --gas-column-ch4 0 \
+  > ../../task/manual_cookbook/R02.txt \
+  2> ../../task/manual_cookbook/R02.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{결과 파일. }\texttt{R02.txt}.
+
+\textbf{확인·해석. }R02.txt와 R01.txt를 비교한다. 수치 오차 범위에서 I와 Q는 같고 U는 부호가 반대여야 한다. U가 0에 가까우면 절대오차를 사용한다. 편광 자료에서 두 방향을 모두 90\textdegree{}로 접으면 U 부호 정보가 사라진다.
+
+\Needspace{17\baselineskip}
+
+\subsection{R03 · RAA = 0 주평면}
+\label{sec:auto:09_cookbook:2.3}
+
+\label{recipe:R03}
+
+\textbf{목적. }검은 경계 기준에서 관측 방향을 RAA0\textdegree{} 주평면에 놓는다. OCRT 정의에서 직달 글린트 가지의 반대쪽에 해당하는 주평면이다.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface black --sza 40 --wavelength 555 --pressure 1013.25 \
+  --vza 30 --raa 0 --gas-column-h2o 0 --gas-column-o3 0 --gas-column-no2 0 \
+  --gas-column-o2 0 --gas-column-co2 0 --gas-column-ch4 0 \
+  > ../../task/manual_cookbook/R03.txt \
+  2> ../../task/manual_cookbook/R03.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{결과 파일. }\texttt{R03.txt}.
+
+\textbf{확인·해석. }이 장면의 대칭성 때문에 \texttt{TOA\_\allowbreak{}rho\_\allowbreak{}U}는 0에 가까워야 한다. 실제 값과 I 대비 크기를 함께 보며 수치 잔차를 확인한다. R03과 R04는 산란기하가 다르므로 I와 Q가 같을 필요는 없다.
+
+\Needspace{17\baselineskip}
+
+\subsection{R04 · RAA = 180 주평면}
+\label{sec:auto:09_cookbook:2.4}
+
+\label{recipe:R04}
+
+\textbf{목적. }SZA와 VZA를 고정하고 RAA를 0\textdegree{}에서 180\textdegree{}로 옮긴다. “글린트 가지”는 기하 방향을 가리키며, 이 사례의 검은 경계가 수면 글린트를 생성하는 것은 아니다.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface black --sza 40 --wavelength 555 --pressure 1013.25 \
+  --vza 30 --raa 180 --gas-column-h2o 0 --gas-column-o3 0 --gas-column-no2 0 \
+  --gas-column-o2 0 --gas-column-co2 0 --gas-column-ch4 0 \
+  > ../../task/manual_cookbook/R04.txt \
+  2> ../../task/manual_cookbook/R04.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{결과 파일. }\texttt{R04.txt}.
+
+\textbf{확인·해석. }R04.txt의 I/Q/U를 R03.txt와 비교한다. U는 다시 0에 가까워야 한다. 실제 수면 글린트는 Fresnel 경계와 VZA=SZA=40\textdegree{}를 사용하는 R10/R11에서 확인한다. R04는 대기의 주평면 사례다.
+
+\Needspace{17\baselineskip}
+
+\subsection{R05 · 천저 관측과 방위각의 퇴화}
+\label{sec:auto:09_cookbook:2.5}
+
+\label{recipe:R05}
+
+\textbf{목적. }VZA를 0\textdegree{}로 설정하고 입력 RAA90\textdegree{} 표기는 유지한다. 정확한 천저에서는 방위각이 서로 다른 출사 광선을 정하지 못하며, 프로그램의 편광 기준축 표기로 남을 수 있다.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface black --sza 40 --wavelength 555 --pressure 1013.25 \
+  --vza 0 --raa 90 --gas-column-h2o 0 --gas-column-o3 0 --gas-column-no2 0 \
+  --gas-column-o2 0 --gas-column-co2 0 --gas-column-ch4 0 \
+  > ../../task/manual_cookbook/R05.txt \
+  2> ../../task/manual_cookbook/R05.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{결과 파일. }\texttt{R05.txt}.
+
+\textbf{확인·해석. }R05.txt로 자료 읽기와 보간의 천저 처리를 확인한다. 격자의 천저 RAA 네 행을 독립적인 네 관측 방향으로 취급하지 않는다. Stokes 성분은 기준면을 맞춘 뒤 비교하며, 기본 천저 검사는 I부터 확인한다.
+
+\Needspace{17\baselineskip}
+
+\subsection{R06 · 비스듬한 관측 방향}
+\label{sec:auto:09_cookbook:2.6}
+
+\label{recipe:R06}
+
+\textbf{목적. }SZA40\textdegree{}와 RAA90\textdegree{}를 유지하고 VZA만 30\textdegree{}에서 60\textdegree{}로 바꾼다. 파장·기압·경계를 함께 바꾸지 않고 긴 관측 경로를 시험한다.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface black --sza 40 --wavelength 555 --pressure 1013.25 \
+  --vza 60 --raa 90 --gas-column-h2o 0 --gas-column-o3 0 --gas-column-no2 0 \
+  --gas-column-o2 0 --gas-column-co2 0 --gas-column-ch4 0 \
+  > ../../task/manual_cookbook/R06.txt \
+  2> ../../task/manual_cookbook/R06.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{결과 파일. }\texttt{R06.txt}.
+
+\textbf{확인·해석. }R01과 \texttt{TOA\_\allowbreak{}rho\_\allowbreak{}I/\allowbreak{}Q/\allowbreak{}U}, \texttt{T\_\allowbreak{}dir\_\allowbreak{}up\_\allowbreak{}view}를 비교한다. 긴 경로는 산란과 감쇠를 함께 바꾸므로 단순 공기질량 배율로 이 계산을 대체하지 않는다. LUT 보간 검증에도 독립적인 경사 관측 방향을 사용한다.
+
+\Needspace{16\baselineskip}
+\section{Rayleigh·해면·IPSS}
+\label{sec:auto:09_cookbook:3}
+
+\Needspace{17\baselineskip}
+
+\subsection{R07 · 거친 검은 해면의 Rayleigh 기준}
+\label{sec:auto:09_cookbook:3.1}
+
+\label{recipe:R07}
+
+\textbf{목적. }R01의 검은 경계를 풍속 5 m/s, 굴절률 1.34인 거친 Fresnel 해면과 검은 물로 바꾼다. 직달 선글린트는 분리하지만 다른 수면–대기 상호작용은 남긴다. 이후 Rayleigh 사례의 기준이다.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface black_fresnel_ocean --sza 40 --wavelength 555 \
+  --pressure 1013.25 --vza 30 --raa 90 --wind-speed 5 --n-water 1.34 \
+  --gas-column-h2o 0 --gas-column-o3 0 --gas-column-no2 0 --gas-column-o2 0 \
+  --gas-column-co2 0 --gas-column-ch4 0 --decouple-sunglint \
+  > ../../task/manual_cookbook/R07.txt \
+  2> ../../task/manual_cookbook/R07.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{결과 파일. }\texttt{R07.txt}.
+
+\textbf{확인·해석. }R07.txt는 이 글린트 정의에 따른 해면 Rayleigh 기준값이다. \texttt{TOA\_\allowbreak{}rho\_\allowbreak{}I/\allowbreak{}Q/\allowbreak{}U}를 R01과 비교해 경계 변경의 영향을 본다. 수중 구성성분의 출사 신호는 없으며 결합 해양의 \texttt{Rrs} 산출물이 아니다.
+
+\Needspace{17\baselineskip}
+
+\subsection{R08 · 풍속 0의 평탄면 한계}
+\label{sec:auto:09_cookbook:3.2}
+
+\label{recipe:R08}
+
+\textbf{목적. }R07에서 풍속만 0 m/s로 바꾼다. SZA40\textdegree{}, VZA30\textdegree{}, RAA90\textdegree{}는 정확한 정반사 방향을 피하므로 평탄 경계의 한계 확인에 적합하다.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface black_fresnel_ocean --sza 40 --wavelength 555 \
+  --pressure 1013.25 --vza 30 --raa 90 --wind-speed 0 --n-water 1.34 \
+  --gas-column-h2o 0 --gas-column-o3 0 --gas-column-no2 0 --gas-column-o2 0 \
+  --gas-column-co2 0 --gas-column-ch4 0 --decouple-sunglint \
+  > ../../task/manual_cookbook/R08.txt \
+  2> ../../task/manual_cookbook/R08.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{결과 파일. }\texttt{R08.txt}.
+
+\textbf{확인·해석. }R08.txt와 R07.txt를 비교한다. 풍속 0은 평탄 경계를 선택하며, 폭이 작지만 유한한 Cox–Munk 글린트로 해석하지 않는다. 표면 거칠기 효과를 비교할 때 굴절률은 고정한다.
+
+\Needspace{17\baselineskip}
+
+\subsection{R09 · 풍속 변화의 영향}
+\label{sec:auto:09_cookbook:3.3}
+
+\label{recipe:R09}
+
+\textbf{목적. }기체 흡수와 직달 글린트를 제외한 R07 구성에서 풍속을 5에서 10 m/s로 높인다. 대기 광학두께를 고정한 채 해면 경사의 분포를 바꾼다.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface black_fresnel_ocean --sza 40 --wavelength 555 \
+  --pressure 1013.25 --vza 30 --raa 90 --wind-speed 10 --n-water 1.34 \
+  --gas-column-h2o 0 --gas-column-o3 0 --gas-column-no2 0 --gas-column-o2 0 \
+  --gas-column-co2 0 --gas-column-ch4 0 --decouple-sunglint \
+  > ../../task/manual_cookbook/R09.txt \
+  2> ../../task/manual_cookbook/R09.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{결과 파일. }\texttt{R09.txt}.
+
+\textbf{확인·해석. }R09와 R07의 같은 TOA Stokes 키를 읽는다. 반사 분포가 넓어질 때 방향별 값은 증가하거나 감소할 수 있다. 높은 풍속이 모든 각도에서 큰 반사도를 뜻하지 않는다. 분포 모양이 필요하면 전체 각도 격자에서 반복한다.
+
+\Needspace{17\baselineskip}
+
+\subsection{R10 · 직달 선글린트 포함}
+\label{sec:auto:09_cookbook:3.4}
+
+\label{recipe:R10}
+
+\textbf{목적. }풍속 5 m/s에서 SZA=VZA=40\textdegree{}, RAA180\textdegree{}를 쓰고 직달 선글린트를 포함한다. 유한한 거친 해면 분포를 유지한 채 OCRT 글린트 가지를 관측한다.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface black_fresnel_ocean --sza 40 --wavelength 555 \
+  --pressure 1013.25 --vza 40 --raa 180 --wind-speed 5 --n-water 1.34 \
+  --gas-column-h2o 0 --gas-column-o3 0 --gas-column-no2 0 --gas-column-o2 0 \
+  --gas-column-co2 0 --gas-column-ch4 0 \
+  > ../../task/manual_cookbook/R10.txt \
+  2> ../../task/manual_cookbook/R10.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{결과 파일. }\texttt{R10.txt}.
+
+\textbf{확인·해석. }R10.txt는 직달 글린트를 포함한 비해양 총량이다. \texttt{-\allowbreak{}-\allowbreak{}decouple-\allowbreak{}sunglint}만 다른 R11과 비교하고 I와 Q부터 확인한다. 비해양 U의 별도 직달 글린트 진단 키에는 문서화된 부호 불일치가 있으므로 두 실행의 총량을 직접 비교한다.
+
+\Needspace{17\baselineskip}
+
+\subsection{R11 · 직달 선글린트 분리}
+\label{sec:auto:09_cookbook:3.5}
+
+\label{recipe:R11}
+
+\textbf{목적. }R10에 직달 글린트 분리 플래그만 추가한다. 그 외 물리·수치 조건이 같으므로 직달 글린트 포함 여부를 통제한 비교가 된다.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface black_fresnel_ocean --sza 40 --wavelength 555 \
+  --pressure 1013.25 --vza 40 --raa 180 --wind-speed 5 --n-water 1.34 \
+  --gas-column-h2o 0 --gas-column-o3 0 --gas-column-no2 0 --gas-column-o2 0 \
+  --gas-column-co2 0 --gas-column-ch4 0 --decouple-sunglint \
+  > ../../task/manual_cookbook/R11.txt \
+  2> ../../task/manual_cookbook/R11.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{결과 파일. }\texttt{R11.txt}.
+
+\textbf{확인·해석. }R10 총반사도에서 R11 총반사도를 빼 직달 글린트 포함에 따른 변화를 구한다. R11에도 하부 경계의 반사와 반복 상호작용은 남아 있다. 이 플래그는 해면을 검은 경계로 바꾸지 않는다.
+
+\Needspace{17\baselineskip}
+
+\subsection{R12 · 낮은 지표 기압}
+\label{sec:auto:09_cookbook:3.6}
+
+\label{recipe:R12}
+
+\textbf{목적. }모든 기체 총량을 0으로 유지한 채 기압을 1013.25에서 900 hPa로 낮춘다. 파장·기하·해면 상태를 고정하고 분자 산란만 바꾼다.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface black_fresnel_ocean --sza 40 --wavelength 555 \
+  --pressure 900 --vza 30 --raa 90 --wind-speed 5 --n-water 1.34 \
+  --gas-column-h2o 0 --gas-column-o3 0 --gas-column-no2 0 --gas-column-o2 0 \
+  --gas-column-co2 0 --gas-column-ch4 0 --decouple-sunglint \
+  > ../../task/manual_cookbook/R12.txt \
+  2> ../../task/manual_cookbook/R12.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{결과 파일. }\texttt{R12.txt}.
+
+\textbf{확인·해석. }R07의 \texttt{tau\_\allowbreak{}R}와 비교하면 기압에 선형으로 비례한다. 전체 \texttt{TOA\_\allowbreak{}rho\_\allowbreak{}I/\allowbreak{}Q/\allowbreak{}U}에는 다중 산란과 해면이 포함되므로 900/1013.25에 정확히 비례할 필요는 없다. 기압 보간 검증에는 직접 계산한 기압 상태를 사용한다.
+
+\Needspace{17\baselineskip}
+
+\subsection{R13 · 청색 파장으로 변경}
+\label{sec:auto:09_cookbook:3.7}
+
+\label{recipe:R13}
+
+\textbf{목적. }기압과 해면 상태를 유지하고 파장을 555에서 443 nm로 바꾼다. 기체 흡수와 에어로졸 스펙트럼이 없으므로 분자의 파장 의존성을 구분하기 쉽다.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface black_fresnel_ocean --sza 40 --wavelength 443 \
+  --pressure 1013.25 --vza 30 --raa 90 --wind-speed 5 --n-water 1.34 \
+  --gas-column-h2o 0 --gas-column-o3 0 --gas-column-no2 0 --gas-column-o2 0 \
+  --gas-column-co2 0 --gas-column-ch4 0 --decouple-sunglint \
+  > ../../task/manual_cookbook/R13.txt \
+  2> ../../task/manual_cookbook/R13.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{결과 파일. }\texttt{R13.txt}.
+
+\textbf{확인·해석. }R07과 \texttt{tau\_\allowbreak{}R}, TOA 반사도를 비교한다. 분자 광학두께의 파장 거듭제곱 법칙이 전체 방향 반사도에 정확히 적용되는 것은 아니다. 555/443 nm 쌍은 단색 계산이며 센서 밴드 적분이 아니다.
+
+\Needspace{17\baselineskip}
+
+\subsection{R14 · 큰 천정각의 평행평면 계산}
+\label{sec:auto:09_cookbook:3.8}
+
+\label{recipe:R14}
+
+\textbf{목적. }구면 보정 없이 SZA75\textdegree{}, VZA70\textdegree{}, RAA90\textdegree{}를 계산한다. R15의 IPSS 비교에서 평행평면 기준이 되며 기하각이 다른 R07과 섞어 비교하지 않는다.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface black_fresnel_ocean --sza 75 --wavelength 555 \
+  --pressure 1013.25 --vza 70 --raa 90 --wind-speed 5 --n-water 1.34 \
+  --gas-column-h2o 0 --gas-column-o3 0 --gas-column-no2 0 --gas-column-o2 0 \
+  --gas-column-co2 0 --gas-column-ch4 0 --decouple-sunglint \
+  > ../../task/manual_cookbook/R14.txt \
+  2> ../../task/manual_cookbook/R14.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{결과 파일. }\texttt{R14.txt}.
+
+\textbf{확인·해석. }R14.txt와 로그를 함께 보관한다. 큰 천정각에서는 기하 정의와 수치 수렴의 영향이 커진다. 지표 기준의 실제 각도를 기록하고, R15/R14 비율은 값이 충분히 0에서 떨어진 성분에만 사용한다.
+
+\Needspace{17\baselineskip}
+
+\subsection{R15 · 큰 천정각의 IPSS 보정}
+\label{sec:auto:09_cookbook:3.9}
+
+\label{recipe:R15}
+
+\textbf{목적. }R14와 정확히 같은 상태에 \texttt{-\allowbreak{}-\allowbreak{}pssa}를 추가한다. 과거 이름을 유지한 이 옵션은 현재 IPSS 보정을 켠다. 이 해면 경로는 지원되지만 결합 \texttt{-\allowbreak{}-\allowbreak{}surface ocean}과 IPSS의 조합은 지원되지 않는다.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface black_fresnel_ocean --sza 75 --wavelength 555 \
+  --pressure 1013.25 --vza 70 --raa 90 --wind-speed 5 --n-water 1.34 \
+  --gas-column-h2o 0 --gas-column-o3 0 --gas-column-no2 0 --gas-column-o2 0 \
+  --gas-column-co2 0 --gas-column-ch4 0 --decouple-sunglint --pssa \
+  > ../../task/manual_cookbook/R15.txt \
+  2> ../../task/manual_cookbook/R15.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{결과 파일. }\texttt{R15.txt}.
+
+\textbf{확인·해석. }R14와 I/Q/U를 비교하되 0 근처에서는 절대차를 사용한다. R15.log의 IPSS 진단도 확인한다. 각도는 지표 화소 기준이며 이 보정은 새로운 완전 3차원 해양 솔버가 아니다. LUT 메타데이터에 IPSS 여부를 남긴다.
+
+\Needspace{16\baselineskip}
+\section{기체 흡수와 대기 프로파일}
+\label{sec:auto:09_cookbook:4}
+
+\Needspace{17\baselineskip}
+
+\subsection{R16 · 표준 프로파일의 모든 기체}
+\label{sec:auto:09_cookbook:4.1}
+
+\label{recipe:R16}
+
+\textbf{목적. }R07의 여섯 기체 0 옵션을 넣지 않고 \texttt{usstd76} 기본 적분 총량으로 기체 흡수를 켠다. 나머지 물리 조건은 그대로 유지한다.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface black_fresnel_ocean --sza 40 --wavelength 555 \
+  --pressure 1013.25 --vza 30 --raa 90 --wind-speed 5 --n-water 1.34 \
+  --atm-profile usstd76 --decouple-sunglint \
+  > ../../task/manual_cookbook/R16.txt \
+  2> ../../task/manual_cookbook/R16.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{결과 파일. }\texttt{R16.txt}.
+
+\textbf{확인·해석. }R16과 R07을 비교해 555 nm에서 기본 기체 혼합물의 영향을 본다. R16.log에서 각 기체 총량과 흡수 광학두께를 읽으며 프로파일 이름만으로 총량을 추정하지 않는다. 이 일반 단일 계산은 기체를 초기화하지만 레거시 \texttt{-\allowbreak{}-\allowbreak{}batch}는 그렇지 않다.
+
+\Needspace{17\baselineskip}
+
+\subsection{R17 · 오존 300 DU만 켜기}
+\label{sec:auto:09_cookbook:4.2}
+
+\label{recipe:R17}
+
+\textbf{목적. }오존을 300 DU로 설정하고 다른 다섯 기체 총량은 명시적으로 0으로 둔다. R07의 기하·파장에서 수증기와 다른 기체를 제외한 오존 흡수를 분리한다.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface black_fresnel_ocean --sza 40 --wavelength 555 \
+  --pressure 1013.25 --vza 30 --raa 90 --wind-speed 5 --n-water 1.34 \
+  --gas-column-h2o 0 --gas-column-o3 300 --gas-column-no2 0 --gas-column-o2 0 \
+  --gas-column-co2 0 --gas-column-ch4 0 --decouple-sunglint \
+  > ../../task/manual_cookbook/R17.txt \
+  2> ../../task/manual_cookbook/R17.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{결과 파일. }\texttt{R17.txt}.
+
+\textbf{확인·해석. }R17과 R07의 차이는 오존 총량뿐이다. 로그에서 재지정된 O3 총량을 확인한다. 1 DU는 2.6868e16 molecules/cm\textsuperscript{2}이며, 입력 300은 DU 값이다. 혼합비나 cm\textsuperscript{-2} 단위 분자 총량으로 해석하지 않는다.
+
+\Needspace{17\baselineskip}
+
+\subsection{R18 · 940 nm의 수증기 흡수}
+\label{sec:auto:09_cookbook:4.3}
+
+\label{recipe:R18}
+
+\textbf{목적. }940 nm에서 수증기 0 기준과 3 g/cm\textsuperscript{2}를 비교한다. 다른 기체는 모두 명시적으로 0이며 두 명령의 기체 프로파일 모양·기하·해면은 같다.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface black_fresnel_ocean --sza 40 --wavelength 940 \
+  --pressure 1013.25 --vza 30 --raa 90 --wind-speed 5 --n-water 1.34 \
+  --gas-column-h2o 0 --gas-column-o3 0 --gas-column-no2 0 --gas-column-o2 0 \
+  --gas-column-co2 0 --gas-column-ch4 0 --decouple-sunglint \
+  > ../../task/manual_cookbook/R18_dry.txt \
+  2> ../../task/manual_cookbook/R18_dry.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface black_fresnel_ocean --sza 40 --wavelength 940 \
+  --pressure 1013.25 --vza 30 --raa 90 --wind-speed 5 --n-water 1.34 \
+  --gas-column-h2o 3 --gas-column-o3 0 --gas-column-no2 0 --gas-column-o2 0 \
+  --gas-column-co2 0 --gas-column-ch4 0 --decouple-sunglint \
+  > ../../task/manual_cookbook/R18_wet.txt \
+  2> ../../task/manual_cookbook/R18_wet.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{결과 파일. }\texttt{R18\_\allowbreak{}dry.txt}, \texttt{R18\_\allowbreak{}wet.txt}.
+
+\textbf{확인·해석. }R18\_wet.txt와 R18\_dry.txt를 비교하고 로그에서 H2 O 흡수를 확인한다. 입력은 상대습도가 아니라 단위면적당 질량이다. 구조가 복잡한 흡수 대역의 단색 표본이므로 센서 밴드 결과에는 별도로 검증한 분광 적분이 필요하다.
+
+\Needspace{17\baselineskip}
+
+\subsection{R19 · 760 nm 산소: 구현 진단 사례}
+\label{sec:auto:09_cookbook:4.4}
+
+\label{recipe:R19}
+
+\textbf{목적. }760 nm에서 O2=0과 예시 산소 총량 4.4e24 molecules/cm\textsuperscript{2}를 비교한다. 다른 다섯 기체는 0이다. 이 값은 분자 개수의 면적밀도이며 화학 단위 mol이 아니다.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface black_fresnel_ocean --sza 40 --wavelength 760 \
+  --pressure 1013.25 --vza 30 --raa 90 --wind-speed 5 --n-water 1.34 \
+  --gas-column-h2o 0 --gas-column-o3 0 --gas-column-no2 0 --gas-column-o2 0 \
+  --gas-column-co2 0 --gas-column-ch4 0 --decouple-sunglint \
+  > ../../task/manual_cookbook/R19_off.txt \
+  2> ../../task/manual_cookbook/R19_off.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface black_fresnel_ocean --sza 40 --wavelength 760 \
+  --pressure 1013.25 --vza 30 --raa 90 --wind-speed 5 --n-water 1.34 \
+  --gas-column-h2o 0 --gas-column-o3 0 --gas-column-no2 0 \
+  --gas-column-o2 4.4e24 --gas-column-co2 0 --gas-column-ch4 0 \
+  --decouple-sunglint \
+  > ../../task/manual_cookbook/R19_on.txt \
+  2> ../../task/manual_cookbook/R19_on.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{결과 파일. }\texttt{R19\_\allowbreak{}off.txt}, \texttt{R19\_\allowbreak{}on.txt}.
+
+\textbf{확인·해석. }R19\_on.log에서 산소 광학두께를 확인한다. 입력에 아보가드로 수를 다시 곱하지 않으며 과거 로그 mol/cm\textsuperscript{2}는 molecules/cm\textsuperscript{2}를 뜻한다. 현재 실행 파일은 40층에서 O2를 켰을 때 TOA I가 약 0.01142에서 0.05405로 증가했다. 추가 산소 ON 점검의 400층과 4000층 값은 약 0.005611과 0.001098이며 세 경우 모두 \texttt{conv=\allowbreak{}1}이었다. 이 큰 수직 해상도 민감도는 SOS 수렴 플래그만으로 해결되지 않는다. 검증된 산소 흡수·생산용 기체 보정 기준이 아닌 구현 진단으로 취급하며, 400층만으로 충분하다고 판단하지 않는다.
+
+\Needspace{17\baselineskip}
+
+\subsection{R20 · 표준과 열대 기체 프로파일}
+\label{sec:auto:09_cookbook:4.5}
+
+\label{recipe:R20}
+
+\textbf{목적. }기체 총량을 재지정하지 않고 760 nm에서 \texttt{usstd76}와 \texttt{tropical}을 비교한다. 수직 모양만 바뀌는 실험이 아니라 기본 프로파일과 적분 총량 전체가 바뀐다.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface black_fresnel_ocean --sza 40 --wavelength 760 \
+  --pressure 1013.25 --vza 30 --raa 90 --wind-speed 5 --n-water 1.34 \
+  --atm-profile usstd76 --decouple-sunglint \
+  > ../../task/manual_cookbook/R20_std.txt \
+  2> ../../task/manual_cookbook/R20_std.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface black_fresnel_ocean --sza 40 --wavelength 760 \
+  --pressure 1013.25 --vza 30 --raa 90 --wind-speed 5 --n-water 1.34 \
+  --atm-profile tropical --decouple-sunglint \
+  > ../../task/manual_cookbook/R20_tropical.txt \
+  2> ../../task/manual_cookbook/R20_tropical.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{결과 파일. }\texttt{R20\_\allowbreak{}std.txt}, \texttt{R20\_\allowbreak{}tropical.txt}.
+
+\textbf{확인·해석. }R20\_std와 R20\_tropical을 로그의 기체 총량과 함께 보관한다. 모양만 비교하려면 여섯 총량을 같은 음이 아닌 값으로 고정한다. R19처럼 강한 760 nm 흡수에는 독립적인 수직 해상도 검증이 필요하다. 이 기본 층 수 결과는 프로파일 선택을 시연하며 생산 정확도의 보증이 아니다. 이 옵션은 기체를 고르며 Rayleigh 기후형을 바꾸지 않는다.
+
+\Needspace{16\baselineskip}
+\section{에어로졸 양·스펙트럼·높이}
+\label{sec:auto:09_cookbook:5}
+
+\Needspace{17\baselineskip}
+
+\subsection{R21 · 555 nm 기준 AOD의 M80C 에어로졸}
+\label{sec:auto:09_cookbook:5.1}
+
+\label{recipe:R21}
+
+\textbf{목적. }443 nm의 기체 흡수 없는 해면 상태에 AOD555=0.1인 M80 C 에어로졸을 추가한다. 먼저 data release의 \texttt{inputs/\allowbreak{}M80C.mie}를 설치한다. 계산 파장과 AOD 기준 파장은 의도적으로 다르다.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface black_fresnel_ocean --sza 40 --wavelength 443 \
+  --pressure 1013.25 --vza 30 --raa 90 --wind-speed 5 --n-water 1.34 \
+  --gas-column-h2o 0 --gas-column-o3 0 --gas-column-no2 0 --gas-column-o2 0 \
+  --gas-column-co2 0 --gas-column-ch4 0 --decouple-sunglint \
+  --mie inputs/M80C.mie --aod-555 0.1 \
+  > ../../task/manual_cookbook/R21.txt \
+  2> ../../task/manual_cookbook/R21.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{결과 파일. }\texttt{R21.txt}.
+
+\textbf{확인·해석. }R21.txt의 \texttt{AOD\_\allowbreak{}ref}, \texttt{AOD\_\allowbreak{}ref\_\allowbreak{}nm}, \texttt{AOD\_\allowbreak{}band}, TOA 반사도를 읽고 에어로졸 없는 R13과 비교한다. 차이에는 에어로졸–분자 및 에어로졸–해면 상호작용도 포함되므로 단일 산란 에어로졸 항만이 아니다. 수치 기본값도 활성 에어로졸 경로를 따른다.
+
+\Needspace{17\baselineskip}
+
+\subsection{R22 · AOD 기준 파장 바꾸기}
+\label{sec:auto:09_cookbook:5.2}
+
+\label{recipe:R22}
+
+\textbf{목적. }같은 M80 C 파일과 443 nm 계산에서 AOD555=0.1을 AOD865=0.1로 바꾼다. 각 명령에는 하나의 AOD 입력 형식만 사용한다.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface black_fresnel_ocean --sza 40 --wavelength 443 \
+  --pressure 1013.25 --vza 30 --raa 90 --wind-speed 5 --n-water 1.34 \
+  --gas-column-h2o 0 --gas-column-o3 0 --gas-column-no2 0 --gas-column-o2 0 \
+  --gas-column-co2 0 --gas-column-ch4 0 --decouple-sunglint \
+  --mie inputs/M80C.mie --aod-865 0.1 \
+  > ../../task/manual_cookbook/R22.txt \
+  2> ../../task/manual_cookbook/R22.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{결과 파일. }\texttt{R22.txt}.
+
+\textbf{확인·해석. }수치 0.1이 같아도 R22의 에어로졸 양은 R21과 다르다. \texttt{AOD\_\allowbreak{}band}와 기준 파장 키를 비교한다. 같은 물리 상태를 다른 기준 파장으로 표현하려면 파일의 소광비로 AOD를 환산해야 하며 숫자를 그대로 유지하면 안 된다.
+
+\Needspace{17\baselineskip}
+
+\subsection{R23 · 에어로졸 모델 파일 바꾸기}
+\label{sec:auto:09_cookbook:5.3}
+
+\label{recipe:R23}
+
+\textbf{목적. }AOD555=0.1을 유지한 채 에어로졸 파일만 M80 C에서 C50으로 바꾼다. \texttt{inputs/\allowbreak{}C50.mie}를 설치하고 M80 C와 함께 파일 해시를 보관한다.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface black_fresnel_ocean --sza 40 --wavelength 443 \
+  --pressure 1013.25 --vza 30 --raa 90 --wind-speed 5 --n-water 1.34 \
+  --gas-column-h2o 0 --gas-column-o3 0 --gas-column-no2 0 --gas-column-o2 0 \
+  --gas-column-co2 0 --gas-column-ch4 0 --decouple-sunglint \
+  --mie inputs/C50.mie --aod-555 0.1 \
+  > ../../task/manual_cookbook/R23.txt \
+  2> ../../task/manual_cookbook/R23.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{결과 파일. }\texttt{R23.txt}.
+
+\textbf{확인·해석. }R23과 R21을 비교한다. 모델 변경은 위상함수·단일산란알베도·분광 소광을 함께 바꿀 수 있어 AOD555가 같아도 계산 파장의 AOD는 다를 수 있다. 모델명은 자료 출처 식별자로 기록하고 물리적 에어로졸 종류를 붙일 때 자료 문서를 확인한다.
+
+\Needspace{17\baselineskip}
+
+\subsection{R24 · 에어로졸 광학두께 두 배}
+\label{sec:auto:09_cookbook:5.4}
+
+\label{recipe:R24}
+
+\textbf{목적. }443 nm·기하·해면을 유지하고 M80 C AOD555를 0.1에서 0.2로 늘린다. 매뉴얼 점검에서 0.2의 기본 20차 상한은 \texttt{conv=\allowbreak{}0}을 반환했으므로 비교하는 두 명령 모두 40차 상한과 ADVANCED 허용을 명시한다.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+env OCRT_ADVANCED=1 ./build/ocrt --surface black_fresnel_ocean --sza 40 \
+  --wavelength 443 --pressure 1013.25 --vza 30 --raa 90 --wind-speed 5 \
+  --n-water 1.34 --gas-column-h2o 0 --gas-column-o3 0 --gas-column-no2 0 \
+  --gas-column-o2 0 --gas-column-co2 0 --gas-column-ch4 0 --decouple-sunglint \
+  --mie inputs/M80C.mie --aod-555 0.1 --sos-max-orders 40 \
+  > ../../task/manual_cookbook/R24_ref.txt \
+  2> ../../task/manual_cookbook/R24_ref.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+env OCRT_ADVANCED=1 ./build/ocrt --surface black_fresnel_ocean --sza 40 \
+  --wavelength 443 --pressure 1013.25 --vza 30 --raa 90 --wind-speed 5 \
+  --n-water 1.34 --gas-column-h2o 0 --gas-column-o3 0 --gas-column-no2 0 \
+  --gas-column-o2 0 --gas-column-co2 0 --gas-column-ch4 0 --decouple-sunglint \
+  --mie inputs/M80C.mie --aod-555 0.2 --sos-max-orders 40 \
+  > ../../task/manual_cookbook/R24_double.txt \
+  2> ../../task/manual_cookbook/R24_double.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{결과 파일. }\texttt{R24\_\allowbreak{}ref.txt}, \texttt{R24\_\allowbreak{}double.txt}.
+
+\textbf{확인·해석. }두 결과의 \texttt{conv=\allowbreak{}1}을 확인한 뒤 R24\_double과 R24\_ref를 비교한다. 같은 상한을 써야 에어로졸 양 변화에 수치 설정 차이가 섞이지 않는다. 밴드 AOD는 두 배지만 감쇠·다중 산란도 바뀌므로 총반사도는 두 배일 필요가 없다. 상한 증가는 실제 수렴 확인을 함께 해야 의미가 있다.
+
+\Needspace{17\baselineskip}
+
+\subsection{R25 · IPSS에서 에어로졸 척도 높이}
+\label{sec:auto:09_cookbook:5.5}
+
+\label{recipe:R25}
+
+\textbf{목적. }SZA75\textdegree{}, VZA70\textdegree{}에서 IPSS를 켜고 AOD555=0.1을 유지한 채 에어로졸 척도 높이 2 km와 1 km를 비교한다. 전체 에어로졸 광학두께는 같고 수직 분포가 바뀐다.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface black_fresnel_ocean --sza 75 --wavelength 555 \
+  --pressure 1013.25 --vza 70 --raa 90 --wind-speed 5 --n-water 1.34 \
+  --gas-column-h2o 0 --gas-column-o3 0 --gas-column-no2 0 --gas-column-o2 0 \
+  --gas-column-co2 0 --gas-column-ch4 0 --decouple-sunglint \
+  --mie inputs/M80C.mie --aod-555 0.1 --pssa --aer-h-km 2 \
+  > ../../task/manual_cookbook/R25_h2.txt \
+  2> ../../task/manual_cookbook/R25_h2.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface black_fresnel_ocean --sza 75 --wavelength 555 \
+  --pressure 1013.25 --vza 70 --raa 90 --wind-speed 5 --n-water 1.34 \
+  --gas-column-h2o 0 --gas-column-o3 0 --gas-column-no2 0 --gas-column-o2 0 \
+  --gas-column-co2 0 --gas-column-ch4 0 --decouple-sunglint \
+  --mie inputs/M80C.mie --aod-555 0.1 --pssa --aer-h-km 1 \
+  > ../../task/manual_cookbook/R25_h1.txt \
+  2> ../../task/manual_cookbook/R25_h1.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{결과 파일. }\texttt{R25\_\allowbreak{}h2.txt}, \texttt{R25\_\allowbreak{}h1.txt}.
+
+\textbf{확인·해석. }R25\_h 2와 R25\_h 1 및 IPSS 진단을 비교한다. 현재 위상함수 가중 보정은 분자와 에어로졸의 광원 분포를 구분한다. \texttt{-\allowbreak{}-\allowbreak{}aer-\allowbreak{}h-\allowbreak{}km}는 양수이며 과거 도움말과 달리 현재 파서에는 ADVANCED 차단이 없다.
+
+\Needspace{16\baselineskip}
+\section{수중 구성성분과 전체 IOP}
+\label{sec:auto:09_cookbook:6}
+
+\Needspace{17\baselineskip}
+
+\subsection{R26 · 분자 대기가 있는 순수 해수}
+\label{sec:auto:09_cookbook:6.1}
+
+\label{recipe:R26}
+
+\textbf{목적. }OCRT 구성성분 입력을 모두 명시적으로 0으로 두고 결합 해양을 선택한다. 수온 20\textdegree{}C, 염분 35 g/kg, 경계 굴절률 1.34, 풍속 3 m/s를 고정한다. 1013.25 hPa의 분자는 남고 기체 흡수와 에어로졸은 없다.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface ocean --sza 40 --wavelength 555 --pressure 1013.25 \
+  --vza 30 --raa 90 --wind-speed 3 --n-water 1.34 --gas-column-h2o 0 \
+  --gas-column-o3 0 --gas-column-no2 0 --gas-column-o2 0 --gas-column-co2 0 \
+  --gas-column-ch4 0 --water-model ocrt --water-temperature 20 \
+  --water-salinity 35 --ocrt-chl 0 --ocrt-tsm 0 --ocrt-adom440 0 \
+  > ../../task/manual_cookbook/R26.txt \
+  2> ../../task/manual_cookbook/R26.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{결과 파일. }\texttt{R26.txt}.
+
+\textbf{확인·해석. }R26.txt의 \texttt{Rrs0plus\_\allowbreak{}I}, \texttt{rrs0minus\_\allowbreak{}I}, IOP, TOA 성분 키를 읽는다. 단일 텍스트 키는 격자의 \texttt{Rrs\_\allowbreak{}I/\allowbreak{}rrs\_\allowbreak{}I}와 다르다. 이 순수 해수 경로의 내부 태양광 정규화는 pi이므로 비영 구성성분 경로와 비교할 때 원시 Lu 대신 정규화 비율을 사용한다.
+
+\Needspace{17\baselineskip}
+
+\subsection{R27 · 대기 광학두께가 없는 순수 해수}
+\label{sec:auto:09_cookbook:6.2}
+
+\label{recipe:R27}
+
+\textbf{목적. }R26의 기압을 0으로 바꾸며 기체 총량 0과 에어로졸 미사용을 유지한다. 분자 산란과 기체·에어로졸의 대기 광학두께를 제거하지만 태양광과 공기–물 경계는 남는다.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface ocean --sza 40 --wavelength 555 --pressure 0 --vza 30 \
+  --raa 90 --wind-speed 3 --n-water 1.34 --gas-column-h2o 0 --gas-column-o3 0 \
+  --gas-column-no2 0 --gas-column-o2 0 --gas-column-co2 0 --gas-column-ch4 0 \
+  --water-model ocrt --water-temperature 20 --water-salinity 35 --ocrt-chl 0 \
+  --ocrt-tsm 0 --ocrt-adom440 0 \
+  > ../../task/manual_cookbook/R27.txt \
+  2> ../../task/manual_cookbook/R27.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{결과 파일. }\texttt{R27.txt}.
+
+\textbf{확인·해석. }R26과 물 반사도 및 TOA 성분을 비교한다. 기압 0만으로는 기본 기체 흡수가 꺼지지 않는다. 수중 경계 검증에 유용하지만 실제 관측 대기를 나타내지 않으며 유한 수심의 반사 해저를 추가하는 설정도 아니다.
+
+\Needspace{17\baselineskip}
+
+\subsection{R28 · CDOM 흡수 추가}
+\label{sec:auto:09_cookbook:6.3}
+
+\label{recipe:R28}
+
+\textbf{목적. }R26에 aDOM440=0.1 m\textsuperscript{-1}을 추가하고 Chl과 TSM은 0으로 유지한다. 기본 aDOM 기울기는 0.014 nm\textsuperscript{-1}이며 대기와 해면 조건은 모두 같다.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface ocean --sza 40 --wavelength 555 --pressure 1013.25 \
+  --vza 30 --raa 90 --wind-speed 3 --n-water 1.34 --gas-column-h2o 0 \
+  --gas-column-o3 0 --gas-column-no2 0 --gas-column-o2 0 --gas-column-co2 0 \
+  --gas-column-ch4 0 --water-model ocrt --water-temperature 20 \
+  --water-salinity 35 --ocrt-chl 0 --ocrt-tsm 0 --ocrt-adom440 0.1 \
+  > ../../task/manual_cookbook/R28.txt \
+  2> ../../task/manual_cookbook/R28.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{결과 파일. }\texttt{R28.txt}.
+
+\textbf{확인·해석. }\texttt{a\_\allowbreak{}dom}, \texttt{a\_\allowbreak{}total}, 정규화된 \texttt{Rrs0plus\_\allowbreak{}I}를 확인한다. CDOM은 흡수를 추가하며 입자 위상함수를 추가하지 않는다. 비영 구성성분 경로의 내부 태양광 정규화는 1이고 순수 해수 경로는 pi이므로 R26과는 비율·반사도로 비교한다.
+
+\Needspace{17\baselineskip}
+
+\subsection{R29 · CDOM의 분광 기울기}
+\label{sec:auto:09_cookbook:6.4}
+
+\label{recipe:R29}
+
+\textbf{목적. }555 nm와 aDOM440=0.1 m\textsuperscript{-1}을 고정하고 기울기 0.014와 0.020 nm\textsuperscript{-1}을 비교한다. 두 명령을 모두 제시해 기준 흡수와 나머지 조건이 같은지 바로 확인할 수 있게 했다.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface ocean --sza 40 --wavelength 555 --pressure 1013.25 \
+  --vza 30 --raa 90 --wind-speed 3 --n-water 1.34 --gas-column-h2o 0 \
+  --gas-column-o3 0 --gas-column-no2 0 --gas-column-o2 0 --gas-column-co2 0 \
+  --gas-column-ch4 0 --water-model ocrt --water-temperature 20 \
+  --water-salinity 35 --ocrt-chl 0 --ocrt-tsm 0 --ocrt-adom440 0.1 \
+  --ocrt-adom-slope 0.014 \
+  > ../../task/manual_cookbook/R29_s014.txt \
+  2> ../../task/manual_cookbook/R29_s014.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface ocean --sza 40 --wavelength 555 --pressure 1013.25 \
+  --vza 30 --raa 90 --wind-speed 3 --n-water 1.34 --gas-column-h2o 0 \
+  --gas-column-o3 0 --gas-column-no2 0 --gas-column-o2 0 --gas-column-co2 0 \
+  --gas-column-ch4 0 --water-model ocrt --water-temperature 20 \
+  --water-salinity 35 --ocrt-chl 0 --ocrt-tsm 0 --ocrt-adom440 0.1 \
+  --ocrt-adom-slope 0.020 \
+  > ../../task/manual_cookbook/R29_s020.txt \
+  2> ../../task/manual_cookbook/R29_s020.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{결과 파일. }\texttt{R29\_\allowbreak{}s014.txt}, \texttt{R29\_\allowbreak{}s020.txt}.
+
+\textbf{확인·해석. }aDOM(lambda)=aDOM440*exp[-S*(lambda-440)]이므로 CDOM 흡수는 약 0.01999와 0.01003 m\textsuperscript{-1}이다. \texttt{Rrs0plus\_\allowbreak{}I} 해석 전에 각 결과의 \texttt{a\_\allowbreak{}dom}부터 확인한다. 큰 기울기는 440 nm보다 긴 파장의 CDOM 흡수를 줄이고 짧은 파장에서는 늘린다.
+
+\Needspace{17\baselineskip}
+
+\subsection{R30 · 엽록소와 현재 산란 구현의 한계}
+\label{sec:auto:09_cookbook:6.5}
+
+\label{recipe:R30}
+
+\textbf{목적. }TSM=aDOM440=0을 유지하고 Chl=1 mg/m\textsuperscript{3}로 둔다. 현재 C 구성성분 경로가 사용하는 식물플랑크톤 흡수 및 쇄설물 자료를 설치한다.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface ocean --sza 40 --wavelength 555 --pressure 1013.25 \
+  --vza 30 --raa 90 --wind-speed 3 --n-water 1.34 --gas-column-h2o 0 \
+  --gas-column-o3 0 --gas-column-no2 0 --gas-column-o2 0 --gas-column-co2 0 \
+  --gas-column-ch4 0 --water-model ocrt --water-temperature 20 \
+  --water-salinity 35 --ocrt-chl 1 --ocrt-tsm 0 --ocrt-adom440 0 \
+  > ../../task/manual_cookbook/R30.txt \
+  2> ../../task/manual_cookbook/R30.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{결과 파일. }\texttt{R30.txt}.
+
+\textbf{확인·해석. }\texttt{a\_\allowbreak{}chl}, \texttt{a\_\allowbreak{}pig}, \texttt{b\_\allowbreak{}pig}, \texttt{bb\_\allowbreak{}pig}와 전체 IOP를 확인한다. 현재 EAP 식물플랑크톤 산란은 비활성화되어 Chl을 양수로 넣어도 켜지지 않는다. 쇄설물 흡수가 0이어도 Chl과 연결된 쇄설물 산란은 남을 수 있다. 완전한 종별 식물플랑크톤 모의로 이름 붙이지 않는다.
+
+\Needspace{17\baselineskip}
+
+\subsection{R31 · 적색 점토 부유 무기입자}
+\label{sec:auto:09_cookbook:6.6}
+
+\label{recipe:R31}
+
+\textbf{목적. }Chl과 CDOM은 0으로 두고 무기 TSM=0.5 g/m\textsuperscript{3}, 종 \texttt{red\_\allowbreak{}clay}를 사용한다. 적색 점토 Ahn 위상표와 대응하는 질량당 흡수·산란 파일을 설치한다.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface ocean --sza 40 --wavelength 555 --pressure 1013.25 \
+  --vza 30 --raa 90 --wind-speed 3 --n-water 1.34 --gas-column-h2o 0 \
+  --gas-column-o3 0 --gas-column-no2 0 --gas-column-o2 0 --gas-column-co2 0 \
+  --gas-column-ch4 0 --water-model ocrt --water-temperature 20 \
+  --water-salinity 35 --ocrt-chl 0 --ocrt-tsm 0.5 --ocrt-adom440 0 \
+  --ocrt-tsm-species red_clay \
+  > ../../task/manual_cookbook/R31.txt \
+  2> ../../task/manual_cookbook/R31.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{결과 파일. }\texttt{R31.txt}.
+
+\textbf{확인·해석. }\texttt{a\_\allowbreak{}min}, \texttt{b\_\allowbreak{}min}, \texttt{bb\_\allowbreak{}min}, 전체 IOP와 \texttt{Rrs0plus\_\allowbreak{}I}를 확인한다. 이 TSM은 건조 무기입자 질량이며 모든 부유성분의 일반적인 합이 아니다. 질량만으로 광학 상태가 정해지지 않으므로 농도와 함께 광물종·표 해시를 보관한다.
+
+\Needspace{17\baselineskip}
+
+\subsection{R32 · 같은 무기입자 농도의 갈색 토양}
+\label{sec:auto:09_cookbook:6.7}
+
+\label{recipe:R32}
+
+\textbf{목적. }R31의 농도 0.5 g/m\textsuperscript{3}와 다른 조건을 유지하고 적색 점토를 \texttt{brown\_\allowbreak{}earth}로 바꾼다. \texttt{Brown\_\allowbreak{}earth\_\allowbreak{}AHN.mie}와 대응 계수표가 필요하다.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface ocean --sza 40 --wavelength 555 --pressure 1013.25 \
+  --vza 30 --raa 90 --wind-speed 3 --n-water 1.34 --gas-column-h2o 0 \
+  --gas-column-o3 0 --gas-column-no2 0 --gas-column-o2 0 --gas-column-co2 0 \
+  --gas-column-ch4 0 --water-model ocrt --water-temperature 20 \
+  --water-salinity 35 --ocrt-chl 0 --ocrt-tsm 0.5 --ocrt-adom440 0 \
+  --ocrt-tsm-species brown_earth \
+  > ../../task/manual_cookbook/R32.txt \
+  2> ../../task/manual_cookbook/R32.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{결과 파일. }\texttt{R32.txt}.
+
+\textbf{확인·해석. }반사도 전에 R32와 R31의 광물 IOP를 비교한다. 일정 질량에서 종을 바꾸는 실험이며 a/b/bb를 고정하고 위상만 바꾸는 실험이 아니다. 흡수·산란·위상의 변화가 모두 결과 차이에 기여할 수 있다.
+
+\Needspace{17\baselineskip}
+
+\subsection{R33 · 엽록소를 고정한 쇄설물 흡수}
+\label{sec:auto:09_cookbook:6.8}
+
+\label{recipe:R33}
+
+\textbf{목적. }Chl=1 mg/m\textsuperscript{3}에서 쇄설물 흡수 a 440=0.01 m\textsuperscript{-1}과 기울기 0.0109 nm\textsuperscript{-1}을 명시한다. TSM과 CDOM은 0이며 R30과 달라지는 것은 쇄설물 흡수 입력이다.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface ocean --sza 40 --wavelength 555 --pressure 1013.25 \
+  --vza 30 --raa 90 --wind-speed 3 --n-water 1.34 --gas-column-h2o 0 \
+  --gas-column-o3 0 --gas-column-no2 0 --gas-column-o2 0 --gas-column-co2 0 \
+  --gas-column-ch4 0 --water-model ocrt --water-temperature 20 \
+  --water-salinity 35 --ocrt-chl 1 --ocrt-tsm 0 --ocrt-adom440 0 \
+  --ocrt-detritus-a440 0.01 --ocrt-detritus-slope 0.0109 \
+  > ../../task/manual_cookbook/R33.txt \
+  2> ../../task/manual_cookbook/R33.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{결과 파일. }\texttt{R33.txt}.
+
+\textbf{확인·해석. }R30과 흡수 구성 및 정규화 물 반사도를 비교한다. 현재 인터페이스는 명시적 쇄설물 옵션에 양의 Chl을 요구한다. 쇄설물 a 440=0은 흡수만 제거하며 Chl 유래 쇄설물 산란까지 제거하지 않는다. 독립적인 쇄설물 농도 모델로 해석하지 않는다.
+
+\Needspace{17\baselineskip}
+
+\subsection{R34 · 경계 굴절률을 고정한 수온 변화}
+\label{sec:auto:09_cookbook:6.9}
+
+\label{recipe:R34}
+
+\textbf{목적. }염분 35 g/kg과 명시적인 경계 굴절률 1.34를 유지하고 수온을 20\textdegree{}C에서 5\textdegree{}C로 내린다. 순수 해수 IOP의 수온 입력을 경계 굴절률 변화와 분리한다.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface ocean --sza 40 --wavelength 555 --pressure 1013.25 \
+  --vza 30 --raa 90 --wind-speed 3 --n-water 1.34 --gas-column-h2o 0 \
+  --gas-column-o3 0 --gas-column-no2 0 --gas-column-o2 0 --gas-column-co2 0 \
+  --gas-column-ch4 0 --water-model ocrt --water-temperature 5 \
+  --water-salinity 35 --ocrt-chl 0 --ocrt-tsm 0 --ocrt-adom440 0 \
+  > ../../task/manual_cookbook/R34.txt \
+  2> ../../task/manual_cookbook/R34.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{결과 파일. }\texttt{R34.txt}.
+
+\textbf{확인·해석. }R26과 \texttt{a\_\allowbreak{}w}, \texttt{b\_\allowbreak{}w}, \texttt{bb\_\allowbreak{}w} 및 정규화 반사도를 비교한다. 이 단일 계산에서 \texttt{-\allowbreak{}-\allowbreak{}water-\allowbreak{}temperature}는 \texttt{-\allowbreak{}-\allowbreak{}n-\allowbreak{}water}를 수온 의존 경계 굴절률로 자동 교체하지 않는다. 가변 굴절률을 원하면 각 비교 경로에 일관된 값을 계산해 명시한다.
+
+\Needspace{17\baselineskip}
+
+\subsection{R35 · CCRR 구성성분 변환 경로}
+\label{sec:auto:09_cookbook:6.10}
+
+\label{recipe:R35}
+
+\textbf{목적. }Chl=1 mg/m\textsuperscript{3}, TSM=CDOM=0으로 CCRR 구성성분 변환 경로를 사용해 R30과 물리 입력 표기를 맞춘다. 이 변환기는 입력을 OCRT IOP로 바꾸며 별도의 CCRR 복사전달 솔버를 실행하지 않는다.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface ocean --sza 40 --wavelength 555 --pressure 1013.25 \
+  --vza 30 --raa 90 --wind-speed 3 --n-water 1.34 --gas-column-h2o 0 \
+  --gas-column-o3 0 --gas-column-no2 0 --gas-column-o2 0 --gas-column-co2 0 \
+  --gas-column-ch4 0 --water-model ccrr --water-temperature 20 \
+  --water-salinity 35 --ccrr-chl 1 --ccrr-tsm 0 --ccrr-adom440 0 \
+  > ../../task/manual_cookbook/R35.txt \
+  2> ../../task/manual_cookbook/R35.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{결과 파일. }\texttt{R35.txt}.
+
+\textbf{확인·해석. }IOP 구성을 먼저 비교하고 정규화 물 반사도를 다음에 비교한다. 명목 Chl이 같아도 OCRT 구성성분 모델과 흡수·산란이 같다는 보장은 없다. 한 실행에서 \texttt{-\allowbreak{}-\allowbreak{}ccrr-\allowbreak{}*}와 \texttt{-\allowbreak{}-\allowbreak{}ocrt-\allowbreak{}*} 구성성분 플래그를 섞지 않는다.
+
+\Needspace{17\baselineskip}
+
+\subsection{R36 · 전체 IOP 직접 입력}
+\label{sec:auto:09_cookbook:6.11}
+
+\label{recipe:R36}
+
+\textbf{목적. }전체 a=0.1, b=0.2, bb=0.005 m\textsuperscript{-1}을 직접 입력한다. 이미 순수 해수와 모든 구성성분을 포함한 총량이므로 나중에 순수 해수 양을 다시 더하지 않는다.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface ocean --sza 40 --wavelength 555 --pressure 1013.25 \
+  --vza 30 --raa 90 --wind-speed 3 --n-water 1.34 --gas-column-h2o 0 \
+  --gas-column-o3 0 --gas-column-no2 0 --gas-column-o2 0 --gas-column-co2 0 \
+  --gas-column-ch4 0 --water-model iop --water-temperature 20 \
+  --water-salinity 35 --iop-a 0.1 --iop-b 0.2 --iop-bb 0.005 \
+  > ../../task/manual_cookbook/R36.txt \
+  2> ../../task/manual_cookbook/R36.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{결과 파일. }\texttt{R36.txt}.
+
+\textbf{확인·해석. }\texttt{a\_\allowbreak{}total}, \texttt{b\_\allowbreak{}total}, \texttt{bb\_\allowbreak{}total}을 확인하고 \texttt{Rrs0plus\_\allowbreak{}I}를 읽는다. 입력은 a>=0, b>0, 0<bb<0.5 b를 만족한다. 외부 위상 파일과 전방 절단 없이 기본 직접 IOP 위상 구성을 사용한다. a/b/bb만으로 가능한 모든 위상함수가 유일하게 정해지는 것은 아니다.
+
+\Needspace{17\baselineskip}
+
+\subsection{R37 · 후방산란 비율 변경}
+\label{sec:auto:09_cookbook:6.12}
+
+\label{recipe:R37}
+
+\textbf{목적. }전체 a=0.1, b=0.2 m\textsuperscript{-1}을 유지하고 bb를 0.005에서 0.01 m\textsuperscript{-1}로 늘린다. 후방산란 비율은 0.025에서 0.05로 바뀐다.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface ocean --sza 40 --wavelength 555 --pressure 1013.25 \
+  --vza 30 --raa 90 --wind-speed 3 --n-water 1.34 --gas-column-h2o 0 \
+  --gas-column-o3 0 --gas-column-no2 0 --gas-column-o2 0 --gas-column-co2 0 \
+  --gas-column-ch4 0 --water-model iop --water-temperature 20 \
+  --water-salinity 35 --iop-a 0.1 --iop-b 0.2 --iop-bb 0.01 \
+  > ../../task/manual_cookbook/R37.txt \
+  2> ../../task/manual_cookbook/R37.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{결과 파일. }\texttt{R37.txt}.
+
+\textbf{확인·해석. }R37과 R36을 비교한다. Rrs 차이를 후방산란 비율 변화에 연결하기 전에 요청한 전체 IOP가 출력되었는지 확인한다. 이 실험은 선택한 기본 위상 구성을 따르며, 같은 bb/b의 임의 위상함수들이 같은 반사도를 낸다는 증명은 아니다.
+
+\Needspace{24\baselineskip}
+\section{LUT·네이티브 배치·수치 확인}
+\label{sec:auto:09_cookbook:7}
+
+\Needspace{17\baselineskip}
+
+\subsection{R38 · 12방향 Rayleigh LUT}
+\label{sec:auto:09_cookbook:7.1}
+
+\label{recipe:R38}
+
+\textbf{목적. }R07의 단일 방향을 VZA=0/30/60\textdegree{}, RAA=0/90/180/270\textdegree{}로 바꾼다. 한 파장·한 SZA에서 12행 13열인 대기·해면 CSV를 만든다.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+./build/ocrt --surface black_fresnel_ocean --sza 40 --wavelength 555 \
+  --pressure 1013.25 --wind-speed 5 --n-water 1.34 --gas-column-h2o 0 \
+  --gas-column-o3 0 --gas-column-no2 0 --gas-column-o2 0 --gas-column-co2 0 \
+  --gas-column-ch4 0 --decouple-sunglint --lut-vza-step 30 --lut-vza-max 60 \
+  --lut-raa-step 90 --output-full-grid ../../task/manual_cookbook/R38.csv \
+  > ../../task/manual_cookbook/R38.txt \
+  2> ../../task/manual_cookbook/R38.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{결과 파일. }\texttt{R38.csv}.
+
+\textbf{확인·해석. }실제 격자 헤더 \texttt{rho\_\allowbreak{}I/\allowbreak{}Q/\allowbreak{}U}를 사용한다. VZA30\textdegree{}, RAA90\textdegree{} 행을 R07의 \texttt{TOA\_\allowbreak{}rho\_\allowbreak{}I/\allowbreak{}Q/\allowbreak{}U}와 비교하며 에어로졸 없는 수치 기본값은 같다. 12행과 유한 관측량을 확인하고 RAA270\textdegree{} 및 U 부호를 보존한다. 작은 자료 흐름 시험이며 생산용 각도 해상도 권고는 아니다.
+
+\Needspace{17\baselineskip}
+
+\subsection{R39 · 두 파장 상태: 개별 격자와 네이티브 배치}
+\label{sec:auto:09_cookbook:7.2}
+
+\label{recipe:R39}
+
+\textbf{목적. }CDOM 해수의 555와 443 nm 각도 격자를 개별 상태 및 네이티브 해양 배치로 각각 계산한다. 모든 경로에 굴절률 1.34와 수중 구적 96을 명시한다. 명시적 수치 설정을 허용하기 위해서만 ADVANCED를 켠다.
+
+같은 C 작업 폴더에서 네이티브 배치 입력을 먼저 만든다:
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+cat > ../../task/manual_cookbook/R39_jobs.csv <<'CSV'
+out,wavelength,sza,wind,ocrt_adom440
+../../task/manual_cookbook/R39_batch555.csv,555,40,3,0.1
+../../task/manual_cookbook/R39_batch443.csv,443,40,3,0.1
+CSV
+
+\end{ManualCode}
+\end{minipage}\par
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+env OCRT_ADVANCED=1 ./build/ocrt --surface ocean --sza 40 --wavelength 555 \
+  --pressure 1013.25 --wind-speed 3 --n-water 1.34 --gas-column-h2o 0 \
+  --gas-column-o3 0 --gas-column-no2 0 --gas-column-o2 0 --gas-column-co2 0 \
+  --gas-column-ch4 0 --water-model ocrt --water-temperature 20 \
+  --water-salinity 35 --ocrt-chl 0 --ocrt-tsm 0 --ocrt-adom440 0.1 \
+  --n-mu-water 96 --lut-vza-step 30 --lut-vza-max 60 --lut-raa-step 90 \
+  --output-full-grid ../../task/manual_cookbook/R39_single555.csv \
+  > ../../task/manual_cookbook/R39_single555.txt \
+  2> ../../task/manual_cookbook/R39_single555.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+env OCRT_ADVANCED=1 ./build/ocrt --surface ocean --sza 40 --wavelength 443 \
+  --pressure 1013.25 --wind-speed 3 --n-water 1.34 --gas-column-h2o 0 \
+  --gas-column-o3 0 --gas-column-no2 0 --gas-column-o2 0 --gas-column-co2 0 \
+  --gas-column-ch4 0 --water-model ocrt --water-temperature 20 \
+  --water-salinity 35 --ocrt-chl 0 --ocrt-tsm 0 --ocrt-adom440 0.1 \
+  --n-mu-water 96 --lut-vza-step 30 --lut-vza-max 60 --lut-raa-step 90 \
+  --output-full-grid ../../task/manual_cookbook/R39_single443.csv \
+  > ../../task/manual_cookbook/R39_single443.txt \
+  2> ../../task/manual_cookbook/R39_single443.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+env OCRT_ADVANCED=1 ./build/ocrt --surface ocean --sza 40 --wavelength 555 \
+  --pressure 1013.25 --wind-speed 3 --n-water 1.34 --gas-column-h2o 0 \
+  --gas-column-o3 0 --gas-column-no2 0 --gas-column-o2 0 --gas-column-co2 0 \
+  --gas-column-ch4 0 --water-model ocrt --water-temperature 20 \
+  --water-salinity 35 --ocrt-chl 0 --ocrt-tsm 0 --ocrt-adom440 0.1 \
+  --n-mu-water 96 --lut-vza-step 30 --lut-vza-max 60 --lut-raa-step 90 \
+  --batch-full-grid ../../task/manual_cookbook/R39_jobs.csv \
+  > ../../task/manual_cookbook/R39_batch.txt \
+  2> ../../task/manual_cookbook/R39_batch.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{결과 파일. }\texttt{R39\_\allowbreak{}single555.csv}, \texttt{R39\_\allowbreak{}single443.csv}, \texttt{R39\_\allowbreak{}batch555.csv}, \texttt{R39\_\allowbreak{}batch443.csv}.
+
+\textbf{확인·해석. }네 출력 CSV는 각각 12행 60열이다. R39\_single 555와 R39\_batch 555 및 443 nm 쌍을 각도·헤더 이름으로 비교한다. 명시적인 n-water는 배치 파장 열에 의한 Quan–Fry 굴절률 자동 선택을 막고 n-mu-water는 배치 48 대 격자 96 기본값 차이를 없앤다. 배치 입력은 BOM 없는 UTF-8이며 경로 안 쉼표와 따옴표를 쓰지 않는다.
+
+\Needspace{17\baselineskip}
+
+\subsection{R40 · 대기와 수중 구적의 독립적인 수렴 확인}
+\label{sec:auto:09_cookbook:7.3}
+
+\label{recipe:R40}
+
+\textbf{목적. }독립적인 수치 세분화를 두 가지 수행한다. R07의 대기 n-mu 24를 32로, 단일 해양 R26의 수중 n-mu-water 48을 96으로 늘린다. 각 쌍은 해당 적분 구적 수만 바꾸며 출력 각도 격자를 바꾸는 실험이 아니다.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+env OCRT_ADVANCED=1 ./build/ocrt --surface black_fresnel_ocean --sza 40 \
+  --wavelength 555 --pressure 1013.25 --vza 30 --raa 90 --wind-speed 5 \
+  --n-water 1.34 --gas-column-h2o 0 --gas-column-o3 0 --gas-column-no2 0 \
+  --gas-column-o2 0 --gas-column-co2 0 --gas-column-ch4 0 --decouple-sunglint \
+  --n-mu 32 \
+  > ../../task/manual_cookbook/R40_atmos32.txt \
+  2> ../../task/manual_cookbook/R40_atmos32.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\noindent\begin{minipage}{\linewidth}
+\begin{ManualCode}
+
+env OCRT_ADVANCED=1 ./build/ocrt --surface ocean --sza 40 --wavelength 555 \
+  --pressure 1013.25 --vza 30 --raa 90 --wind-speed 3 --n-water 1.34 \
+  --gas-column-h2o 0 --gas-column-o3 0 --gas-column-no2 0 --gas-column-o2 0 \
+  --gas-column-co2 0 --gas-column-ch4 0 --water-model ocrt \
+  --water-temperature 20 --water-salinity 35 --ocrt-chl 0 --ocrt-tsm 0 \
+  --ocrt-adom440 0 --n-mu-water 96 \
+  > ../../task/manual_cookbook/R40_water96.txt \
+  2> ../../task/manual_cookbook/R40_water96.log
+
+\end{ManualCode}
+\end{minipage}\par
+
+\textbf{결과 파일. }\texttt{R40\_\allowbreak{}atmos32.txt}, \texttt{R40\_\allowbreak{}water96.txt}.
+
+\textbf{확인·해석. }각 쌍에서 I/Q/U 절대차와 0이 아닌 I의 상대오차를 계산한다. 대기와 해양은 물리 장면이 달라 R40\_atmos 32와 R40\_water 96을 직접 비교하지 않는다. 작은 차이는 이 상태에서 이 세분화의 근거이며 보편적인 정확도 한계가 아니다. 필요한 경우 Fourier 차수·층 수·허용치는 따로 세분화한다.
+
+\Needspace{16\baselineskip}
+\section{성공한 예시를 신뢰할 수 있는 자료로 확장하기}
+\label{sec:auto:09_cookbook:8}
+
+도구의 기본 검사는 주요 관측량의 유한수, 격자 크기·각도, 해양 CSV의 \texttt{water\_\allowbreak{}converged=\allowbreak{}1}을 확인한다. 결합 해양 단일 텍스트의 \texttt{conv}는 반환된 수중 계산의 수렴을 보고하며 대기·전체 결합의 독립적인 보증은 아니다. 대기 단일 텍스트의 \texttt{conv}는 Fourier SOS 수렴을 모은다. 유효하지 않은 상향 전달비는 따로 기록하고 0으로 바꾸지 않는다. R19는 기본 검사 통과만으로 물리적 타당성이 확립되지 않음을 보여준다. Python R1의 EAP 자료 누락 한계와 C/Python IPSS 차이는 부록~\ref{chap:06_python_batch} 설명 그대로이며 이 예시들은 C를 호출한다.
+
+상태 축을 늘리기 전에 다른 물리·수치 조건을 고정한 비교 쌍을 확인한다. 보간 오차에는 독립 계산점, 수치 오차에는 수렴 세분화, 물리적 타당성에는 외부 관측·기준값을 사용한다. 결과마다 파장·SZA·기압·풍속·AOD·수중 상태와 자료 해시를 함께 보관한다. 학습자료는 인접 각도 행만 나누기보다 완전한 대기·해양 상태를 학습·평가 집합으로 분리한다. 실패한 계산을 모두 0인 스펙트럼으로 대체하지 않는다.

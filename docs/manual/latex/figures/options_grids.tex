@@ -1,0 +1,34 @@
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[x=1cm,y=1cm,font=\sffamily\fontsize{9}{11}\selectfont,>=Latex]
+\node[align=center,font=\sffamily\bfseries\fontsize{10}{12}\selectfont] at (3.35,7.15) {\FigLang{출력할 방향 선택}{Choose output directions}};
+\node[align=center,font=\sffamily\bfseries\fontsize{10}{12}\selectfont] at (11.45,7.15) {\FigLang{내부 적분과 전개 계산}{Solve internal integration/expansion}};
+\node[align=center,text width=6.4cm] at (3.35,6.45) {\texttt{--lut-vza-step 30}\\\texttt{--lut-vza-max 60}\\\texttt{--lut-raa-step 90}};
+\draw[->,ocrtGray] (0.7,2.15)--(6.35,2.15) node[right,inner xsep=2pt] {RAA};
+\draw[->,ocrtGray] (0.7,2.15)--(0.7,5.55) node[above] {VZA};
+\foreach \x/\labelx in {1.3/0,2.8/90,4.3/180,5.8/270}{\node[below] at (\x,2.15) {$\labelx^\circ$};}
+\foreach \y/\labely in {2.65/0,3.7/30,4.75/60}{\node[left] at (0.7,\y) {$\labely^\circ$};}
+\foreach \x in {1.3,2.8,4.3,5.8}{\foreach \y in {2.65,3.7,4.75}{\draw[ocrtLine] (\x-0.55,\y-0.38) rectangle +(1.1,0.76);\fill[ocrtTeal] (\x,\y) circle (3pt);}}
+\node[align=center,text width=6.2cm] at (3.35,1.28) {$3\;\mathrm{VZA}\times4\;\mathrm{RAA}=12$\FigLang{행}{ rows}\\\FigLang{CSV 평가점}{CSV evaluation points}};
+\draw[ocrtLine] (7.1,0.45)--(7.1,6.95);
+% Internal quadrature nodes: illustrative positions, not actual Gauss nodes.
+\node[align=center] at (9.25,6.45) {\texttt{--n-mu}\\\FigLang{각도 적분점}{Angular quadrature}};
+\draw[ocrtLine] (7.85,3.65)--(10.65,3.65);
+\draw[ocrtLine] (10.45,3.65) arc[start angle=0,end angle=180,radius=1.2];
+\foreach \ang in {15,40,78,120,162}{\draw[->,ocrtTeal,thick] (9.25,3.65)--+(\ang:1.2);}
+\node[align=center] at (13.35,6.45) {\texttt{--n-layers}\\\FigLang{대기 수직층}{Atmospheric layers}};
+\fill[ocrtTeal!6] (11.95,3.65) rectangle (14.8,5.25);
+\foreach \yy in {3.65,3.92,4.19,4.46,4.73,5.0,5.25}{\draw[ocrtLine] (11.95,\yy)--(14.8,\yy);}
+\draw[->,orange!85!black,thick] (12.05,5.15)--(14.4,3.72);
+\node[align=center,text width=3.9cm] at (9.25,2.72) {\texttt{--m-max}\\\FigLang{방위각 Fourier 모드}{Azimuthal Fourier modes}};
+\draw[->,ocrtGray] (7.85,0.75)--(10.65,0.75);
+\draw[ocrtTeal,thick,domain=0:360,samples=50] plot ({7.95+\x/140},{1.25+0.25*cos(\x)});
+\draw[orange!85!black,thick,domain=0:360,samples=65] plot ({7.95+\x/140},{1.25+0.25*cos(2*\x)});
+\node[align=center,text width=4.1cm] at (13.35,2.72) {\texttt{--sos-max-orders}\\\FigLang{최대 대기 산란 차수}{Air scattering:\\maximum order}};
+\draw[->,ocrtTeal,thick] (11.8,1.5)--(12.4,0.83)--(13.25,1.48)--(14.15,0.83)--(14.8,1.4);
+\foreach \x/\y/\num in {12.4/0.83/1,13.25/1.48/2,14.15/0.83/3}{\fill[ocrtTeal] (\x,\y) circle (2.5pt);\node[above] at (\x,\y+0.08) {\num};}
+\node[anchor=north,align=center,text width=15.2cm,text=ocrtGray] at (7.7,-0.12) {\FigLang{출력 격자를 촘촘하게 해도 적분점·층수·Fourier 차수·산란 차수가 자동으로 늘어나지는 않는다.}{A finer output grid does not automatically increase\\quadrature points, layers, Fourier modes, or scattering orders.}};
+\end{tikzpicture}
+\caption{\FigLang{\texttt{--lut-*}는 CSV에서 평가할 기하를, 수치 옵션은 내부 계산의 해상도와 반복 한계를 정한다. 왼쪽은 12행의 예이며 VZA=0의 네 RAA는 같은 천정 관측을 다른 방위 라벨로 나타낸다. 오른쪽 적분점·층·곡선은 개념도다. \texttt{--n-mu-water}와 \texttt{--water-m-max}는 별도 수중 제어이며 \texttt{--sos-max-orders}가 수중 차수 한계를 바꾸지는 않는다. 명시적인 해양 격자 파일 지정 시 수중 기본 적분점이 96으로 승격되는 현재 구현의 예외는 본문의 설명을 함께 따른다.}{\texttt{--lut-*} chooses geometries evaluated in the CSV; numerical options control internal resolution and iteration limits. The left panel has 12 rows; its four RAA labels at VZA=0 share the zenith viewing direction. Internal nodes, layers, and curves are schematic. \texttt{--n-mu-water} and \texttt{--water-m-max} control underwater calculations separately; \texttt{--sos-max-orders} does not set the underwater order limit. See the text for the current implementation's promotion to 96 underwater nodes when an explicit ocean-grid filename is parsed.}}
+\label{fig:options-grids}
+\end{figure}
