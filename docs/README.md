@@ -1,3 +1,30 @@
+# OCRT documentation guide
+
+Installation and execution of OCRT start with the [user manual](manual/README.md). A [Korean PDF](manual/OCRT_Manual_KO.pdf) and an [English PDF](manual/OCRT_Manual_EN.pdf) are provided; edit the [LaTeX sources](manual/latex/README.md) to regenerate the PDFs. The documentation directory of this repository is `docs/`.
+
+| Directory | Contents | When to read |
+|---|---|---|
+| [manual/](manual/README.md) | Korean and English PDFs and the LaTeX sources. Basic concepts, angle conventions, installation, the complete option reference, examples, input/output formats, Python batch processing | When installing for the first time, or when producing calculations and LUTs |
+| [technical/](technical/) | Technical records on the physical model, spectral data, algorithm changes and performance improvements | When the implementation rationale or the background of a model change is needed |
+| [validation/](validation/) | Validation records by feature: comparison experiments, error analyses, IPSS and others | When checking the validation conditions and limits of a specific result |
+| [reports/](reports/) | Result reports and figures for individual work items | When looking for the results of an individual experiment or development task |
+
+`technical/`, `validation/` and `reports/` record the state at the time they were written. For the current usage, consult the manual together with the source of the corresponding version. Do not assume that the options and defaults in older documents match the current code.
+
+`paper/`, which may exist in a local working folder, is a private area holding the manuscript and is not part of the public repository distribution.
+
+## Related locations
+
+- [Repository guide](../README.md)
+- [Technical documents inside the C code](../code/OCRT_C/docs/)
+- [Python code and documents](../code/OCRT_Python/)
+- [Development status record](../OCRT_MIGRATION_STATUS_2026-08-23.md)
+- [Work hand-over and data inventory](../MIGRATION_README_2026-09-05_KO.md)
+
+When adding a new document, put execution procedures for users in `manual/`, implementation descriptions in `technical/`, comparison conditions and numerical results in `validation/`, and individual work reports in `reports/`.
+
+---
+
 # OCRT 문서 안내
 
 OCRT의 설치와 실행은 [사용자 매뉴얼](manual/README.md)에서 시작한다. [한글판 PDF](manual/OCRT_Manual_KO.pdf)와 [영문판 PDF](manual/OCRT_Manual_EN.pdf)를 제공하며, [LaTeX 원본](manual/latex/README.md)을 수정해 PDF를 재생성한다. 이 저장소의 문서 디렉토리 이름은 `docs/`이다.
