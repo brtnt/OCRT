@@ -59,8 +59,8 @@ repository root).
 - The residual of −0.2 % at VZA 55 and low SZA is the view-path curvature term
   −(h̄/R_e) tan²θ_v; it does not depend on SZA and vanishes at nadir. The legacy scheme omitted it.
   The correction matters for SZA ≥ 75°.
-- Details: status document §14–§14.1, the IPSS record (§1–§11.6), and figures figI1–figI5 in
-  `docs/reports/`.
+- Details: status document §14–§14.1, the IPSS record (§1–§11.6) and figures figI1–figI5 in
+  `docs/validation/ipss_2026-09-05/` (same files under `code/OCRT_C/validation/ipss_2026-09-05/`).
 - Note: the `V2_VERSION` string in `src/main.c` follows the v1.2 lineage and differs from the
   document version (v1.11.1).
 
@@ -70,7 +70,7 @@ In git (public): `code/OCRT_C` (src, tests including one fixture Mie table, scri
 validation, patches, manifests), `code/OCRT_Python` (code, documents, tests, small data: AFGL,
 cross sections, IOP tables), `scripts/` (data installation and manifests), `code/campaign_runner`,
 `code/run_tools`, `code/validation_05` (harness, bit baselines, tools), `docs/technical`,
-`docs/validation`, `docs/reports`, the status document, this README, `LICENSE`, `.gitignore`,
+`docs/validation`, the status document, this README, `LICENSE`, `.gitignore`,
 `.gitattributes` (`* -text`, byte-exact storage).
 
 Local only (`.gitignore`):
@@ -96,10 +96,12 @@ Third-party codes used for validation are not part of this package and are not s
         -fno-trapping-math -DOCRT_FAST_KERNELS -fopenmp -Isrc $(find src -name '*.c') -o build/ocrt -lm
     # gates (G-I0 … G-I4 and regression §2–§5)
     bash scripts/run_ipss_gates.sh
-    # manifest (validation/ipss_2026-09-05, build/ and _RELEASE/ are excluded by convention)
-    find . -type f ! -path "./SHA256SUMS.txt" ! -path "./build/*" ! -path "./_RELEASE/*" \
-         ! -path "./validation/ipss_2026-09-05/*" -print0 | sort -z | xargs -0 sha256sum \
-         | sed 's#  \./#  #' > SHA256SUMS.txt
+    # manifests: MANIFEST_SHA256.csv (source package) and SHA256SUMS.txt (source package + Mie tables).
+    # Excluded by convention: build/, _RELEASE/, validation/ipss_2026-09-05/, __pycache__/, dot-files.
+    # Mie tables that are not installed locally are listed with the hashes of scripts/MIE_SHA256SUMS_data-v1.txt.
+    python3 scripts/make_manifests.py
+    # verification of a checkout (installed Mie tables are checked too; missing ones are skipped)
+    sh verify_package.sh
 
 Environment variables: `OCRT_ADVANCED=1` (advanced options), `OCRT_DEBUG=1`, `OCRT_IPSS_DUMP=1`
 (κ diagnostics), `OCRT_IPSS_PROFILE_DUMP=<file>` (dump of the κ input profile and P11 table),
@@ -224,7 +226,8 @@ reset to the new `origin/main`.
   그 코드의 층수 외삽값은 VZA 55 에서 −0.239 %(OCRT −0.240 %)다.
 - VZA 55·저 SZA 에서 남는 −0.2 % 는 시선경로 곡률 항 −(h̄/R_e)tan²θ_v 이며, SZA 에 무관하고
   천저에서 0 이다. 구 방식이 빠뜨렸던 항이다. 구면 보정이 실제로 필요한 구간은 SZA 75° 이상이다.
-- 상세: 상태 문서 §14·§14.1, IPSS 기록(§1–§11.6), `docs/reports/` 의 그림 figI1–figI5.
+- 상세: 상태 문서 §14·§14.1, IPSS 기록(§1–§11.6)과 그림 figI1–figI5 는 `docs/validation/ipss_2026-09-05/`
+  (`code/OCRT_C/validation/ipss_2026-09-05/` 에 같은 파일).
 - 참고: `src/main.c` 의 `V2_VERSION` 문자열은 v1.2 계보 표기이고 문서 버전(v1.11.1)과 체계가 다르다.
 
 ## 3. 자료 위치 — git 에 있는 것 / 로컬에만 있는 것
@@ -232,7 +235,7 @@ reset to the new `origin/main`.
 git 에 있음(공개): `code/OCRT_C`(src·tests(픽스처 Mie 1개 포함)·scripts·tools·docs·validation·
 patches·매니페스트), `code/OCRT_Python`(코드·문서·테스트·소형 data: AFGL·단면적·IOP 표),
 `scripts/`(자료 설치·매니페스트), `code/campaign_runner`, `code/run_tools`,
-`code/validation_05`(harness·bit_baselines·tools), `docs/technical`, `docs/validation`, `docs/reports`,
+`code/validation_05`(harness·bit_baselines·tools), `docs/technical`, `docs/validation`,
 상태 문서, 이 README, `LICENSE`, `.gitignore`, `.gitattributes`(`* -text`, 바이트 보존).
 
 로컬에만 있음(`.gitignore`):
@@ -258,10 +261,12 @@ patches·매니페스트), `code/OCRT_Python`(코드·문서·테스트·소형 
         -fno-trapping-math -DOCRT_FAST_KERNELS -fopenmp -Isrc $(find src -name '*.c') -o build/ocrt -lm
     # 게이트 (G-I0~G-I4 + 회귀 §2–§5)
     bash scripts/run_ipss_gates.sh
-    # 매니페스트 재생성 (validation/ipss_2026-09-05, build/, _RELEASE/ 는 제외 — 기존 규약)
-    find . -type f ! -path "./SHA256SUMS.txt" ! -path "./build/*" ! -path "./_RELEASE/*" \
-         ! -path "./validation/ipss_2026-09-05/*" -print0 | sort -z | xargs -0 sha256sum \
-         | sed 's#  \./#  #' > SHA256SUMS.txt
+    # 매니페스트 재생성: MANIFEST_SHA256.csv(소스 패키지), SHA256SUMS.txt(소스 패키지 + Mie 표).
+    # 제외 규약: build/, _RELEASE/, validation/ipss_2026-09-05/, __pycache__/, 점으로 시작하는 파일.
+    # 로컬에 없는 Mie 표는 scripts/MIE_SHA256SUMS_data-v1.txt 의 해시로 기재한다.
+    python3 scripts/make_manifests.py
+    # 체크아웃 검증 (설치된 Mie 표도 검사, 없는 표는 건너뜀)
+    sh verify_package.sh
 
 환경변수: `OCRT_ADVANCED=1`(고급 옵션), `OCRT_DEBUG=1`, `OCRT_IPSS_DUMP=1`(κ 진단),
 `OCRT_IPSS_PROFILE_DUMP=<file>`(κ 입력 프로파일·P11 표 덤프), `OCRT_IPSS_NQUAD`(구적 수렴 게이트),

@@ -24,8 +24,7 @@ constituent phase functions in mixed atmospheres. Details:
 | `code/OCRT_C/` | C reference implementation (`src/`), gate and regression tests (`tests/`, `scripts/`), diagnostic tools (`tools/`), technical documents (`docs/`), validation records (`validation/`), change logs (`CHANGES_*.md`, `RELEASE_NOTES_*.md`), file manifest (`SHA256SUMS.txt`) |
 | `code/OCRT_Python/` | Python batch package (`ocrt_py/`, `produce_grid.py`, `ocrt_solve.py`, GPU gate) and small input data |
 | `code/campaign_runner/`, `code/run_tools/`, `code/validation_05/` | Campaign runner, run tools, validation harness and bit baselines |
-| `docs/technical/`, `docs/validation/` | Technical reports and validation records |
-| `docs/reports/` | Session reports (validation documents and figures) |
+| `docs/technical/`, `docs/validation/` | Technical reports and validation records (including the IPSS replacement record and figures) |
 | `docs/manual/` | User manual: installation, all CLI options, RAA, Rayleigh LUT and simulation examples, output formats |
 | `scripts/` | Data installation scripts (`fetch_data.sh` / `.ps1`) and SHA-256 manifests |
 | `OCRT_MIGRATION_STATUS_2026-08-23.md` | Cumulative development status |
@@ -114,8 +113,7 @@ C 참조 구현과, 같은 물리를 배치 자료생산용으로 재현한 Pyth
 | `code/OCRT_C/` | C 참조 구현(`src/`), 게이트·회귀 테스트(`tests/`, `scripts/`), 진단 도구(`tools/`), 기술 문서(`docs/`), 검증 기록(`validation/`), 변경 이력(`CHANGES_*.md`, `RELEASE_NOTES_*.md`), 파일 매니페스트(`SHA256SUMS.txt`) |
 | `code/OCRT_Python/` | Python 배치 패키지(`ocrt_py/`, `produce_grid.py`, `ocrt_solve.py`, GPU 게이트)와 소형 입력 자료 |
 | `code/campaign_runner/`, `code/run_tools/`, `code/validation_05/` | 캠페인 실행기, 실행 도구, 검증 하니스와 비트 기준선 |
-| `docs/technical/`, `docs/validation/` | 기술 보고서와 검증 기록 |
-| `docs/reports/` | 작업 세션 산출 기록(검증 문서·그림) |
+| `docs/technical/`, `docs/validation/` | 기술 보고서와 검증 기록(IPSS 교체 기록과 그림 포함) |
 | `docs/manual/` | 사용자 매뉴얼: 설치, 전체 CLI 옵션, RAA, Rayleigh LUT·시뮬레이션 예시, 출력 형식 |
 | `scripts/` | 자료 설치 스크립트(`fetch_data.sh` / `.ps1`)와 SHA-256 매니페스트 |
 | `OCRT_MIGRATION_STATUS_2026-08-23.md` | 개발 상태 문서(누적) |
