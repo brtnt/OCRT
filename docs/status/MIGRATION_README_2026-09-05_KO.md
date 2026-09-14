@@ -6,7 +6,8 @@ update procedure → rules → open items. The earlier package notes (2026-08-19
 `OCRT_MIGRATION_STATUS_2026-08-23.md` and are not repeated here.
 
 `<LOCAL_ROOT>` denotes the local working folder into which this repository is checked out (the
-repository root).
+repository root). Location of this document: `docs/status/` (moved from the repository root on
+2026-09-14 together with the status document; all paths below are relative to the repository root).
 
 ---
 
@@ -179,7 +180,8 @@ reset to the new `origin/main`.
 남은 과제. 이전 패키지 노트(2026-08-19)는 `OCRT_MIGRATION_STATUS_2026-08-23.md` 에 누적되어 있으므로
 여기서 반복하지 않는다.
 
-`<LOCAL_ROOT>` 는 이 저장소를 체크아웃한 로컬 작업 폴더(저장소 루트)를 뜻한다.
+`<LOCAL_ROOT>` 는 이 저장소를 체크아웃한 로컬 작업 폴더(저장소 루트)를 뜻한다. 이 문서의 위치는
+`docs/status/` 다(2026-09-14 상태 문서와 함께 저장소 루트에서 이동; 아래 경로는 모두 저장소 루트 기준).
 
 ---
 

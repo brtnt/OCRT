@@ -14,7 +14,7 @@ Current version: **OCRT C v1.11.1 (2026-09-05)**. The spherical-shell correction
 IPSS scheme of Zhai & Hu (2022) only; the older PSSA scheme was removed. The viewing zenith
 angle is anchored at the surface pixel, and the correction factor κ is weighted by the
 constituent phase functions in mixed atmospheres. Details:
-`OCRT_MIGRATION_STATUS_2026-08-23.md` §14–§14.1 and
+`docs/status/OCRT_MIGRATION_STATUS_2026-08-23.md` §14–§14.1 and
 `code/OCRT_C/validation/ipss_2026-09-05/OCRT_IPSS_REPLACEMENT_RECORD_2026-09-05.md`.
 
 ## Repository layout
@@ -27,8 +27,7 @@ constituent phase functions in mixed atmospheres. Details:
 | `docs/technical/`, `docs/validation/` | Technical reports and validation records (including the IPSS replacement record and figures) |
 | `docs/manual/` | User manual: installation, all CLI options, RAA, Rayleigh LUT and simulation examples, output formats |
 | `scripts/` | Data installation scripts (`fetch_data.sh` / `.ps1`) and SHA-256 manifests |
-| `OCRT_MIGRATION_STATUS_2026-08-23.md` | Cumulative development status |
-| `MIGRATION_README_2026-09-05_KO.md` | **How to start a new work session; inventory of what is where** |
+| `docs/status/` | Development status log and the work hand-over note (how a new work session starts; inventory of what is in git and what stays local) |
 
 ## Data installation (Mie tables, required for aerosol and hydrosol runs)
 
@@ -103,7 +102,7 @@ C 참조 구현과, 같은 물리를 배치 자료생산용으로 재현한 Pyth
 
 현재 버전: **OCRT C v1.11.1 (2026-09-05)**. 구면 보정은 Zhai & Hu (2022) 의 IPSS 방식만 사용하며,
 이전의 PSSA 방식은 삭제했다. 관측천정각은 지표 화소를 기준으로 하고, 혼합 대기에서는 보정계수 κ 를
-성분별 위상함수로 가중한다. 상세는 `OCRT_MIGRATION_STATUS_2026-08-23.md` §14–§14.1 과
+성분별 위상함수로 가중한다. 상세는 `docs/status/OCRT_MIGRATION_STATUS_2026-08-23.md` §14–§14.1 과
 `code/OCRT_C/validation/ipss_2026-09-05/OCRT_IPSS_REPLACEMENT_RECORD_2026-09-05.md` 를 참조한다.
 
 ## 저장소 구성
@@ -116,8 +115,7 @@ C 참조 구현과, 같은 물리를 배치 자료생산용으로 재현한 Pyth
 | `docs/technical/`, `docs/validation/` | 기술 보고서와 검증 기록(IPSS 교체 기록과 그림 포함) |
 | `docs/manual/` | 사용자 매뉴얼: 설치, 전체 CLI 옵션, RAA, Rayleigh LUT·시뮬레이션 예시, 출력 형식 |
 | `scripts/` | 자료 설치 스크립트(`fetch_data.sh` / `.ps1`)와 SHA-256 매니페스트 |
-| `OCRT_MIGRATION_STATUS_2026-08-23.md` | 개발 상태 문서(누적) |
-| `MIGRATION_README_2026-09-05_KO.md` | **새 작업 세션 시작 절차와 자료 위치 목록** |
+| `docs/status/` | 개발 상태 문서(누적)와 작업 인계 문서(새 작업 세션 시작 절차, git 에 있는 것과 로컬에만 있는 것의 목록) |
 
 ## 자료 설치 (Mie 표 — 에어로졸·하이드로졸 계산에 필요)
 
